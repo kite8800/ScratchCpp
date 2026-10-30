@@ -6,7 +6,7 @@ A scratch-like block editor for C/CPP/C++, with extensible customized block edit
 
 A browser-based block editor for learning C/C++. Beginners drag ready-made code blocks (variables, loops, `printf`, `cout`, math functions, string handling…) into a syntax-highlighted editor instead of typing everything from scratch. C and C++ are supported side by side, with configurable blocks that can be extended, reordered, and shared as JSON.
 
-No installation, no build step — just open `ScratchCpp.html`.
+No installation, no build step — just open `ScratchCpp.html`. Demo: https://github.com/kite8800/ScratchCpp/
 
 ## Why this exists
 
