@@ -58,6 +58,8 @@ Open `ScratchCpp.html` in a modern browser (Chrome, Edge, Firefox, Safari). Pris
 
 It is easy to add customized blocks for Arduino etc.
 
+You can use AI to generate customized blocks easily. The reference propmpt is here: https://github.com/kite8800/ScratchCpp/blob/main/ScratchCpp/scratchcpp_block_json_ai_prompt.txt 
+
 ## Block Configuration
 
 Blocks are stored as a JSON array of categories:
@@ -100,7 +102,9 @@ Blocks are stored as a JSON array of categories:
 
 # 定制积木
 
-非常容易扩展和定制积木模块
+非常容易扩展和定制积木模块。
+
+扩展可以用AI自动生成，参考的prompt在 https://github.com/kite8800/ScratchCpp/blob/main/ScratchCpp/scratchcpp_block_json_ai_prompt.txt 
 
 ## 积木配置格式
 
