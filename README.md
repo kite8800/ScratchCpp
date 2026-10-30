@@ -83,44 +83,7 @@ Blocks are stored as a JSON array of categories:
       "cpp": []
     }
   }
-]## 积木配置格式
-
-积木存为分类数组的 JSON：
-
-```json
-[
-  {
-    "id": "cat-var",
-    "category": "变量",
-    "icon": "database",
-    "collapsed": false,
-    "subgroups": {
-      "none": [
-        {
-          "id": "v-int",
-          "icon": "hashtag",
-          "label": "int x = 10;",
-          "code": "int x = 10;",
-          "mode": "line"
-        }
-      ],
-      "c": [],
-      "cpp": []
-    }
-  }
 ]
-```
-
-**分类** — `id`、`category`、`icon`、`collapsed`、`subgroups`。`subgroups` 必须含 `none` / `c` / `cpp`（可为空数组）；追加的键成为自定义子类别。
-
-**积木** — `id`、`icon`、`label`、`code`、`mode`。
-- `mode: "line"` — 插入到当前行行首，保留缩进。
-- `mode: "lc"` — 插入到光标处作为表达式（UI 中叫 `Exp`）。
-
-**C++ `std::` 前缀** — 在 `code` / `label` 里写 `{{STD}}`，会根据「省略 std::」开关替换为 `std::` 或空串。
-
-**图标**（不带 `fa-` 前缀）：`cube` `folder` `database` `code` `code-branch` `terminal` `calculator` `font` `file-import` `star` `bolt` `tools` `hashtag` `list` `equals` `plus` `minus` `times` `divide` `percent` `play` `print` `keyboard` `search` `link` `cut` `copy` `exchange-alt` `sign-out-alt` `globe` `arrow-up` `arrow-down` `arrow-right` `location-arrow` `cubes` `square-root-alt` `circle` `wave-square` `chart-line` `absolute` `superscript` `exclamation-triangle` `quote-left` `ruler-horizontal` `balance-scale` `file-signature` `stop` `forward` `redo`
-
 ```
 
 **Category** — `id`, `category`, `icon`, `collapsed`, `subgroups`. `subgroups` must contain `none` / `c` / `cpp` (can be empty arrays); additional keys become custom subgroups.
