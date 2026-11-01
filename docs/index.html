@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>积木 C/C++ 编辑器</title>
+    <title>Scratch C/C++</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpath d='M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'/%3E%3C/svg%3E">
     <!-- Prism 本地依赖（离线可用，无需 CDN） -->
     <!-- 说明：语法配色已全部由下方 :root / html[data-theme="light"] 的 --syn-* 变量接管，
@@ -958,6 +958,118 @@
         .modal .modal-actions button.danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
         .modal .modal-actions button.danger svg.icon { color: var(--danger-text); }
         .modal .modal-actions button.danger:hover { background: var(--danger-hover); }
+
+        /* ==================== 积木选择浮层 ==================== */
+        .block-picker {
+            position: fixed;
+            z-index: 1500;
+            width: 460px;
+            max-width: 92vw;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 0.8rem;
+        }
+        .block-picker.show { display: flex; }
+
+        .block-picker-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--bg-panel-header);
+            border-bottom: 1px solid var(--border);
+        }
+        .block-picker-header svg.icon {
+            width: 15px; height: 15px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .block-picker-header input {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-input);
+            border: 1px solid var(--border-input);
+            border-radius: 6px;
+            color: var(--text-primary);
+            padding: 6px 8px;
+            font-size: 0.8rem;
+            outline: none;
+            font-family: 'Courier New', Courier, monospace;
+            transition: border-color 0.12s;
+        }
+        .block-picker-header input:focus { border-color: var(--accent); }
+        .block-picker-header input::placeholder { color: var(--text-faint); }
+
+        .block-picker-list {
+            max-height: 320px;
+            min-height: 44px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .block-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.1s;
+        }
+        .block-picker-item:hover { background: var(--bg-block-hover); }
+        .block-picker-item.active {
+            background: var(--accent);
+            border-color: var(--accent-light);
+        }
+        .block-picker-item.active .block-picker-label,
+        .block-picker-item.active .block-picker-mode { color: #fff; }
+        .block-picker-item.active svg.icon { color: #fff; }
+
+        .block-picker-item svg.icon {
+            width: 14px; height: 14px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            stroke-width: 2.2;
+        }
+        .block-picker-label {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--text-primary);
+            font-size: 0.76rem;
+        }
+        .block-picker-mode {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .block-picker-footer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 10px;
+            background: var(--bg-panel-header);
+            border-top: 1px solid var(--border);
+            font-size: 0.66rem;
+            color: var(--text-dim);
+        }
+        .block-picker-empty {
+            padding: 22px 12px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
     </style>
     <script>
         /* 首帧防闪烁：在 body 渲染前同步设置 data-theme */
@@ -1057,53 +1169,56 @@
     </svg>
 
     <div class="toolbar">
-        <span class="logo"><a href="#" title="Version: v0.9; Author: Hayden KWOK"><svg class="icon"><use href="#icon-cube"/></svg></a> 积木 C/C++</span>
-        <button id="openBtn" title="打开文件"><svg class="icon"><use href="#icon-folder-open"/></svg> 打开</button>
-        <button id="saveBtn" title="保存文件"><svg class="icon"><use href="#icon-save"/></svg> 保存</button>
-        <button id="clipboardImportBtn" title="从剪贴板导入代码"><svg class="icon"><use href="#icon-paste"/></svg> 导入剪贴板</button>
-        <button id="clipboardExportBtn" title="导出代码到剪贴板"><svg class="icon"><use href="#icon-copy"/></svg> 导出剪贴板</button>
+        <span class="logo"><a href="#" title="Version: v0.9; Author: Hayden KWOK"><svg class="icon"><use href="#icon-cube"/></svg></a> <span data-i18n="appTitle">Scratch C/C++</span></span>
+        <button id="openBtn" data-i18n="btnOpen" data-i18n-title="btnOpenTitle" title="打开文件"><svg class="icon"><use href="#icon-folder-open"/></svg> 打开</button>
+        <button id="saveBtn" data-i18n="btnSave" data-i18n-title="btnSaveTitle" title="保存文件"><svg class="icon"><use href="#icon-save"/></svg> 保存</button>
+        <button id="clipboardImportBtn" data-i18n="btnImportClip" data-i18n-title="btnImportClipTitle" title="从剪贴板导入代码"><svg class="icon"><use href="#icon-paste"/></svg> 导入剪贴板</button>
+        <button id="clipboardExportBtn" data-i18n="btnExportClip" data-i18n-title="btnExportClipTitle" title="导出代码到剪贴板"><svg class="icon"><use href="#icon-copy"/></svg> 导出剪贴板</button>
         <span class="divider"></span>
-        <button id="clearBtn"><svg class="icon"><use href="#icon-trash"/></svg> 清空</button>
-        <button id="exampleBtn"><svg class="icon"><use href="#icon-lightbulb"/></svg> 示例</button>
+        <button id="clearBtn" data-i18n="btnClear" data-i18n-title="btnClearTitle" title="清空编辑器（可撤销）"><svg class="icon"><use href="#icon-trash"/></svg> 清空</button>
+        <button id="exampleBtn" data-i18n="btnExample" data-i18n-title="btnExampleTitle" title="插入示例代码"><svg class="icon"><use href="#icon-lightbulb"/></svg> 示例</button>
         <span class="spacer"></span>
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
+        <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText" style="font-size:0.8rem; font-weight:600;">中</span></button>
         <span style="font-size:0.75rem; color:var(--hint);">
-            <svg class="icon"><use href="#icon-search"/></svg> 点击/拖拽积木 · 右键编辑 · Ctrl+F 查找
+            <svg class="icon"><use href="#icon-search"/></svg> <span data-i18n="toolbarHint">点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+F 查找</span>
         </span>
         <input type="file" id="openFileInput" accept=".c,.cpp,.h,.hpp,.cc,.txt" style="display:none">
     </div>
 
     <div class="toolbar toolbar-second">
-        <button id="undoBtn" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
-        <button id="redoBtn" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
+        <button id="undoBtn" data-i18n="btnUndo" data-i18n-title="btnUndoTitle" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
+        <button id="redoBtn" data-i18n="btnRedo" data-i18n-title="btnRedoTitle" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
         <span class="divider"></span>
-        <button id="autoIndentBtn" title="自动缩进当前行 / 选中行"><svg class="icon"><use href="#icon-autoindent"/></svg> 自动缩进</button>
-        <button id="indentBtn" title="缩进当前行 / 选中行 (Tab)"><svg class="icon"><use href="#icon-indent"/></svg> 缩进</button>
-        <button id="outdentBtn" title="反缩进当前行 / 选中行 (Shift+Tab)"><svg class="icon"><use href="#icon-outdent"/></svg> 反缩进</button>
+        <button id="autoIndentBtn" data-i18n="btnAutoIndent" data-i18n-title="btnAutoIndentTitle" title="自动缩进当前行 / 选中行"><svg class="icon"><use href="#icon-autoindent"/></svg> 自动缩进</button>
+        <button id="indentBtn" data-i18n="btnIndent" data-i18n-title="btnIndentTitle" title="缩进当前行 / 选中行 (Tab)"><svg class="icon"><use href="#icon-indent"/></svg> 缩进</button>
+        <button id="outdentBtn" data-i18n="btnOutdent" data-i18n-title="btnOutdentTitle" title="反缩进当前行 / 选中行 (Shift+Tab)"><svg class="icon"><use href="#icon-outdent"/></svg> 反缩进</button>
+        <span class="divider"></span>
+        <button id="blockPickerBtn" data-i18n="btnBlockPicker" data-i18n-title="btnBlockPickerTitle" title="插入积木 (Ctrl+/，或 Ctrl+点击编辑器)"><svg class="icon"><use href="#icon-cube"/></svg> 积木</button>
     </div>
 
     <div class="main-container">
         <div class="blocks-panel">
             <div class="blocks-panel-header">
                 <div class="row">
-                    <label title="勾选后，表达式插入（Exp）单行时自动去掉末尾分号">
+                    <label data-i18n="optExpStripSemicolon" data-i18n-title="optExpStripSemicolonTitle" title="勾选后，公式插入单行时自动去掉末尾分号">
                         <input type="checkbox" id="expStripSemicolonCheckbox" checked>
                         <svg class="icon"><use href="#icon-x"/></svg> 表达式去分号
                     </label>
                 </div>
                 <div class="row">
-                    <label title="勾选后, C++ 积木插入时省略 std:: 前缀">
+                    <label data-i18n="optOmitStd" data-i18n-title="optOmitStdTitle" title="勾选后, C++ 积木插入时省略 std:: 前缀">
                         <input type="checkbox" id="omitStdCheckbox">
                         <svg class="icon"><use href="#icon-magic"/></svg> 省略 std:: 前缀
                     </label>
                 </div>
                 <div class="row">
-                    <button class="panel-btn" id="addCategoryBtn" title="新增类别"><svg class="icon"><use href="#icon-folder-plus"/></svg> 类别</button>
-                    <button class="panel-btn" id="reorderBtn" title="调整顺序"><svg class="icon"><use href="#icon-sort"/></svg> 排序</button>
+                    <button class="panel-btn" id="addCategoryBtn" data-i18n="btnAddCategory" data-i18n-title="btnAddCategoryTitle" title="新增类别"><svg class="icon"><use href="#icon-folder-plus"/></svg> 类别</button>
+                    <button class="panel-btn" id="reorderBtn" data-i18n="btnReorder" data-i18n-title="btnReorderTitle" title="调整顺序"><svg class="icon"><use href="#icon-sort"/></svg> 排序</button>
                     <span style="flex:1"></span>
-                    <button class="panel-btn icon-only" id="exportBtn" title="导出积木配置"><svg class="icon"><use href="#icon-download"/></svg></button>
-                    <button class="panel-btn icon-only" id="importBtn" title="导入积木配置"><svg class="icon"><use href="#icon-upload"/></svg></button>
-                    <button class="panel-btn icon-only danger" id="resetBtn" title="恢复默认积木"><svg class="icon"><use href="#icon-rotate-left"/></svg></button>
+                    <button class="panel-btn icon-only" id="exportBtn" data-i18n-title="btnExportBlocksTitle" title="导出积木配置"><svg class="icon"><use href="#icon-download"/></svg></button>
+                    <button class="panel-btn icon-only" id="importBtn" data-i18n-title="btnImportBlocksTitle" title="导入积木配置"><svg class="icon"><use href="#icon-upload"/></svg></button>
+                    <button class="panel-btn icon-only danger" id="resetBtn" data-i18n-title="btnResetBlocksTitle" title="恢复默认积木"><svg class="icon"><use href="#icon-rotate-left"/></svg></button>
                 </div>
             </div>
             <div class="blocks-scroll" id="blocksScroll"></div>
@@ -1117,28 +1232,28 @@
                     <input type="text" id="titleInput" value="main.cpp" spellcheck="false">
                 </div>
                 <div class="header-actions">
-                    <button class="header-btn" id="findBtn" title="查找 (Ctrl+F)"><svg class="icon"><use href="#icon-search"/></svg> 查找</button>
-                    <button class="header-btn" id="replaceBtn" title="替换 (Ctrl+H)"><svg class="icon"><use href="#icon-exchange-alt"/></svg> 替换</button>
-                    <button class="header-btn active" id="lineNumBtn" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg> 行号</button>
+                    <button class="header-btn" id="findBtn" data-i18n="btnFind" data-i18n-title="btnFindTitle" title="查找 (Ctrl+F)"><svg class="icon"><use href="#icon-search"/></svg> 查找</button>
+                    <button class="header-btn" id="replaceBtn" data-i18n="btnReplace" data-i18n-title="btnReplaceTitle" title="替换 (Ctrl+H)"><svg class="icon"><use href="#icon-exchange-alt"/></svg> 替换</button>
+                    <button class="header-btn active" id="lineNumBtn" data-i18n="optLineNumbers" data-i18n-title="optLineNumbersTitle" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg> 行号</button>
                     <span id="cursorPos">行 1, 列 1</span>
                 </div>
             </div>
 
             <div class="search-bar" id="searchBar">
-                <input type="text" id="searchInput" placeholder="查找...">
-                <button class="opt-btn active" id="caseBtn" title="区分大小写 (Aa)">Aa</button>
-                <button class="opt-btn active" id="wordBtn" title="整词匹配 (\b)">W</button>
+                <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="查找...">
+                <button class="opt-btn active" id="caseBtn" data-i18n-title="optCaseTitle" title="区分大小写 (Aa)">Aa</button>
+                <button class="opt-btn active" id="wordBtn" data-i18n-title="optWordTitle" title="整词匹配 (\b)">W</button>
                 <span class="search-count" id="searchCount">0 / 0</span>
-                <button class="nav-btn" id="prevBtn" title="上一个 (Shift+Enter)"><svg class="icon"><use href="#icon-arrow-up"/></svg></button>
-                <button class="nav-btn" id="nextBtn" title="下一个 (Enter)"><svg class="icon"><use href="#icon-arrow-down"/></svg></button>
+                <button class="nav-btn" id="prevBtn" data-i18n-title="btnPrevTitle" title="上一个 (Shift+Enter)"><svg class="icon"><use href="#icon-arrow-up"/></svg></button>
+                <button class="nav-btn" id="nextBtn" data-i18n-title="btnNextTitle" title="下一个 (Enter)"><svg class="icon"><use href="#icon-arrow-down"/></svg></button>
                 <span class="sep"></span>
                 <div class="replace-group" id="replaceGroup">
-                    <input type="text" id="replaceInput" placeholder="替换为...">
-                    <button class="replace-btn" id="replaceOneBtn" title="替换当前">替换</button>
-                    <button class="replace-btn" id="replaceAllBtn" title="全部替换">全部</button>
+                    <input type="text" id="replaceInput" data-i18n-placeholder="replacePlaceholder" placeholder="替换为...">
+                    <button class="replace-btn" id="replaceOneBtn" data-i18n="btnReplaceOne" data-i18n-title="btnReplaceOneTitle" title="替换当前">替换</button>
+                    <button class="replace-btn" id="replaceAllBtn" data-i18n="btnReplaceAll" data-i18n-title="btnReplaceAllTitle" title="全部替换">全部</button>
                 </div>
                 <span style="flex:1"></span>
-                <button class="close-btn" id="closeSearchBtn" title="关闭 (Esc)"><svg class="icon"><use href="#icon-x"/></svg></button>
+                <button class="close-btn" id="closeSearchBtn" data-i18n-title="btnCloseTitle" title="关闭 (Esc)"><svg class="icon"><use href="#icon-x"/></svg></button>
             </div>
 
             <div class="code-editor" id="codeEditorContainer">
@@ -1151,31 +1266,31 @@
                 <div class="search-layer" id="searchLayer">
                     <pre><code id="searchCode"></code></pre>
                 </div>
-                <textarea id="codeInput" spellcheck="false" placeholder="// 点击左侧积木或直接编写代码..."></textarea>
+                <textarea id="codeInput" spellcheck="false" data-i18n-placeholder="editorPlaceholder" placeholder="// 点击左侧积木或直接编写代码..."></textarea>
             </div>
         </div>
     </div>
 
     <div class="status-bar">
-        <span><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
-        <span>积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+F 查找 / Ctrl+H 替换</span>
+        <span data-i18n="statusReady"><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
+        <span data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+F 查找 / Ctrl+H 替换</span>
         <span id="execTime"></span>
     </div>
 
     <!-- 积木编辑弹窗 -->
     <div class="modal-overlay" id="blockConfigModal">
         <div class="modal">
-            <h3><svg class="icon"><use href="#icon-sort"/></svg> 编辑积木</h3>
+            <h3 data-i18n="modalEditBlockTitle"><svg class="icon"><use href="#icon-sort"/></svg> 编辑积木</h3>
             <div class="field">
-                <label>代码内容</label>
+                <label data-i18n="fieldCode">代码内容</label>
                 <textarea id="configCode" rows="5"></textarea>
                 <span class="hint" id="configHint"></span>
             </div>
             <div class="modal-actions">
-                <button id="blockDeleteBtn" class="danger"><svg class="icon"><use href="#icon-trash"/></svg> 删除</button>
+                <button id="blockDeleteBtn" class="danger" data-i18n="btnDelete"><svg class="icon"><use href="#icon-trash"/></svg> 删除</button>
                 <span style="flex:1"></span>
-                <button id="blockCancelBtn">取消</button>
-                <button id="blockSaveBtn" class="primary"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+                <button id="blockCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="blockSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
             </div>
         </div>
     </div>
@@ -1183,69 +1298,69 @@
     <!-- 新增积木弹窗 -->
     <div class="modal-overlay" id="addBlockModal">
         <div class="modal">
-            <h3><svg class="icon"><use href="#icon-plus"/></svg> 新增积木</h3>
+            <h3 data-i18n="modalAddBlockTitle"><svg class="icon"><use href="#icon-plus"/></svg> 新增积木</h3>
             <div class="field">
-                <label>代码内容</label>
-                <textarea id="addBlockCode" rows="4" placeholder="例如: printf(&quot;hi\n&quot;);"></textarea>
+                <label data-i18n="fieldCode">代码内容</label>
+                <textarea id="addBlockCode" rows="4" data-i18n-placeholder="addBlockCodePlaceholder" placeholder="例如: printf(&quot;hi\n&quot;);"></textarea>
             </div>
             <div class="field">
-                <label>简短描述（可选，默认取代码第一行）</label>
-                <input type="text" id="addBlockLabel" placeholder="例如: 打印问候">
+                <label data-i18n="fieldLabel">简短描述（可选，默认取代码第一行）</label>
+                <input type="text" id="addBlockLabel" data-i18n-placeholder="addBlockLabelPlaceholder" placeholder="例如: 打印问候">
             </div>
             <div class="field">
-                <label>图标</label>
+                <label data-i18n="fieldIcon">图标</label>
                 <select id="addBlockIconSelect">
-                    <option value="cube">方块</option>
-                    <option value="hashtag">井号</option>
-                    <option value="list">列表</option>
-                    <option value="equals">等号</option>
-                    <option value="plus">加号</option>
-                    <option value="minus">减号</option>
-                    <option value="times">乘号</option>
-                    <option value="divide">除号</option>
-                    <option value="percent">百分号</option>
-                    <option value="play">播放</option>
-                    <option value="bolt">闪电</option>
-                    <option value="stop">停止</option>
-                    <option value="forward">前进</option>
-                    <option value="code">代码</option>
-                    <option value="code-branch">分支</option>
-                    <option value="terminal">终端</option>
-                    <option value="calculator">计算器</option>
-                    <option value="print">打印</option>
-                    <option value="keyboard">键盘</option>
-                    <option value="search">搜索</option>
-                    <option value="link">链接</option>
-                    <option value="cut">剪切</option>
-                    <option value="copy">复制</option>
-                    <option value="exchange-alt">交换</option>
-                    <option value="sign-out-alt">返回</option>
-                    <option value="globe">地球</option>
-                    <option value="star">星</option>
-                    <option value="tools">工具</option>
+                    <option value="cube" data-i18n="icon_cube">方块</option>
+                    <option value="hashtag" data-i18n="icon_hashtag">井号</option>
+                    <option value="list" data-i18n="icon_list">列表</option>
+                    <option value="equals" data-i18n="icon_equals">等号</option>
+                    <option value="plus" data-i18n="icon_plus">加号</option>
+                    <option value="minus" data-i18n="icon_minus">减号</option>
+                    <option value="times" data-i18n="icon_times">乘号</option>
+                    <option value="divide" data-i18n="icon_divide">除号</option>
+                    <option value="percent" data-i18n="icon_percent">百分号</option>
+                    <option value="play" data-i18n="icon_play">播放</option>
+                    <option value="bolt" data-i18n="icon_bolt">闪电</option>
+                    <option value="stop" data-i18n="icon_stop">停止</option>
+                    <option value="forward" data-i18n="icon_forward">前进</option>
+                    <option value="code" data-i18n="icon_code">代码</option>
+                    <option value="code-branch" data-i18n="icon_code-branch">分支</option>
+                    <option value="terminal" data-i18n="icon_terminal">终端</option>
+                    <option value="calculator" data-i18n="icon_calculator">计算器</option>
+                    <option value="print" data-i18n="icon_print">打印</option>
+                    <option value="keyboard" data-i18n="icon_keyboard">键盘</option>
+                    <option value="search" data-i18n="icon_search">搜索</option>
+                    <option value="link" data-i18n="icon_link">链接</option>
+                    <option value="cut" data-i18n="icon_cut">剪切</option>
+                    <option value="copy" data-i18n="icon_copy">复制</option>
+                    <option value="exchange-alt" data-i18n="icon_exchange-alt">交换</option>
+                    <option value="sign-out-alt" data-i18n="icon_sign-out-alt">返回</option>
+                    <option value="globe" data-i18n="icon_globe">地球</option>
+                    <option value="star" data-i18n="icon_star">星</option>
+                    <option value="tools" data-i18n="icon_tools">工具</option>
                 </select>
-                <input type="text" id="addBlockIconInput" placeholder="或直接输入图标名，如 star" style="margin-top:4px; font-size:0.78rem;">
+                <input type="text" id="addBlockIconInput" data-i18n-placeholder="iconInputPlaceholder" placeholder="或直接输入图标名，如 star" style="margin-top:4px; font-size:0.78rem;">
             </div>
             <div class="field">
-                <label>子类别归属</label>
+                <label data-i18n="fieldSubcategory">子类别归属</label>
                 <div class="radio-group" style="flex-wrap:wrap;">
-                    <label><input type="radio" name="addBlockSubRadio" value="none" checked> 通用</label>
-                    <label><input type="radio" name="addBlockSubRadio" value="c"> C</label>
-                    <label><input type="radio" name="addBlockSubRadio" value="cpp"> C++</label>
-                    <label><input type="radio" name="addBlockSubRadio" value="custom"> 自定义</label>
+                    <label><input type="radio" name="addBlockSubRadio" value="none" checked> <span data-i18n="subGeneral">通用</span></label>
+                    <label><input type="radio" name="addBlockSubRadio" value="c"> <span data-i18n="subC">C</span></label>
+                    <label><input type="radio" name="addBlockSubRadio" value="cpp"> <span data-i18n="subCpp">C++</span></label>
+                    <label><input type="radio" name="addBlockSubRadio" value="custom"> <span data-i18n="subCustom">自定义</span></label>
                 </div>
-                <input type="text" id="addBlockCustomSub" placeholder="自定义子类别名，如 advanced / 示例" style="margin-top:6px;">
+                <input type="text" id="addBlockCustomSub" data-i18n-placeholder="subCustomPlaceholder" placeholder="自定义子类别名，如 advanced / 示例" style="margin-top:6px;">
             </div>
             <div class="field">
-                <label>插入方式</label>
+                <label data-i18n="fieldInsertMode">插入方式</label>
                 <div class="radio-group">
-                    <label><input type="radio" name="addBlockMode" value="line" checked> Line</label>
-                    <label><input type="radio" name="addBlockMode" value="lc"> Exp</label>
+                    <label><input type="radio" name="addBlockMode" value="line" checked> <span data-i18n="modeLine">行</span></label>
+                    <label><input type="radio" name="addBlockMode" value="exp"> <span data-i18n="modeExp">公式</span></label>
                 </div>
             </div>
             <div class="modal-actions">
-                <button id="addBlockCancelBtn">取消</button>
-                <button id="addBlockSaveBtn" class="primary"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+                <button id="addBlockCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="addBlockSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
             </div>
         </div>
     </div>
@@ -1253,33 +1368,33 @@
     <!-- 类别弹窗 -->
     <div class="modal-overlay" id="categoryModal">
         <div class="modal">
-            <h3><svg class="icon"><use href="#icon-folder"/></svg> <span id="categoryModalTitle">新增类别</span></h3>
+            <h3><svg class="icon"><use href="#icon-folder"/></svg> <span id="categoryModalTitle" data-i18n="modalAddCategoryTitle">新增类别</span></h3>
             <div class="field">
-                <label>类别名</label>
-                <input type="text" id="categoryName" placeholder="例如: 我的工具">
+                <label data-i18n="fieldCategoryName">类别名</label>
+                <input type="text" id="categoryName" data-i18n-placeholder="categoryNamePlaceholder" placeholder="例如: 我的工具">
             </div>
             <div class="field">
-                <label>图标</label>
+                <label data-i18n="fieldIcon">图标</label>
                 <select id="categoryIconSelect">
-                    <option value="cube">方块</option>
-                    <option value="database">数据库</option>
-                    <option value="code-branch">分支</option>
-                    <option value="code">代码</option>
-                    <option value="terminal">终端</option>
-                    <option value="calculator">计算器</option>
-                    <option value="font">字体</option>
-                    <option value="file-import">导入</option>
-                    <option value="star">星</option>
-                    <option value="bolt">闪电</option>
-                    <option value="tools">工具</option>
+                    <option value="cube" data-i18n="icon_cube">方块</option>
+                    <option value="database" data-i18n="icon_database">数据库</option>
+                    <option value="code-branch" data-i18n="icon_code-branch">分支</option>
+                    <option value="code" data-i18n="icon_code">代码</option>
+                    <option value="terminal" data-i18n="icon_terminal">终端</option>
+                    <option value="calculator" data-i18n="icon_calculator">计算器</option>
+                    <option value="font" data-i18n="icon_font">字体</option>
+                    <option value="file-import" data-i18n="icon_file-import">导入</option>
+                    <option value="star" data-i18n="icon_star">星</option>
+                    <option value="bolt" data-i18n="icon_bolt">闪电</option>
+                    <option value="tools" data-i18n="icon_tools">工具</option>
                 </select>
-                <input type="text" id="categoryIconInput" placeholder="或直接输入图标名, 如 star" style="margin-top:4px; font-size:0.78rem;">
+                <input type="text" id="categoryIconInput" data-i18n-placeholder="iconInputPlaceholder" placeholder="或直接输入图标名, 如 star" style="margin-top:4px; font-size:0.78rem;">
             </div>
             <div class="modal-actions">
-                <button id="categoryDeleteBtn" class="danger" style="display:none;"><svg class="icon"><use href="#icon-trash"/></svg> 删除</button>
+                <button id="categoryDeleteBtn" class="danger" data-i18n="btnDelete" style="display:none;"><svg class="icon"><use href="#icon-trash"/></svg> 删除</button>
                 <span style="flex:1"></span>
-                <button id="categoryCancelBtn">取消</button>
-                <button id="categorySaveBtn" class="primary"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+                <button id="categoryCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="categorySaveBtn" class="primary" data-i18n="btnSaveCategory"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
             </div>
         </div>
     </div>
@@ -1287,14 +1402,14 @@
     <!-- 粘贴代码弹窗（剪贴板导入兜底） -->
     <div class="modal-overlay" id="pasteModal">
         <div class="modal">
-            <h3><svg class="icon"><use href="#icon-paste"/></svg> 粘贴代码</h3>
+            <h3 data-i18n="modalPasteTitle"><svg class="icon"><use href="#icon-paste"/></svg> 粘贴代码</h3>
             <div class="field">
-                <label>在下方粘贴代码（Ctrl+V），然后点「导入」</label>
-                <textarea id="pasteTextarea" rows="8" placeholder="在此粘贴代码..."></textarea>
+                <label data-i18n="pasteHint">在下方粘贴代码（Ctrl+V），然后点「导入」</label>
+                <textarea id="pasteTextarea" rows="8" data-i18n-placeholder="pastePlaceholder" placeholder="在此粘贴代码..."></textarea>
             </div>
             <div class="modal-actions">
-                <button id="pasteCancelBtn">取消</button>
-                <button id="pasteConfirmBtn" class="primary"><svg class="icon"><use href="#icon-check"/></svg> 导入</button>
+                <button id="pasteCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="pasteConfirmBtn" class="primary" data-i18n="btnImport"><svg class="icon"><use href="#icon-check"/></svg> 导入</button>
             </div>
         </div>
     </div>
@@ -1302,23 +1417,478 @@
     <!-- 导入选项弹窗 -->
     <div class="modal-overlay" id="importModeModal">
         <div class="modal">
-            <h3><svg class="icon"><use href="#icon-upload"/></svg> 导入积木配置</h3>
+            <h3 data-i18n="modalImportTitle"><svg class="icon"><use href="#icon-upload"/></svg> 导入积木配置</h3>
             <div class="field">
-                <label>选择导入方式</label>
-                <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.7;">
+                <label data-i18n="fieldImportMode">选择导入方式</label>
+                <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.7;" data-i18n-html="importModeDesc">
                     <strong style="color:var(--text-strong);">覆盖导入</strong>：清空现有积木，完全使用导入的配置。<br>
                     <strong style="color:var(--text-strong);">增量导入</strong>：按分类名和积木 label 合并，已存在的积木替换，不存在的追加到对应子类别末尾。
                 </p>
             </div>
             <div class="modal-actions">
-                <button id="importCancelBtn">取消</button>
-                <button id="importIncrementalBtn">增量导入</button>
-                <button id="importOverwriteBtn" class="primary"><svg class="icon"><use href="#icon-check"/></svg> 覆盖导入</button>
+                <button id="importCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="importIncrementalBtn" data-i18n="btnImportIncremental">增量导入</button>
+                <button id="importOverwriteBtn" class="primary" data-i18n="btnImportOverwrite"><svg class="icon"><use href="#icon-check"/></svg> 覆盖导入</button>
             </div>
         </div>
     </div>
 
+    <!-- ===== 积木选择浮层 ===== -->
+    <div class="block-picker" id="blockPicker">
+        <div class="block-picker-header">
+            <svg class="icon"><use href="#icon-cube"/></svg>
+            <input type="text" id="blockPickerInput"
+                   data-i18n-placeholder="pickerPlaceholder"
+                   placeholder="筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）"
+                   spellcheck="false" autocomplete="off">
+        </div>
+        <div class="block-picker-list" id="blockPickerList"></div>
+        <div class="block-picker-footer">
+            <span data-i18n="pickerFooterNav">↑↓ 选择</span>
+            <span data-i18n="pickerFooterInsert">Enter 插入</span>
+            <span data-i18n="pickerFooterEsc">Esc 关闭</span>
+            <span style="flex:1"></span>
+            <span id="blockPickerCount">0 项</span>
+        </div>
+    </div>
+
     <script>
+        // ==================== 国际化 (i18n) ====================
+        const LANG_KEY = 'app-lang-v1';
+
+        const I18N = {
+            zh: {
+                appTitle: 'Scratch C/C++',
+                // 第一栏工具栏
+                btnOpen: '打开',
+                btnOpenTitle: '打开文件（.c/.cpp/.h/.hpp/.cc/.txt）',
+                btnSave: '保存',
+                btnSaveTitle: '保存文件（用标题栏名称作为文件名）',
+                btnImportClip: '导入剪贴板',
+                btnImportClipTitle: '从剪贴板导入代码',
+                btnExportClip: '导出剪贴板',
+                btnExportClipTitle: '导出代码到剪贴板',
+                btnClear: '清空',
+                btnClearTitle: '清空编辑器（可撤销）',
+                btnExample: '示例',
+                btnExampleTitle: '插入示例代码',
+                toolbarHint: '点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+F 查找',
+                langToggleTitle: '切换语言 / Switch language',
+                // 第二栏工具栏
+                btnUndo: '撤销',
+                btnUndoTitle: '撤销 (Ctrl+Z)',
+                btnRedo: '重做',
+                btnRedoTitle: '重做 (Ctrl+Y / Ctrl+Shift+Z)',
+                btnAutoIndent: '自动缩进',
+                btnAutoIndentTitle: '自动缩进当前行 / 选中行',
+                btnIndent: '缩进',
+                btnIndentTitle: '缩进当前行 / 选中行 (Tab)',
+                btnOutdent: '反缩进',
+                btnOutdentTitle: '反缩进当前行 / 选中行 (Shift+Tab)',
+                btnBlockPicker: '积木',
+                btnBlockPickerTitle: '插入积木 (Ctrl+/，或 Ctrl+点击编辑器)',
+                // 积木面板头部
+                optExpStripSemicolon: '表达式去分号',
+                optExpStripSemicolonTitle: '勾选后，公式插入单行时自动去掉末尾分号',
+                optOmitStd: '省略 std:: 前缀',
+                optOmitStdTitle: '勾选后，C++ 积木插入时省略 std:: 前缀',
+                btnAddCategory: '类别',
+                btnAddCategoryTitle: '新增类别',
+                btnReorder: '排序',
+                btnReorderTitle: '调整顺序',
+                btnReorderDone: '完成',
+                btnExportBlocksTitle: '导出积木配置',
+                btnImportBlocksTitle: '导入积木配置',
+                btnResetBlocksTitle: '恢复默认积木',
+                // 编辑器头部
+                btnFind: '查找',
+                btnFindTitle: '查找 (Ctrl+F)',
+                btnReplace: '替换',
+                btnReplaceTitle: '替换 (Ctrl+H)',
+                optLineNumbers: '行号',
+                optLineNumbersTitle: '显示 / 隐藏行号',
+                cursorPos: '行 {line}, 列 {col}',
+                // 搜索栏
+                searchPlaceholder: '查找...',
+                optCaseTitle: '区分大小写 (Aa)',
+                optWordTitle: '整词匹配 (\\b)',
+                searchNoResults: '无匹配',
+                btnPrevTitle: '上一个 (Shift+Enter)',
+                btnNextTitle: '下一个 (Enter)',
+                replacePlaceholder: '替换为...',
+                btnReplaceOneTitle: '替换当前',
+                btnReplaceAllTitle: '全部替换',
+                btnCloseTitle: '关闭 (Esc)',
+                // 状态栏
+                statusReady: '就绪',
+                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+F 查找 / Ctrl+H 替换',
+                // 积木选择浮层
+                pickerPlaceholder: '筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）',
+                pickerEmpty: '没有匹配的积木',
+                pickerNoBlocks: '暂无积木，请在左侧面板添加',
+                pickerFooterNav: '↑↓ 选择',
+                pickerFooterInsert: 'Enter 插入',
+                pickerFooterEsc: 'Esc 关闭',
+                pickerCount: '{n} 项',
+                modeLine: '行',
+                modeExp: '公式',
+                modeLineTitle: '模式：行插入',
+                modeExpTitle: '模式：公式插入',
+                // 积木行 / 分类
+                rowMoveUpTitle: '上移（同组内）',
+                rowMoveDownTitle: '下移（同组内）',
+                rowModeTitle: '勾选: 公式插入（Exp，单行去末尾分号）；不勾: 行插入（Line）',
+                catMoveUpTitle: '上移类别',
+                catMoveDownTitle: '下移类别',
+                catAddBlockTitle: '在此类别新增积木',
+                // 编辑积木弹窗
+                modalEditBlockTitle: '编辑积木',
+                fieldCode: '代码内容',
+                hintStdPrefix: '提示: 含 std:: 前缀，插入时若勾选"省略 std::"会自动去掉',
+                btnDelete: '删除',
+                btnCancel: '取消',
+                btnSave: '保存',
+                // 新增积木弹窗
+                modalAddBlockTitle: '新增积木',
+                addBlockCodePlaceholder: '例如: printf("hi\\n");',
+                fieldLabel: '简短描述（可选，默认取代码第一行）',
+                addBlockLabelPlaceholder: '例如: 打印问候',
+                fieldIcon: '图标',
+                iconInputPlaceholder: '或直接输入图标名，如 star',
+                fieldSubcategory: '子类别归属',
+                subGeneral: '通用',
+                subC: 'C',
+                subCpp: 'C++',
+                subCustom: '自定义',
+                subCustomPlaceholder: '自定义子类别名，如 advanced / 示例',
+                fieldInsertMode: '插入方式',
+                // 类别弹窗
+                modalAddCategoryTitle: '新增类别',
+                modalEditCategoryTitle: '编辑类别',
+                fieldCategoryName: '类别名',
+                categoryNamePlaceholder: '例如: 我的工具',
+                btnSaveCategory: '保存',
+                confirmDeleteCategory: '确定删除类别「{name}」吗？该类别下的所有积木也会一起删除。',
+                confirmResetBlocks: '确定恢复默认积木配置吗？当前的所有自定义（新增/编辑/删除/排序）都会丢失。',
+                // 粘贴代码弹窗
+                modalPasteTitle: '粘贴代码',
+                pasteHint: '在下方粘贴代码（Ctrl+V），然后点「导入」',
+                pastePlaceholder: '在此粘贴代码...',
+                btnImport: '导入',
+                // 导入模式弹窗
+                modalImportTitle: '导入积木配置',
+                fieldImportMode: '选择导入方式',
+                importModeDesc: '<strong style="color:var(--text-strong);">覆盖导入</strong>：清空现有积木，完全使用导入的配置。<br><strong style="color:var(--text-strong);">增量导入</strong>：按分类名和积木 label 合并，已存在的积木替换，不存在的追加到对应子类别末尾。',
+                btnImportIncremental: '增量导入',
+                btnImportOverwrite: '覆盖导入',
+                // 系统提示
+                alertImportOverwrite: '导入成功（覆盖）！',
+                alertImportIncremental: '导入成功（增量）！',
+                alertImportFail: '导入失败: {msg}',
+                alertNoImportText: '没有可导入的文本',
+                alertNeedCode: '请输入代码内容',
+                alertNeedCustomSub: '请输入自定义子类别名',
+                alertNeedCategoryName: '请输入类别名',
+                alertCopyFail: '复制失败，请手动全选编辑器内容后 Ctrl+C 复制',
+                errInvalidStructure: '结构错误：需为数组，每个分类含 category 和 subgroups（含 none/c/cpp 三个数组）',
+                warnPrism: '⚠ Prism 未加载，语法高亮不可用（检查网络或 CDN）',
+                copied: '已复制',
+                // 编辑器占位与主题提示
+                editorPlaceholder: '// 点击左侧积木或直接编写代码...',
+                themeTitleDark: '当前：深色（点击切换为浅色）',
+                themeTitleLight: '当前：浅色（点击切换为跟随系统）',
+                themeTitleSystem: '当前：跟随系统（点击切换为深色）'
+            },
+            en: {
+                appTitle: 'Scratch C/C++',
+                // Toolbar 1
+                btnOpen: 'Open',
+                btnOpenTitle: 'Open file (.c/.cpp/.h/.hpp/.cc/.txt)',
+                btnSave: 'Save',
+                btnSaveTitle: 'Save file (uses the name in the title bar)',
+                btnImportClip: 'Clipboard Import',
+                btnImportClipTitle: 'Import code from clipboard',
+                btnExportClip: 'Clipboard Export',
+                btnExportClipTitle: 'Export code to clipboard',
+                btnClear: 'Clear',
+                btnClearTitle: 'Clear the editor (undoable)',
+                btnExample: 'Example',
+                btnExampleTitle: 'Insert example code',
+                toolbarHint: 'Click/drag blocks · Right-click to edit · Ctrl+/ insert · Ctrl+F find',
+                langToggleTitle: '切换语言 / Switch language',
+                // Toolbar 2
+                btnUndo: 'Undo',
+                btnUndoTitle: 'Undo (Ctrl+Z)',
+                btnRedo: 'Redo',
+                btnRedoTitle: 'Redo (Ctrl+Y / Ctrl+Shift+Z)',
+                btnAutoIndent: 'Auto Indent',
+                btnAutoIndentTitle: 'Auto-indent current line / selection',
+                btnIndent: 'Indent',
+                btnIndentTitle: 'Indent current line / selection (Tab)',
+                btnOutdent: 'Outdent',
+                btnOutdentTitle: 'Outdent current line / selection (Shift+Tab)',
+                btnBlockPicker: 'Blocks',
+                btnBlockPickerTitle: 'Insert block (Ctrl+/, or Ctrl+click editor)',
+                // Blocks panel header
+                optExpStripSemicolon: 'Strip semicolon (Exp)',
+                optExpStripSemicolonTitle: 'When checked, single-line expression inserts drop the trailing semicolon',
+                optOmitStd: 'Omit std:: prefix',
+                optOmitStdTitle: 'When checked, C++ blocks omit the std:: prefix on insert',
+                btnAddCategory: 'Category',
+                btnAddCategoryTitle: 'Add category',
+                btnReorder: 'Reorder',
+                btnReorderTitle: 'Reorder items',
+                btnReorderDone: 'Done',
+                btnExportBlocksTitle: 'Export block config',
+                btnImportBlocksTitle: 'Import block config',
+                btnResetBlocksTitle: 'Reset to default blocks',
+                // Editor header
+                btnFind: 'Find',
+                btnFindTitle: 'Find (Ctrl+F)',
+                btnReplace: 'Replace',
+                btnReplaceTitle: 'Replace (Ctrl+H)',
+                optLineNumbers: 'Line numbers',
+                optLineNumbersTitle: 'Show / hide line numbers',
+                cursorPos: 'Ln {line}, Col {col}',
+                // Search bar
+                searchPlaceholder: 'Find...',
+                optCaseTitle: 'Match case (Aa)',
+                optWordTitle: 'Whole word (\\b)',
+                searchNoResults: 'No results',
+                btnPrevTitle: 'Previous (Shift+Enter)',
+                btnNextTitle: 'Next (Enter)',
+                replacePlaceholder: 'Replace with...',
+                btnReplaceOneTitle: 'Replace current',
+                btnReplaceAllTitle: 'Replace all',
+                btnCloseTitle: 'Close (Esc)',
+                // Status bar
+                statusReady: 'Ready',
+                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+F find / Ctrl+H replace',
+                // Block picker
+                pickerPlaceholder: 'Filter blocks... (↑↓ select, Enter insert, Esc close)',
+                pickerEmpty: 'No matching blocks',
+                pickerNoBlocks: 'No blocks yet. Add them in the left panel',
+                pickerFooterNav: '↑↓ select',
+                pickerFooterInsert: 'Enter insert',
+                pickerFooterEsc: 'Esc close',
+                pickerCount: '{n} items',
+                modeLine: 'Line',
+                modeExp: 'Exp',
+                modeLineTitle: 'Mode: line insert',
+                modeExpTitle: 'Mode: expression insert',
+                // Block row / category
+                rowMoveUpTitle: 'Move up (within group)',
+                rowMoveDownTitle: 'Move down (within group)',
+                rowModeTitle: 'Checked: expression insert (Exp, drops the trailing semicolon); unchecked: line insert',
+                catMoveUpTitle: 'Move category up',
+                catMoveDownTitle: 'Move category down',
+                catAddBlockTitle: 'Add a block to this category',
+                // Edit block modal
+                modalEditBlockTitle: 'Edit Block',
+                fieldCode: 'Code content',
+                hintStdPrefix: 'Hint: contains std:: prefix; removed on insert if "Omit std::" is checked',
+                btnDelete: 'Delete',
+                btnCancel: 'Cancel',
+                btnSave: 'Save',
+                // Add block modal
+                modalAddBlockTitle: 'Add Block',
+                addBlockCodePlaceholder: 'e.g. printf("hi\\n");',
+                fieldLabel: 'Short label (optional; defaults to the first line)',
+                addBlockLabelPlaceholder: 'e.g. Print greeting',
+                fieldIcon: 'Icon',
+                iconInputPlaceholder: 'Or type an icon name, e.g. star',
+                fieldSubcategory: 'Subcategory',
+                subGeneral: 'General',
+                subC: 'C',
+                subCpp: 'C++',
+                subCustom: 'Custom',
+                subCustomPlaceholder: 'Custom subcategory name, e.g. advanced / example',
+                fieldInsertMode: 'Insert mode',
+                // Category modal
+                modalAddCategoryTitle: 'Add Category',
+                modalEditCategoryTitle: 'Edit Category',
+                fieldCategoryName: 'Category name',
+                categoryNamePlaceholder: 'e.g. My tools',
+                btnSaveCategory: 'Save',
+                confirmDeleteCategory: 'Delete category "{name}"? All blocks in it will be removed as well.',
+                confirmResetBlocks: 'Reset to default blocks? All customizations (add/edit/delete/reorder) will be lost.',
+                // Paste modal
+                modalPasteTitle: 'Paste Code',
+                pasteHint: 'Paste code below (Ctrl+V), then click "Import"',
+                pastePlaceholder: 'Paste code here...',
+                btnImport: 'Import',
+                // Import mode modal
+                modalImportTitle: 'Import Block Config',
+                fieldImportMode: 'Choose import mode',
+                importModeDesc: '<strong style="color:var(--text-strong);">Overwrite</strong>: clear existing blocks and use the imported config.<br><strong style="color:var(--text-strong);">Incremental</strong>: merge by category name and block label; existing blocks are replaced, new ones are appended to the subcategory.',
+                btnImportIncremental: 'Incremental',
+                btnImportOverwrite: 'Overwrite',
+                // System messages
+                alertImportOverwrite: 'Import successful (overwrite)!',
+                alertImportIncremental: 'Import successful (incremental)!',
+                alertImportFail: 'Import failed: {msg}',
+                alertNoImportText: 'No text to import',
+                alertNeedCode: 'Please enter code content',
+                alertNeedCustomSub: 'Please enter a custom subcategory name',
+                alertNeedCategoryName: 'Please enter a category name',
+                alertCopyFail: 'Copy failed. Please select all and press Ctrl+C.',
+                errInvalidStructure: 'Invalid structure: expected an array where each category has category and subgroups (with none/c/cpp arrays)',
+                warnPrism: '⚠ Prism not loaded; syntax highlighting unavailable (check network or CDN)',
+                copied: 'Copied',
+                // Editor placeholder & theme hints
+                editorPlaceholder: '// Click a block on the left, or just start typing...',
+                themeTitleDark: 'Current: dark (click for light)',
+                themeTitleLight: 'Current: light (click to follow system)',
+                themeTitleSystem: 'Current: follow system (click for dark)'
+            }
+        };
+
+        // 图标下拉框选项名（i18n key = 'icon_' + 图标名）
+        const ICON_LABELS = {
+            cube: ['方块', 'Cube'],
+            hashtag: ['井号', 'Hashtag'],
+            list: ['列表', 'List'],
+            equals: ['等号', 'Equals'],
+            plus: ['加号', 'Plus'],
+            minus: ['减号', 'Minus'],
+            times: ['乘号', 'Times'],
+            divide: ['除号', 'Divide'],
+            percent: ['百分号', 'Percent'],
+            play: ['播放', 'Play'],
+            bolt: ['闪电', 'Bolt'],
+            stop: ['停止', 'Stop'],
+            forward: ['前进', 'Forward'],
+            code: ['代码', 'Code'],
+            'code-branch': ['分支', 'Branch'],
+            terminal: ['终端', 'Terminal'],
+            calculator: ['计算器', 'Calculator'],
+            print: ['打印', 'Print'],
+            keyboard: ['键盘', 'Keyboard'],
+            search: ['搜索', 'Search'],
+            link: ['链接', 'Link'],
+            cut: ['剪切', 'Cut'],
+            copy: ['复制', 'Copy'],
+            'exchange-alt': ['交换', 'Swap'],
+            'sign-out-alt': ['返回', 'Back'],
+            globe: ['地球', 'Globe'],
+            star: ['星', 'Star'],
+            tools: ['工具', 'Tools'],
+            database: ['数据库', 'Database'],
+            font: ['字体', 'Font'],
+            'file-import': ['导入', 'Import']
+        };
+        Object.keys(ICON_LABELS).forEach(k => {
+            I18N.zh['icon_' + k] = ICON_LABELS[k][0];
+            I18N.en['icon_' + k] = ICON_LABELS[k][1];
+        });
+
+        let currentLang = 'zh';
+
+        function getLangPref() {
+            try {
+                const v = localStorage.getItem(LANG_KEY);
+                if (v === 'zh' || v === 'en') return v;
+            } catch (e) { }
+            return 'zh';
+        }
+
+        // 取翻译：当前语言 → 中文 → key 本身；支持 {name} 占位
+        function t(key, params) {
+            const dict = I18N[currentLang] || I18N.zh;
+            let s = dict[key];
+            if (s === undefined) s = I18N.zh[key];
+            if (s === undefined) s = key;
+            if (params) {
+                s = s.replace(/\{(\w+)\}/g, (m, k) => (params[k] !== undefined ? String(params[k]) : m));
+            }
+            return s;
+        }
+
+        // 写入文本：元素内若已有 SVG 图标等子元素，只改最后一个文本节点，避免把图标冲掉
+        function setI18nText(el, val) {
+            if (el.children.length > 0) {
+                const texts = Array.prototype.filter.call(el.childNodes, n => n.nodeType === 3 && n.nodeValue.trim());
+                if (texts.length) {
+                    texts[texts.length - 1].nodeValue = ' ' + val;
+                    for (let i = 0; i < texts.length - 1; i++) texts[i].nodeValue = '';
+                    return;
+                }
+            }
+            el.textContent = val;
+        }
+
+        function applyI18n(root) {
+            const scope = root || document;
+            scope.querySelectorAll('[data-i18n]').forEach(el => {
+                setI18nText(el, t(el.dataset.i18n));
+            });
+            scope.querySelectorAll('[data-i18n-html]').forEach(el => {
+                el.innerHTML = t(el.dataset.i18nHtml);
+            });
+            scope.querySelectorAll('[data-i18n-title]').forEach(el => {
+                el.title = t(el.dataset.i18nTitle);
+            });
+            scope.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = t(el.dataset.i18nPlaceholder);
+            });
+        }
+
+        function updateLangButton() {
+            const btn = document.getElementById('langToggleBtn');
+            const label = document.getElementById('langToggleText');
+            if (btn) btn.title = t('langToggleTitle');
+            if (label) label.textContent = currentLang === 'zh' ? '中' : 'EN';
+        }
+
+        // 语言切换后需要重算的所有动态文案
+        function refreshUiText() {
+            updateLangButton();
+            updateThemeButton(getThemePref());
+            updateCursorPosition();
+            updateSearchUI();
+            if (Array.isArray(BLOCKS) && BLOCKS.length) renderBlocksPanel();
+            if (blockPickerState.visible) renderBlockPickerList();
+        }
+
+        function setLang(lang, opts) {
+            currentLang = (lang === 'en') ? 'en' : 'zh';
+            document.documentElement.setAttribute('lang', currentLang === 'zh' ? 'zh-CN' : 'en');
+            document.documentElement.setAttribute('data-lang', currentLang);
+            if (!opts || opts.persist !== false) {
+                try { localStorage.setItem(LANG_KEY, currentLang); } catch (e) { }
+            }
+            document.title = t('appTitle');
+            applyI18n();
+            updateLangButton();
+            refreshUiText();
+        }
+
+        // ==================== 插入模式（Line / Exp）====================
+        /**
+         * 积木插入模式归一化。
+         * 规范值：'line' | 'exp'
+         * 历史值：'lc'（旧版 Exp 写法），读入时视同 'exp'。
+         * 写入一律用规范值，旧 JSON 导入后自动升级。
+         */
+        const MODE_LINE = 'line';
+        const MODE_EXP = 'exp';
+
+        function normalizeMode(m) {
+            return (m === 'exp' || m === 'lc') ? MODE_EXP : MODE_LINE;
+        }
+
+        function normalizeBlocksModes(blocks) {
+            if (!Array.isArray(blocks)) return blocks;
+            blocks.forEach(cat => {
+                Object.keys((cat && cat.subgroups) || {}).forEach(sub => {
+                    (cat.subgroups[sub] || []).forEach(item => {
+                        if (item) item.mode = normalizeMode(item.mode);
+                    });
+                });
+            });
+            return blocks;
+        }
+
         // ==================== 内置默认数据 ====================
         const DEFAULT_BLOCKS = [
             {
@@ -1400,8 +1970,8 @@
                         { id: 'v-int-val', icon: 'hashtag', label: 'int x = 10;', code: 'int x = 10;', mode: 'line' },
                         { id: 'v-float-val', icon: 'hashtag', label: 'float pi = 3.14;', code: 'float pi = 3.14;', mode: 'line' },
                         { id: 'v-char-val', icon: 'hashtag', label: "char c = 'A';", code: "char c = 'A';", mode: 'line' },
-                        { id: 'v-inc', icon: 'plus', label: 'i++;', code: 'i++;', mode: 'lc' },
-                        { id: 'v-dec', icon: 'minus', label: 'i--;', code: 'i--;', mode: 'lc' },
+                        { id: 'v-inc', icon: 'plus', label: 'i++;', code: 'i++;', mode: 'exp' },
+                        { id: 'v-dec', icon: 'minus', label: 'i--;', code: 'i--;', mode: 'exp' },
                         { id: 'v-assign-add', icon: 'plus', label: 'x = x + 1;', code: 'x = x + 1;', mode: 'line' },
                         { id: 'v-add-assign', icon: 'plus', label: 'x += 1;', code: 'x += 1;', mode: 'line' },
                         { id: 'v-sub-assign', icon: 'minus', label: 'x -= 1;', code: 'x -= 1;', mode: 'line' },
@@ -1480,35 +2050,35 @@
                 subgroups: {
                     none: [],
                     c: [
-                        { id: 'c-abs', icon: 'absolute', label: 'abs(-5);', code: 'abs(-5);', mode: 'lc' },
-                        { id: 'c-fabs', icon: 'absolute', label: 'fabs(-5.5);', code: 'fabs(-5.5);', mode: 'lc' },
-                        { id: 'c-pow', icon: 'superscript', label: 'pow(2, 3);', code: 'pow(2, 3);', mode: 'lc' },
-                        { id: 'c-sqrt', icon: 'square-root-alt', label: 'sqrt(16);', code: 'sqrt(16);', mode: 'lc' },
-                        { id: 'c-floor', icon: 'arrow-down', label: 'floor(3.7);', code: 'floor(3.7);', mode: 'lc' },
-                        { id: 'c-ceil', icon: 'arrow-up', label: 'ceil(3.2);', code: 'ceil(3.2);', mode: 'lc' },
-                        { id: 'c-round', icon: 'circle', label: 'round(3.5);', code: 'round(3.5);', mode: 'lc' },
-                        { id: 'c-sin', icon: 'wave-square', label: 'sin(0.5);', code: 'sin(0.5);', mode: 'lc' },
-                        { id: 'c-cos', icon: 'wave-square', label: 'cos(0.5);', code: 'cos(0.5);', mode: 'lc' },
-                        { id: 'c-tan', icon: 'wave-square', label: 'tan(0.5);', code: 'tan(0.5);', mode: 'lc' },
-                        { id: 'c-fmax', icon: 'arrow-up', label: 'fmax(3, 7);', code: 'fmax(3, 7);', mode: 'lc' },
-                        { id: 'c-fmin', icon: 'arrow-down', label: 'fmin(3, 7);', code: 'fmin(3, 7);', mode: 'lc' },
-                        { id: 'c-exp', icon: 'chart-line', label: 'exp(1);', code: 'exp(1);', mode: 'lc' },
-                        { id: 'c-log', icon: 'chart-line', label: 'log(10);', code: 'log(10);', mode: 'lc' },
+                        { id: 'c-abs', icon: 'absolute', label: 'abs(-5);', code: 'abs(-5);', mode: 'exp' },
+                        { id: 'c-fabs', icon: 'absolute', label: 'fabs(-5.5);', code: 'fabs(-5.5);', mode: 'exp' },
+                        { id: 'c-pow', icon: 'superscript', label: 'pow(2, 3);', code: 'pow(2, 3);', mode: 'exp' },
+                        { id: 'c-sqrt', icon: 'square-root-alt', label: 'sqrt(16);', code: 'sqrt(16);', mode: 'exp' },
+                        { id: 'c-floor', icon: 'arrow-down', label: 'floor(3.7);', code: 'floor(3.7);', mode: 'exp' },
+                        { id: 'c-ceil', icon: 'arrow-up', label: 'ceil(3.2);', code: 'ceil(3.2);', mode: 'exp' },
+                        { id: 'c-round', icon: 'circle', label: 'round(3.5);', code: 'round(3.5);', mode: 'exp' },
+                        { id: 'c-sin', icon: 'wave-square', label: 'sin(0.5);', code: 'sin(0.5);', mode: 'exp' },
+                        { id: 'c-cos', icon: 'wave-square', label: 'cos(0.5);', code: 'cos(0.5);', mode: 'exp' },
+                        { id: 'c-tan', icon: 'wave-square', label: 'tan(0.5);', code: 'tan(0.5);', mode: 'exp' },
+                        { id: 'c-fmax', icon: 'arrow-up', label: 'fmax(3, 7);', code: 'fmax(3, 7);', mode: 'exp' },
+                        { id: 'c-fmin', icon: 'arrow-down', label: 'fmin(3, 7);', code: 'fmin(3, 7);', mode: 'exp' },
+                        { id: 'c-exp', icon: 'chart-line', label: 'exp(1);', code: 'exp(1);', mode: 'exp' },
+                        { id: 'c-log', icon: 'chart-line', label: 'log(10);', code: 'log(10);', mode: 'exp' },
                     ],
                     cpp: [
-                        { id: 'cpp-abs', icon: 'absolute', label: '{{STD}}abs(-5);', code: '{{STD}}abs(-5);', mode: 'lc' },
-                        { id: 'cpp-pow', icon: 'superscript', label: '{{STD}}pow(2, 3);', code: '{{STD}}pow(2, 3);', mode: 'lc' },
-                        { id: 'cpp-sqrt', icon: 'square-root-alt', label: '{{STD}}sqrt(16);', code: '{{STD}}sqrt(16);', mode: 'lc' },
-                        { id: 'cpp-floor', icon: 'arrow-down', label: '{{STD}}floor(3.7);', code: '{{STD}}floor(3.7);', mode: 'lc' },
-                        { id: 'cpp-ceil', icon: 'arrow-up', label: '{{STD}}ceil(3.2);', code: '{{STD}}ceil(3.2);', mode: 'lc' },
-                        { id: 'cpp-round', icon: 'circle', label: '{{STD}}round(3.5);', code: '{{STD}}round(3.5);', mode: 'lc' },
-                        { id: 'cpp-sin', icon: 'wave-square', label: '{{STD}}sin(0.5);', code: '{{STD}}sin(0.5);', mode: 'lc' },
-                        { id: 'cpp-cos', icon: 'wave-square', label: '{{STD}}cos(0.5);', code: '{{STD}}cos(0.5);', mode: 'lc' },
-                        { id: 'cpp-tan', icon: 'wave-square', label: '{{STD}}tan(0.5);', code: '{{STD}}tan(0.5);', mode: 'lc' },
-                        { id: 'cpp-max', icon: 'arrow-up', label: '{{STD}}max(3, 7);', code: '{{STD}}max(3, 7);', mode: 'lc' },
-                        { id: 'cpp-min', icon: 'arrow-down', label: '{{STD}}min(3, 7);', code: '{{STD}}min(3, 7);', mode: 'lc' },
-                        { id: 'cpp-exp', icon: 'chart-line', label: '{{STD}}exp(1);', code: '{{STD}}exp(1);', mode: 'lc' },
-                        { id: 'cpp-log', icon: 'chart-line', label: '{{STD}}log(10);', code: '{{STD}}log(10);', mode: 'lc' },
+                        { id: 'cpp-abs', icon: 'absolute', label: '{{STD}}abs(-5);', code: '{{STD}}abs(-5);', mode: 'exp' },
+                        { id: 'cpp-pow', icon: 'superscript', label: '{{STD}}pow(2, 3);', code: '{{STD}}pow(2, 3);', mode: 'exp' },
+                        { id: 'cpp-sqrt', icon: 'square-root-alt', label: '{{STD}}sqrt(16);', code: '{{STD}}sqrt(16);', mode: 'exp' },
+                        { id: 'cpp-floor', icon: 'arrow-down', label: '{{STD}}floor(3.7);', code: '{{STD}}floor(3.7);', mode: 'exp' },
+                        { id: 'cpp-ceil', icon: 'arrow-up', label: '{{STD}}ceil(3.2);', code: '{{STD}}ceil(3.2);', mode: 'exp' },
+                        { id: 'cpp-round', icon: 'circle', label: '{{STD}}round(3.5);', code: '{{STD}}round(3.5);', mode: 'exp' },
+                        { id: 'cpp-sin', icon: 'wave-square', label: '{{STD}}sin(0.5);', code: '{{STD}}sin(0.5);', mode: 'exp' },
+                        { id: 'cpp-cos', icon: 'wave-square', label: '{{STD}}cos(0.5);', code: '{{STD}}cos(0.5);', mode: 'exp' },
+                        { id: 'cpp-tan', icon: 'wave-square', label: '{{STD}}tan(0.5);', code: '{{STD}}tan(0.5);', mode: 'exp' },
+                        { id: 'cpp-max', icon: 'arrow-up', label: '{{STD}}max(3, 7);', code: '{{STD}}max(3, 7);', mode: 'exp' },
+                        { id: 'cpp-min', icon: 'arrow-down', label: '{{STD}}min(3, 7);', code: '{{STD}}min(3, 7);', mode: 'exp' },
+                        { id: 'cpp-exp', icon: 'chart-line', label: '{{STD}}exp(1);', code: '{{STD}}exp(1);', mode: 'exp' },
+                        { id: 'cpp-log', icon: 'chart-line', label: '{{STD}}log(10);', code: '{{STD}}log(10);', mode: 'exp' },
                     ]
                 }
             },
@@ -1522,24 +2092,24 @@
                     c: [
                         { id: 'c-str-decl', icon: 'quote-left', label: 'char s[] = "hello";', code: 'char s[] = "hello";', mode: 'line' },
                         { id: 'c-str-arr', icon: 'quote-left', label: 'char s[20];', code: 'char s[20];', mode: 'line' },
-                        { id: 'c-strlen', icon: 'ruler-horizontal', label: 'strlen(s);', code: 'strlen(s);', mode: 'lc' },
-                        { id: 'c-strcpy', icon: 'copy', label: 'strcpy(dest, src);', code: 'strcpy(dest, src);', mode: 'lc' },
-                        { id: 'c-strcat', icon: 'link', label: 'strcat(dest, src);', code: 'strcat(dest, src);', mode: 'lc' },
-                        { id: 'c-strcmp', icon: 'balance-scale', label: 'strcmp(s1, s2);', code: 'strcmp(s1, s2);', mode: 'lc' },
-                        { id: 'c-strchr', icon: 'search', label: "strchr(s, 'a');", code: "strchr(s, 'a');", mode: 'lc' },
-                        { id: 'c-strstr', icon: 'search', label: 'strstr(s, "sub");', code: 'strstr(s, "sub");', mode: 'lc' },
+                        { id: 'c-strlen', icon: 'ruler-horizontal', label: 'strlen(s);', code: 'strlen(s);', mode: 'exp' },
+                        { id: 'c-strcpy', icon: 'copy', label: 'strcpy(dest, src);', code: 'strcpy(dest, src);', mode: 'exp' },
+                        { id: 'c-strcat', icon: 'link', label: 'strcat(dest, src);', code: 'strcat(dest, src);', mode: 'exp' },
+                        { id: 'c-strcmp', icon: 'balance-scale', label: 'strcmp(s1, s2);', code: 'strcmp(s1, s2);', mode: 'exp' },
+                        { id: 'c-strchr', icon: 'search', label: "strchr(s, 'a');", code: "strchr(s, 'a');", mode: 'exp' },
+                        { id: 'c-strstr', icon: 'search', label: 'strstr(s, "sub");', code: 'strstr(s, "sub");', mode: 'exp' },
                         { id: 'c-sprintf', icon: 'print', label: 'sprintf(buf, "%d", x);', code: 'sprintf(buf, "%d", x);', mode: 'line' },
                         { id: 'c-sscanf', icon: 'keyboard', label: 'sscanf(buf, "%d", &x);', code: 'sscanf(buf, "%d", &x);', mode: 'line' },
                     ],
                     cpp: [
                         { id: 'cpp-str-decl', icon: 'quote-left', label: '{{STD}}string s = "hello";', code: '{{STD}}string s = "hello";', mode: 'line' },
-                        { id: 'cpp-strlen', icon: 'ruler-horizontal', label: 's.length();', code: 's.length();', mode: 'lc' },
-                        { id: 'cpp-substr', icon: 'cut', label: 's.substr(0, 5);', code: 's.substr(0, 5);', mode: 'lc' },
-                        { id: 'cpp-find', icon: 'search', label: 's.find("sub");', code: 's.find("sub");', mode: 'lc' },
-                        { id: 'cpp-append', icon: 'link', label: 's.append("world");', code: 's.append("world");', mode: 'lc' },
-                        { id: 'cpp-cstr', icon: 'exchange-alt', label: 's.c_str();', code: 's.c_str();', mode: 'lc' },
-                        { id: 'cpp-to-string', icon: 'exchange-alt', label: '{{STD}}to_string(42);', code: '{{STD}}to_string(42);', mode: 'lc' },
-                        { id: 'cpp-stoi', icon: 'exchange-alt', label: '{{STD}}stoi("42");', code: '{{STD}}stoi("42");', mode: 'lc' },
+                        { id: 'cpp-strlen', icon: 'ruler-horizontal', label: 's.length();', code: 's.length();', mode: 'exp' },
+                        { id: 'cpp-substr', icon: 'cut', label: 's.substr(0, 5);', code: 's.substr(0, 5);', mode: 'exp' },
+                        { id: 'cpp-find', icon: 'search', label: 's.find("sub");', code: 's.find("sub");', mode: 'exp' },
+                        { id: 'cpp-append', icon: 'link', label: 's.append("world");', code: 's.append("world");', mode: 'exp' },
+                        { id: 'cpp-cstr', icon: 'exchange-alt', label: 's.c_str();', code: 's.c_str();', mode: 'exp' },
+                        { id: 'cpp-to-string', icon: 'exchange-alt', label: '{{STD}}to_string(42);', code: '{{STD}}to_string(42);', mode: 'exp' },
+                        { id: 'cpp-stoi', icon: 'exchange-alt', label: '{{STD}}stoi("42");', code: '{{STD}}stoi("42");', mode: 'exp' },
                     ]
                 }
             }
@@ -1768,7 +2338,7 @@
             const lines = textBefore.split('\n');
             const line = lines.length;
             const col = lines[lines.length - 1].length + 1;
-            cursorPos.textContent = `行 ${line}, 列 ${col}`;
+            cursorPos.textContent = t('cursorPos', { line: line, col: col });
             updateActiveLineNumber();
         }
 
@@ -2219,11 +2789,12 @@
         }
 
         function insertCode(template, mode, targetOffset) {
+            mode = normalizeMode(mode);   // 兜底：'lc' 等历史值统一为 'exp'
             let snippet = renderCode(template);
             const text = codeInput.value;
             const caretOffset = targetOffset !== undefined ? targetOffset : (codeInput.selectionStart || 0);
 
-            if (mode === 'lc') {
+            if (mode === MODE_EXP) {
                 const lines = snippet.split('\n');
                 if (lines.length === 1) {
                     if (expStripSemicolonCheckbox.checked) {
@@ -2393,7 +2964,7 @@
         function updateSearchUI() {
             const total = searchState.matches.length;
             if (total === 0) {
-                searchCount.textContent = searchInput.value ? '无匹配' : '0 / 0';
+                searchCount.textContent = searchInput.value ? t('searchNoResults') : '0 / 0';
             } else {
                 searchCount.textContent = `${searchState.currentIndex + 1} / ${total}`;
             }
@@ -2439,6 +3010,7 @@
         }
 
         function openSearch(showReplace) {
+            if (blockPickerState.visible) hideBlockPicker(false);
             searchState.visible = true;
             searchState.showReplace = showReplace;
             searchBar.classList.add('show');
@@ -2517,7 +3089,7 @@
         // ==================== 剪贴板导入/导出（含兜底） ====================
         function applyImportedText(text) {
             if (text === undefined || text === null) {
-                alert('没有可导入的文本');
+                alert(t('alertNoImportText'));
                 return;
             }
             codeInput.value = text;
@@ -2573,18 +3145,19 @@
             if (ok) {
                 showCopiedFeedback();
             } else {
-                alert('复制失败，请手动全选编辑器内容后 Ctrl+C 复制');
+                alert(t('alertCopyFail'));
             }
         }
 
         function showCopiedFeedback() {
             const btn = document.getElementById('clipboardExportBtn');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<svg class="icon"><use href="#icon-check"/></svg> 已复制';
+            btn.innerHTML = iconSvg('check') + ' ' + t('copied');
             setTimeout(() => { btn.innerHTML = originalHTML; }, 1500);
         }
 
         function openPasteDialog() {
+            if (blockPickerState.visible) hideBlockPicker(false);
             pasteTextarea.value = '';
             pasteModal.classList.add('show');
             pasteTextarea.focus();
@@ -2620,7 +3193,7 @@
 
         function isValidBlockData(data) {
             if (!Array.isArray(data) || data.length === 0) return false;
-            return data.every(c =>
+            return data.every(c => 
                 c && c.category && c.subgroups &&
                 typeof c.subgroups === 'object' &&
                 Array.isArray(c.subgroups.none) &&
@@ -2770,7 +3343,7 @@
 
                 const upBtn = document.createElement('button');
                 upBtn.innerHTML = iconSvg('arrow-up');
-                upBtn.title = '上移（同组内）';
+                upBtn.title = t('rowMoveUpTitle');
                 upBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     moveBlock(cat, sub, item, -1);
@@ -2779,7 +3352,7 @@
 
                 const downBtn = document.createElement('button');
                 downBtn.innerHTML = iconSvg('arrow-down');
-                downBtn.title = '下移（同组内）';
+                downBtn.title = t('rowMoveDownTitle');
                 downBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     moveBlock(cat, sub, item, 1);
@@ -2790,14 +3363,14 @@
             } else {
                 const modeWrap = document.createElement('span');
                 modeWrap.className = 'block-mode';
-                modeWrap.title = '勾选: 表达式插入（Exp，单行去末尾分号）；不勾: 行插入（Line）';
+                modeWrap.title = t('rowModeTitle');
 
                 const cb = document.createElement('input');
                 cb.type = 'checkbox';
-                cb.checked = (item.mode === 'lc');
+                cb.checked = normalizeMode(item.mode) === MODE_EXP;
                 cb.addEventListener('click', (e) => e.stopPropagation());
                 cb.addEventListener('change', (e) => {
-                    item.mode = cb.checked ? 'lc' : 'line';
+                    item.mode = cb.checked ? MODE_EXP : MODE_LINE;
                     div.dataset.mode = item.mode;
                     saveToStorage();
                     e.stopPropagation();
@@ -2805,7 +3378,7 @@
                 modeWrap.appendChild(cb);
 
                 const modeText = document.createElement('span');
-                modeText.textContent = 'Exp';
+                modeText.textContent = t('modeExp');   // 中文「公式」/ 英文 Exp
                 modeWrap.appendChild(modeText);
 
                 div.appendChild(modeWrap);
@@ -2880,7 +3453,7 @@
                     const upBtn = document.createElement('button');
                     upBtn.className = 'cat-reorder-btn';
                     upBtn.innerHTML = iconSvg('arrow-up');
-                    upBtn.title = '上移类别';
+                    upBtn.title = t('catMoveUpTitle');
                     upBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         moveCategory(cat, -1);
@@ -2890,7 +3463,7 @@
                     const downBtn = document.createElement('button');
                     downBtn.className = 'cat-reorder-btn';
                     downBtn.innerHTML = iconSvg('arrow-down');
-                    downBtn.title = '下移类别';
+                    downBtn.title = t('catMoveDownTitle');
                     downBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         moveCategory(cat, 1);
@@ -2902,7 +3475,7 @@
                     const addBtn = document.createElement('button');
                     addBtn.className = 'cat-add-btn';
                     addBtn.innerHTML = iconSvg('plus');
-                    addBtn.title = '在此类别新增积木';
+                    addBtn.title = t('catAddBlockTitle');
                     addBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         openAddBlockModal(cat);
@@ -2946,6 +3519,8 @@
                 catEl.appendChild(body);
                 blocksScroll.appendChild(catEl);
             });
+
+            buildCompletionIndex();
         }
 
         function refreshBlockLabels() {
@@ -2955,6 +3530,7 @@
                 const template = div.dataset.code;
                 labelEl.textContent = renderCode(template.split('\n')[0]);
             });
+            buildCompletionIndex();
         }
 
         function moveCategory(cat, dir) {
@@ -2981,10 +3557,11 @@
 
         // ==================== 积木编辑弹窗 ====================
         function openBlockEditor(cat, sub, item) {
+            if (blockPickerState.visible) hideBlockPicker(false);
             editingBlock = { catId: cat.id, sub, blockId: item.id };
             configCode.value = item.code.replace(/\{\{STD\}\}/g, 'std::');
             configHint.textContent = item.code.includes('{{STD}}')
-                ? '提示: 含 std:: 前缀，插入时若勾选"省略 std::"会自动去掉'
+                ? t('hintStdPrefix')
                 : '';
             blockConfigModal.classList.add('show');
             configCode.focus();
@@ -3035,6 +3612,7 @@
 
         // ==================== 新增积木弹窗 ====================
         function openAddBlockModal(cat) {
+            if (blockPickerState.visible) hideBlockPicker(false);
             addingBlockTo = { catId: cat.id };
             addBlockCode.value = '';
             addBlockLabel.value = '';
@@ -3054,7 +3632,7 @@
 
             const code = addBlockCode.value.trim();
             if (!code) {
-                alert('请输入代码内容');
+                alert(t('alertNeedCode'));
                 return;
             }
             const label = addBlockLabel.value.trim() || code.split('\n')[0];
@@ -3069,7 +3647,7 @@
             if (selectedRadio === 'custom') {
                 const customName = addBlockCustomSub.value.trim();
                 if (!customName) {
-                    alert('请输入自定义子类别名');
+                    alert(t('alertNeedCustomSub'));
                     return;
                 }
                 sub = customName;
@@ -3109,8 +3687,9 @@
 
         // ==================== 类别弹窗 ====================
         function openCategoryEditor(cat) {
+            if (blockPickerState.visible) hideBlockPicker(false);
             editingCategory = cat ? { catId: cat.id } : null;
-            categoryModalTitle.textContent = cat ? '编辑类别' : '新增类别';
+            categoryModalTitle.textContent = cat ? t('modalEditCategoryTitle') : t('modalAddCategoryTitle');
             categoryName.value = cat ? cat.category : '';
             const icon = cat ? (cat.icon || 'cube') : 'cube';
             const selectOptions = Array.from(categoryIconSelect.options).map(o => o.value);
@@ -3129,7 +3708,7 @@
         categorySaveBtn.addEventListener('click', () => {
             const name = categoryName.value.trim();
             if (!name) {
-                alert('请输入类别名');
+                alert(t('alertNeedCategoryName'));
                 return;
             }
             let icon = categoryIconInput.value.trim();
@@ -3167,7 +3746,7 @@
             if (!editingCategory) return;
             const cat = findCategory(editingCategory.catId);
             if (!cat) return;
-            if (!confirm(`确定删除类别「${cat.category}」吗？该类别下的所有积木也会一起删除。`)) return;
+            if (!confirm(t('confirmDeleteCategory', { name: cat.category }))) return;
             const idx = BLOCKS.indexOf(cat);
             if (idx >= 0) BLOCKS.splice(idx, 1);
             saveToStorage();
@@ -3193,8 +3772,8 @@
             isReorderMode = !isReorderMode;
             reorderBtn.classList.toggle('active', isReorderMode);
             reorderBtn.innerHTML = isReorderMode
-                ? iconSvg('check') + ' 完成'
-                : iconSvg('sort') + ' 排序';
+                ? iconSvg('check') + ' ' + t('btnReorderDone')
+                : iconSvg('sort') + ' ' + t('btnReorder');
             renderBlocksPanel();
         });
 
@@ -3221,12 +3800,13 @@
                 try {
                     const data = JSON.parse(ev.target.result);
                     if (!isValidBlockData(data)) {
-                        throw new Error('结构错误：需为数组，每个分类含 category 和 subgroups（含 none/c/cpp 三个数组）');
+                        throw new Error(t('errInvalidStructure'));
                     }
+                    normalizeBlocksModes(data);   // 'lc' 等历史值统一升级为 'exp'
                     pendingImportData = data;
                     importModeModal.classList.add('show');
                 } catch (err) {
-                    alert('导入失败: ' + err.message);
+                    alert(t('alertImportFail', { msg: err.message }));
                 }
             };
             reader.readAsText(file);
@@ -3240,7 +3820,7 @@
             renderBlocksPanel();
             importModeModal.classList.remove('show');
             pendingImportData = null;
-            alert('导入成功（覆盖）！');
+            alert(t('alertImportOverwrite'));
         });
 
         importIncrementalBtn.addEventListener('click', () => {
@@ -3250,7 +3830,7 @@
             renderBlocksPanel();
             importModeModal.classList.remove('show');
             pendingImportData = null;
-            alert('导入成功（增量）！');
+            alert(t('alertImportIncremental'));
         });
 
         importCancelBtn.addEventListener('click', () => {
@@ -3266,10 +3846,298 @@
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
-            if (!confirm('确定恢复默认积木配置吗？当前的所有自定义（新增/编辑/删除/排序）都会丢失。')) return;
+            if (!confirm(t('confirmResetBlocks'))) return;
             BLOCKS = JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
             saveToStorage();
             renderBlocksPanel();
+        });
+
+        // ==================== 积木选择器（Block Picker） ====================
+        const MAX_PICKER_ITEMS = 12;
+
+        const blockPickerState = {
+            visible: false,
+            items: [],
+            activeIndex: 0,
+            insertOffset: 0,
+            source: null      // 'keyboard' | 'ctrl-click' | 'toolbar'
+        };
+
+        const blockPicker = document.getElementById('blockPicker');
+        const blockPickerInput = document.getElementById('blockPickerInput');
+        const blockPickerList = document.getElementById('blockPickerList');
+        const blockPickerCount = document.getElementById('blockPickerCount');
+
+        // ---- 扁平索引：与 BLOCKS 同步 ----
+        let completionIndex = [];
+
+        function buildCompletionIndex() {
+            completionIndex = [];
+            BLOCKS.forEach(cat => {
+                Object.keys(cat.subgroups || {}).forEach(sub => {
+                    (cat.subgroups[sub] || []).forEach(item => {
+                        if (!item || !item.code) return;
+                        const label = renderCode(item.label || item.code.split('\n')[0]);
+                        completionIndex.push({
+                            catId: cat.id,
+                            sub: sub,
+                            blockId: item.id,
+                            label: label,
+                            code: item.code,          // 原始模板，含 {{STD}}
+                            mode: normalizeMode(item.mode),
+                            icon: item.icon || 'cube',
+                            category: cat.category,
+                            searchText: label.toLowerCase()
+                        });
+                    });
+                });
+            });
+            // 浮层开着时同步刷新候选（配置变更/omitStd 切换）
+            if (blockPickerState.visible) {
+                blockPickerState.items = searchCompletions(blockPickerInput.value);
+                blockPickerState.activeIndex = Math.min(
+                    blockPickerState.activeIndex,
+                    Math.max(0, blockPickerState.items.length - 1)
+                );
+                renderBlockPickerList();
+            }
+        }
+
+        // ---- 模糊子序列匹配 ----
+        function fuzzyScore(query, target) {
+            let qi = 0, score = 0, lastMatch = -1;
+            for (let ti = 0; ti < target.length && qi < query.length; ti++) {
+                if (target[ti] === query[qi]) {
+                    score += 1;
+                    if (lastMatch === ti - 1) score += 2;   // 连续匹配
+                    if (ti === 0) score += 3;               // 首字符匹配
+                    lastMatch = ti;
+                    qi++;
+                }
+            }
+            if (qi < query.length) return null;             // 不匹配
+            return score - target.length * 0.05;            // 短 label 略优先
+        }
+
+        function searchCompletions(query) {
+            const q = (query || '').trim().toLowerCase();
+            if (!q) return completionIndex.slice(0, MAX_PICKER_ITEMS);
+            const scored = [];
+            for (let i = 0; i < completionIndex.length; i++) {
+                const s = fuzzyScore(q, completionIndex[i].searchText);
+                if (s !== null) scored.push({ item: completionIndex[i], s: s });
+            }
+            scored.sort((a, b) => b.s - a.s);
+            return scored.slice(0, MAX_PICKER_ITEMS).map(x => x.item);
+        }
+
+        // ---- 列表渲染 ----
+        function renderBlockPickerList() {
+            const items = blockPickerState.items;
+            blockPickerList.innerHTML = '';
+
+            if (items.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'block-picker-empty';
+                empty.textContent = blockPickerInput.value.trim()
+                    ? t('pickerEmpty')
+                    : t('pickerNoBlocks');
+                blockPickerList.appendChild(empty);
+                blockPickerCount.textContent = t('pickerCount', { n: 0 });
+                return;
+            }
+
+            items.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'block-picker-item' + (idx === blockPickerState.activeIndex ? ' active' : '');
+                row.dataset.index = String(idx);
+
+                const iconWrap = document.createElement('span');
+                iconWrap.innerHTML = iconSvg(item.icon);
+                const iconEl = iconWrap.firstElementChild;
+                if (iconEl) row.appendChild(iconEl);
+
+                const labelEl = document.createElement('span');
+                labelEl.className = 'block-picker-label';
+                labelEl.textContent = item.label;
+                row.appendChild(labelEl);
+
+                const modeEl = document.createElement('span');
+                modeEl.className = 'block-picker-mode';
+                modeEl.textContent = item.mode === MODE_EXP ? t('modeExp') : t('modeLine');
+                modeEl.title = item.mode === MODE_EXP ? t('modeExpTitle') : t('modeLineTitle');
+                row.appendChild(modeEl);
+
+                row.addEventListener('mouseenter', () => {
+                    blockPickerState.activeIndex = idx;
+                    updateBlockPickerActive();
+                });
+                row.addEventListener('mousedown', (e) => e.preventDefault());  // 防止筛选框失焦
+                row.addEventListener('click', () => acceptBlockFromPicker(item));
+
+                blockPickerList.appendChild(row);
+            });
+
+            blockPickerCount.textContent = t('pickerCount', { n: items.length });
+            scrollPickerActiveIntoView();
+        }
+
+        function updateBlockPickerActive() {
+            const rows = blockPickerList.querySelectorAll('.block-picker-item');
+            rows.forEach((row, i) => row.classList.toggle('active', i === blockPickerState.activeIndex));
+            scrollPickerActiveIntoView();
+        }
+
+        function scrollPickerActiveIntoView() {
+            const active = blockPickerList.querySelector('.block-picker-item.active');
+            if (!active) return;
+            const listRect = blockPickerList.getBoundingClientRect();
+            const itemRect = active.getBoundingClientRect();
+            if (itemRect.top < listRect.top) {
+                blockPickerList.scrollTop -= (listRect.top - itemRect.top);
+            } else if (itemRect.bottom > listRect.bottom) {
+                blockPickerList.scrollTop += (itemRect.bottom - listRect.bottom);
+            }
+        }
+
+        // ---- 定位 ----
+        function getCaretPixelPos() {
+            const pos = codeInput.selectionStart || 0;
+            const textBefore = codeInput.value.substring(0, pos);
+            const lines = textBefore.split('\n');
+            const lineIdx = lines.length - 1;
+            const col = lines[lineIdx].length;
+            const lineHeight = 24;
+            const charWidth = 9;
+            const padTop = 16;
+            const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
+            const rect = codeInput.getBoundingClientRect();
+            return {
+                left: rect.left + padLeft + col * charWidth - codeInput.scrollLeft,
+                top: rect.top + padTop + (lineIdx + 1) * lineHeight - codeInput.scrollTop
+            };
+        }
+
+        function positionBlockPicker(source, point) {
+            const pw = blockPicker.offsetWidth || 460;
+            const ph = blockPicker.offsetHeight || 300;
+            const margin = 8;
+            let left, top;
+
+            if (source === 'toolbar') {
+                left = (window.innerWidth - pw) / 2;
+                top = (window.innerHeight - ph) / 2;
+            } else {
+                const pt = point || getCaretPixelPos();
+                left = Math.max(margin, pt.left);
+                top = pt.top;
+                if (top + ph > window.innerHeight - margin) {
+                    top = Math.max(margin, top - ph - 24);
+                }
+                if (left + pw > window.innerWidth - margin) {
+                    left = Math.max(margin, window.innerWidth - pw - margin);
+                }
+            }
+
+            blockPicker.style.left = Math.round(left) + 'px';
+            blockPicker.style.top = Math.round(top) + 'px';
+        }
+
+        // ---- 打开 / 关闭 / 接受 ----
+        function openBlockPicker(source, explicitOffset, point) {
+            if (blockPickerState.visible) hideBlockPicker(false);
+            if (searchState.visible) closeSearch();
+
+            blockPickerState.source = source;
+            blockPickerState.insertOffset = (typeof explicitOffset === 'number')
+                ? explicitOffset
+                : (codeInput.selectionStart || 0);
+            blockPickerState.activeIndex = 0;
+            blockPickerState.visible = true;
+
+            blockPickerInput.value = '';
+            blockPickerState.items = searchCompletions('');
+            blockPicker.classList.add('show');
+            renderBlockPickerList();
+            positionBlockPicker(source, point);
+            blockPickerInput.focus();
+            blockPickerInput.select();
+        }
+
+        function hideBlockPicker(restoreFocus) {
+            if (!blockPickerState.visible) return;
+            if (restoreFocus === undefined) restoreFocus = true;
+            blockPickerState.visible = false;
+            blockPicker.classList.remove('show');
+            blockPickerList.innerHTML = '';
+            if (restoreFocus) {
+                const off = blockPickerState.insertOffset;
+                codeInput.focus();
+                codeInput.setSelectionRange(off, off);
+                updateCursorPosition();
+            }
+        }
+
+        function acceptBlockFromPicker(item) {
+            const offset = blockPickerState.insertOffset;
+            const code = item.code;       // 原始模板，交给 insertCode 内部 renderCode
+            const mode = item.mode;
+            hideBlockPicker(false);
+            codeInput.focus();
+            codeInput.setSelectionRange(offset, offset);
+            insertCode(code, mode, offset);
+        }
+
+        // ---- 浮层内交互 ----
+        let pickerComposing = false;
+        blockPickerInput.addEventListener('compositionstart', () => { pickerComposing = true; });
+        blockPickerInput.addEventListener('compositionend', () => { pickerComposing = false; });
+
+        blockPickerInput.addEventListener('input', () => {
+            blockPickerState.items = searchCompletions(blockPickerInput.value);
+            blockPickerState.activeIndex = 0;
+            renderBlockPickerList();
+        });
+
+        blockPickerInput.addEventListener('keydown', (e) => {
+            if (pickerComposing) return;      // 中文输入法组合期间不拦截
+            const len = blockPickerState.items.length;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (len) {
+                    blockPickerState.activeIndex = (blockPickerState.activeIndex + 1) % len;
+                    updateBlockPickerActive();
+                }
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (len) {
+                    blockPickerState.activeIndex = (blockPickerState.activeIndex - 1 + len) % len;
+                    updateBlockPickerActive();
+                }
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                if (len) acceptBlockFromPicker(blockPickerState.items[blockPickerState.activeIndex]);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hideBlockPicker();
+                return;
+            }
+        });
+
+        // 外部点击关闭（点编辑器也关：用户此时想编辑；Ctrl+点击会立即重新打开）
+        document.addEventListener('mousedown', (e) => {
+            if (!blockPickerState.visible) return;
+            if (blockPicker.contains(e.target)) return;
+            const btn = document.getElementById('blockPickerBtn');
+            if (btn && btn.contains(e.target)) return;
+            hideBlockPicker(false);
         });
 
         // ==================== 编辑器事件 ====================
@@ -3281,19 +4149,43 @@
             if (searchState.visible) performSearch();
         });
 
-        codeInput.addEventListener('scroll', syncScroll);
-        codeInput.addEventListener('click', updateCursorPosition);
+        codeInput.addEventListener('scroll', () => {
+            syncScroll();
+            if (blockPickerState.visible && blockPickerState.source === 'keyboard') {
+                positionBlockPicker('keyboard');
+            }
+        });
+        codeInput.addEventListener('click', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                const offset = getOffsetFromPoint(e.clientX, e.clientY);
+                openBlockPicker('ctrl-click', offset, { left: e.clientX, top: e.clientY + 4 });
+                return;
+            }
+            updateCursorPosition();
+        });
         codeInput.addEventListener('keyup', updateCursorPosition);
         codeInput.addEventListener('select', updateCursorPosition);
 
         window.addEventListener('resize', () => {
             syncScrollbarWidth();
             syncScroll();
+            if (blockPickerState.visible && blockPickerState.source === 'keyboard') {
+                positionBlockPicker('keyboard');
+            }
         });
 
         codeInput.addEventListener('focus', syncScroll);
 
         codeInput.addEventListener('keydown', (e) => {
+            // Ctrl+/ 唤起积木选择器（兼容 Slash 与小键盘除号，避免键盘布局差异导致 e.key 不同）
+            const isSlashKey = e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide';
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && isSlashKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                openBlockPicker('keyboard');
+                return;
+            }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
                 openSearch(false);
@@ -3346,6 +4238,17 @@
         });
 
         document.addEventListener('keydown', (e) => {
+            if (blockPickerState.visible) return;   // 浮层优先，屏蔽全局 Ctrl+F/H
+            // Ctrl+/ 全局兜底：按钮在顶部工具栏，焦点不在任何输入框时也应能唤起
+            const isSlashKey = e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide';
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && isSlashKey) {
+                const ae = document.activeElement;
+                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+                if (!typing) {
+                    e.preventDefault();
+                    openBlockPicker('toolbar');
+                }
+            }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
                 if (document.activeElement !== codeInput && document.activeElement !== searchInput) {
                     e.preventDefault();
@@ -3387,6 +4290,15 @@
 
         undoBtn.addEventListener('click', undo);
         redoBtn.addEventListener('click', redo);
+
+        // 积木选择器：工具栏入口（触屏兜底）
+        document.getElementById('blockPickerBtn').addEventListener('click', () => {
+            if (blockPickerState.visible) {
+                hideBlockPicker();
+                return;
+            }
+            openBlockPicker('toolbar');
+        });
 
         document.getElementById('autoIndentBtn').addEventListener('click', () => {
             autoIndentSelection();
@@ -3477,9 +4389,9 @@ int main() {
         function updateThemeButton(pref) {
             if (!themeToggleBtn) return;
             const map = {
-                dark: { icon: 'moon', title: '当前：深色（点击切换为浅色）' },
-                light: { icon: 'sun', title: '当前：浅色（点击切换为跟随系统）' },
-                system: { icon: 'monitor', title: '当前：跟随系统（点击切换为深色）' }
+                dark: { icon: 'moon', title: t('themeTitleDark') },
+                light: { icon: 'sun', title: t('themeTitleLight') },
+                system: { icon: 'monitor', title: t('themeTitleSystem') }
             };
             const cfg = map[pref] || map[THEME_DEFAULT];
             themeToggleBtn.innerHTML = `<svg class="icon"><use href="#icon-${cfg.icon}"/></svg>`;
@@ -3504,6 +4416,15 @@ int main() {
             themeToggleBtn.addEventListener('click', cycleTheme);
         }
 
+        // ==================== 语言切换 ====================
+        (function initLangToggle() {
+            const btn = document.getElementById('langToggleBtn');
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                setLang(currentLang === 'zh' ? 'en' : 'zh');
+            });
+        })();
+
         // 系统主题变化时，仅在「跟随系统」模式下实时响应
         const onSystemThemeChange = () => {
             if (getThemePref() === 'system') {
@@ -3522,8 +4443,10 @@ int main() {
         (function init() {
             const saved = loadFromStorage();
             BLOCKS = saved || JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
+            normalizeBlocksModes(BLOCKS);   // 旧的 localStorage 里可能是 'lc'
 
             renderBlocksPanel();
+            setLang(getLangPref(), { persist: false });   // 应用界面语言（首帧即生效，不会闪）
 
             const defaultCode = `#include <stdio.h>
 
@@ -3554,7 +4477,7 @@ int main() {
 
             if (typeof Prism === 'undefined') {
                 document.querySelector('.status-bar').insertAdjacentHTML('beforeend',
-                    '<span style="color:var(--danger);">⚠ Prism 未加载，语法高亮不可用（检查网络或 CDN）</span>');
+                    '<span style="color:var(--danger);">' + t('warnPrism') + '</span>');
             }
         })();
     </script>
