@@ -1,0 +1,1042 @@
+[
+  {
+    "id": "cat-mvudezpb-wa2n",
+    "category": "自定义",
+    "icon": "cube",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "custom-mvxinzvj-445o",
+          "icon": "cube",
+          "label": "isPrime[i]",
+          "code": "isPrime[i]",
+          "mode": "exp"
+        },
+        {
+          "id": "custom-mvudr56l-4fdd",
+          "icon": "forward",
+          "label": "i++;",
+          "code": "i++;",
+          "mode": "line"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-include",
+    "category": "include / 预处理",
+    "icon": "file-import",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "c": [
+        {
+          "id": "c-inc-stdio",
+          "icon": "hashtag",
+          "label": "#include <stdio.h>",
+          "code": "#include <stdio.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-inc-stdlib",
+          "icon": "hashtag",
+          "label": "#include <stdlib.h>",
+          "code": "#include <stdlib.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-inc-string",
+          "icon": "hashtag",
+          "label": "#include <string.h>",
+          "code": "#include <string.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-inc-math",
+          "icon": "hashtag",
+          "label": "#include <math.h>",
+          "code": "#include <math.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-inc-stdbool",
+          "icon": "hashtag",
+          "label": "#include <stdbool.h>",
+          "code": "#include <stdbool.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-inc-ctype",
+          "icon": "hashtag",
+          "label": "#include <ctype.h>",
+          "code": "#include <ctype.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-inc-time",
+          "icon": "hashtag",
+          "label": "#include <time.h>",
+          "code": "#include <time.h>",
+          "mode": "line"
+        },
+        {
+          "id": "c-define",
+          "icon": "hashtag",
+          "label": "#define MAX 100",
+          "code": "#define MAX 100",
+          "mode": "line"
+        },
+        {
+          "id": "c-ifdef",
+          "icon": "code-branch",
+          "label": "#ifdef DEBUG",
+          "code": "#ifdef DEBUG\n    \n#endif",
+          "mode": "line"
+        },
+        {
+          "id": "c-ifndef",
+          "icon": "code-branch",
+          "label": "#ifndef HEADER_H",
+          "code": "#ifndef HEADER_H\n#define HEADER_H\n\n#endif",
+          "mode": "line"
+        },
+        {
+          "id": "c-if",
+          "icon": "code-branch",
+          "label": "#if 0",
+          "code": "#if 0\n    \n#endif",
+          "mode": "line"
+        }
+      ],
+      "cpp": [
+        {
+          "id": "cpp-inc-io",
+          "icon": "hashtag",
+          "label": "#include <iostream>",
+          "code": "#include <iostream>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-string",
+          "icon": "hashtag",
+          "label": "#include <string>",
+          "code": "#include <string>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-cmath",
+          "icon": "hashtag",
+          "label": "#include <cmath>",
+          "code": "#include <cmath>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-cstdlib",
+          "icon": "hashtag",
+          "label": "#include <cstdlib>",
+          "code": "#include <cstdlib>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-cstring",
+          "icon": "hashtag",
+          "label": "#include <cstring>",
+          "code": "#include <cstring>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-vector",
+          "icon": "hashtag",
+          "label": "#include <vector>",
+          "code": "#include <vector>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-algorithm",
+          "icon": "hashtag",
+          "label": "#include <algorithm>",
+          "code": "#include <algorithm>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-inc-iomanip",
+          "icon": "hashtag",
+          "label": "#include <iomanip>",
+          "code": "#include <iomanip>",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-using-ns",
+          "icon": "globe",
+          "label": "using namespace std;",
+          "code": "using namespace std;",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-define",
+          "icon": "hashtag",
+          "label": "#define MAX 100",
+          "code": "#define MAX 100",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-ifdef",
+          "icon": "code-branch",
+          "label": "#ifdef DEBUG",
+          "code": "#ifdef DEBUG\n    \n#endif",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-ifndef",
+          "icon": "code-branch",
+          "label": "#ifndef HEADER_H",
+          "code": "#ifndef HEADER_H\n#define HEADER_H\n\n#endif",
+          "mode": "line"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-function",
+    "category": "函数",
+    "icon": "code",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "fn-main",
+          "icon": "play",
+          "label": "int main() { ... }",
+          "code": "int main() {\n    \n    return 0;\n}",
+          "mode": "line"
+        },
+        {
+          "id": "fn-void",
+          "icon": "code",
+          "label": "void func() { ... }",
+          "code": "void func() {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "fn-int",
+          "icon": "code",
+          "label": "int func(int a) { return 0; }",
+          "code": "int func(int a) {\n    return 0;\n}",
+          "mode": "line"
+        },
+        {
+          "id": "fn-decl",
+          "icon": "file-signature",
+          "label": "int func(int a);",
+          "code": "int func(int a);",
+          "mode": "line"
+        },
+        {
+          "id": "fn-call",
+          "icon": "bolt",
+          "label": "func();",
+          "code": "func();",
+          "mode": "line"
+        },
+        {
+          "id": "fn-return-void",
+          "icon": "sign-out-alt",
+          "label": "return;",
+          "code": "return;",
+          "mode": "line"
+        },
+        {
+          "id": "fn-return-0",
+          "icon": "sign-out-alt",
+          "label": "return 0;",
+          "code": "return 0;",
+          "mode": "line"
+        },
+        {
+          "id": "fn-return-val",
+          "icon": "sign-out-alt",
+          "label": "return x;",
+          "code": "return x;",
+          "mode": "line"
+        }
+      ],
+      "c": [
+        {
+          "id": "c-fn-arr",
+          "icon": "list",
+          "label": "void func(int arr[], int n) { ... }",
+          "code": "void func(int arr[], int n) {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-fn-ptr-ret",
+          "icon": "arrow-right",
+          "label": "int* func() { return NULL; }",
+          "code": "int* func() {\n    return NULL;\n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-fn-ptr",
+          "icon": "location-arrow",
+          "label": "int (*fp)(int, int);",
+          "code": "int (*fp)(int, int);",
+          "mode": "line"
+        }
+      ],
+      "cpp": [
+        {
+          "id": "cpp-fn-template",
+          "icon": "cubes",
+          "label": "template <typename T> T func(T a) { ... }",
+          "code": "template <typename T>\nT func(T a) {\n    return a;\n}",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-fn-ref",
+          "icon": "link",
+          "label": "void func(int& x) { ... }",
+          "code": "void func(int& x) {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-fn-default",
+          "icon": "equals",
+          "label": "void func(int x = 0) { ... }",
+          "code": "void func(int x = 0) {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-fn-inline",
+          "icon": "bolt",
+          "label": "inline int func() { return 0; }",
+          "code": "inline int func() {\n    return 0;\n}",
+          "mode": "line"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-var",
+    "category": "变量",
+    "icon": "database",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-int",
+          "icon": "hashtag",
+          "label": "int x;",
+          "code": "int x;",
+          "mode": "line"
+        },
+        {
+          "id": "v-int-multi",
+          "icon": "hashtag",
+          "label": "int i, j, k;",
+          "code": "int i, j, k;",
+          "mode": "line"
+        },
+        {
+          "id": "v-float",
+          "icon": "hashtag",
+          "label": "float f;",
+          "code": "float f;",
+          "mode": "line"
+        },
+        {
+          "id": "v-char",
+          "icon": "hashtag",
+          "label": "char c;",
+          "code": "char c;",
+          "mode": "line"
+        },
+        {
+          "id": "v-int-val",
+          "icon": "hashtag",
+          "label": "int x = 10;",
+          "code": "int x = 10;",
+          "mode": "line"
+        },
+        {
+          "id": "v-float-val",
+          "icon": "hashtag",
+          "label": "float pi = 3.14;",
+          "code": "float pi = 3.14;",
+          "mode": "line"
+        },
+        {
+          "id": "v-char-val",
+          "icon": "hashtag",
+          "label": "char c = 'A';",
+          "code": "char c = 'A';",
+          "mode": "line"
+        },
+        {
+          "id": "v-inc",
+          "icon": "plus",
+          "label": "i++;",
+          "code": "i++;",
+          "mode": "exp"
+        },
+        {
+          "id": "v-dec",
+          "icon": "minus",
+          "label": "i--;",
+          "code": "i--;",
+          "mode": "exp"
+        },
+        {
+          "id": "v-assign-add",
+          "icon": "plus",
+          "label": "x = x + 1;",
+          "code": "x = x + 1;",
+          "mode": "line"
+        },
+        {
+          "id": "v-add-assign",
+          "icon": "plus",
+          "label": "x += 1;",
+          "code": "x += 1;",
+          "mode": "line"
+        },
+        {
+          "id": "v-sub-assign",
+          "icon": "minus",
+          "label": "x -= 1;",
+          "code": "x -= 1;",
+          "mode": "line"
+        },
+        {
+          "id": "v-mul-assign",
+          "icon": "times",
+          "label": "x *= 2;",
+          "code": "x *= 2;",
+          "mode": "line"
+        },
+        {
+          "id": "v-div-assign",
+          "icon": "divide",
+          "label": "x /= 2;",
+          "code": "x /= 2;",
+          "mode": "line"
+        },
+        {
+          "id": "v-mod-assign",
+          "icon": "percent",
+          "label": "x %= 2;",
+          "code": "x %= 2;",
+          "mode": "line"
+        },
+        {
+          "id": "v-assign-num",
+          "icon": "equals",
+          "label": "x = 20;",
+          "code": "x = 20;",
+          "mode": "line"
+        },
+        {
+          "id": "v-assign-var",
+          "icon": "equals",
+          "label": "x = y;",
+          "code": "x = y;",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-int",
+          "icon": "list",
+          "label": "int arr[5];",
+          "code": "int arr[5];",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-int-val",
+          "icon": "list",
+          "label": "int arr[5] = {1,2,3,4,5};",
+          "code": "int arr[5] = {1, 2, 3, 4, 5};",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-float",
+          "icon": "list",
+          "label": "float arr[3];",
+          "code": "float arr[3];",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-float-val",
+          "icon": "list",
+          "label": "float arr[3] = {1.1,2.2,3.3};",
+          "code": "float arr[3] = {1.1, 2.2, 3.3};",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-char",
+          "icon": "list",
+          "label": "char str[20];",
+          "code": "char str[20];",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-char-val",
+          "icon": "list",
+          "label": "char str[] = \"hello\";",
+          "code": "char str[] = \"hello\";",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-assign",
+          "icon": "equals",
+          "label": "arr[0] = 10;",
+          "code": "arr[0] = 10;",
+          "mode": "line"
+        },
+        {
+          "id": "v-arr-assign-i",
+          "icon": "equals",
+          "label": "arr[i] = value;",
+          "code": "arr[i] = value;",
+          "mode": "line"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-control",
+    "category": "控制",
+    "icon": "code-branch",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "c-if",
+          "icon": "code-branch",
+          "label": "if (x > 0) { ... }",
+          "code": "if (x > 0) {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-ifelse",
+          "icon": "code-branch",
+          "label": "if (x > 0) { ... } else { ... }",
+          "code": "if (x > 0) {\n    \n} else {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-ifelseif",
+          "icon": "code-branch",
+          "label": "if (x > 0) { ... } else if (y > 0) { ... } else { ... }",
+          "code": "if (x > 0) {\n    \n} else if (y > 0) {\n    \n} else {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-elseif",
+          "icon": "code-branch",
+          "label": "else if (y > 0) { ... }",
+          "code": "else if (y > 0) {\n    \n}",
+          "mode": "exp"
+        },
+        {
+          "id": "c-switch",
+          "icon": "code-branch",
+          "label": "switch (x) { case ... }",
+          "code": "switch (x) {\n    case 1:\n        \n        break;\n    default:\n        \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-case",
+          "icon": "code-branch",
+          "label": "case 1: ... break;",
+          "code": "case 1:\n    \n    break;",
+          "mode": "line"
+        },
+        {
+          "id": "c-for",
+          "icon": "redo",
+          "label": "for (int i=0; i<5; i++) { ... }",
+          "code": "for (int i = 0; i < 5; i++) {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-while",
+          "icon": "redo",
+          "label": "while (x > 0) { ... }",
+          "code": "while (x > 0) {\n    \n}",
+          "mode": "line"
+        },
+        {
+          "id": "c-dowhile",
+          "icon": "redo",
+          "label": "do { ... } while (x > 0);",
+          "code": "do {\n    \n} while (x > 0);",
+          "mode": "line"
+        },
+        {
+          "id": "c-break",
+          "icon": "stop",
+          "label": "break;",
+          "code": "break;",
+          "mode": "line"
+        },
+        {
+          "id": "c-continue",
+          "icon": "forward",
+          "label": "continue;",
+          "code": "continue;",
+          "mode": "line"
+        },
+        {
+          "id": "c-return-void",
+          "icon": "sign-out-alt",
+          "label": "return;",
+          "code": "return;",
+          "mode": "line"
+        },
+        {
+          "id": "c-return-0",
+          "icon": "sign-out-alt",
+          "label": "return 0;",
+          "code": "return 0;",
+          "mode": "line"
+        },
+        {
+          "id": "c-return-val",
+          "icon": "sign-out-alt",
+          "label": "return x;",
+          "code": "return x;",
+          "mode": "line"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-io",
+    "category": "常用函数",
+    "icon": "terminal",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "c": [
+        {
+          "id": "c-printf-str",
+          "icon": "print",
+          "label": "printf(\"Hello\\n\");",
+          "code": "printf(\"Hello, World!\\n\");",
+          "mode": "line"
+        },
+        {
+          "id": "c-printf-var",
+          "icon": "print",
+          "label": "printf(\"%d\\n\", x);",
+          "code": "printf(\"%d\\n\", x);",
+          "mode": "line"
+        },
+        {
+          "id": "c-scanf",
+          "icon": "keyboard",
+          "label": "scanf(\"%d\", &x);",
+          "code": "scanf(\"%d\", &x);",
+          "mode": "line"
+        },
+        {
+          "id": "c-puts",
+          "icon": "print",
+          "label": "puts(\"Hello\");",
+          "code": "puts(\"Hello\");",
+          "mode": "line"
+        },
+        {
+          "id": "c-getchar",
+          "icon": "keyboard",
+          "label": "char c = getchar();",
+          "code": "char c = getchar();",
+          "mode": "line"
+        }
+      ],
+      "cpp": [
+        {
+          "id": "cpp-cout-str",
+          "icon": "terminal",
+          "label": "{{STD}}cout << \"Hello\";",
+          "code": "{{STD}}cout << \"Hello, World!\" << {{STD}}endl;",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-cout-var",
+          "icon": "terminal",
+          "label": "{{STD}}cout << x;",
+          "code": "{{STD}}cout << x << {{STD}}endl;",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-cin",
+          "icon": "keyboard",
+          "label": "{{STD}}cin >> x;",
+          "code": "{{STD}}cin >> x;",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-getline",
+          "icon": "keyboard",
+          "label": "{{STD}}getline({{STD}}cin, s);",
+          "code": "{{STD}}getline({{STD}}cin, s);",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-cerr",
+          "icon": "exclamation-triangle",
+          "label": "{{STD}}cerr << \"Error\";",
+          "code": "{{STD}}cerr << \"Error\" << {{STD}}endl;",
+          "mode": "line"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-math",
+    "category": "数学",
+    "icon": "calculator",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "c": [
+        {
+          "id": "c-abs",
+          "icon": "absolute",
+          "label": "abs(-5);",
+          "code": "abs(-5);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-fabs",
+          "icon": "absolute",
+          "label": "fabs(-5.5);",
+          "code": "fabs(-5.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-pow",
+          "icon": "superscript",
+          "label": "pow(2, 3);",
+          "code": "pow(2, 3);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-sqrt",
+          "icon": "square-root-alt",
+          "label": "sqrt(16);",
+          "code": "sqrt(16);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-floor",
+          "icon": "arrow-down",
+          "label": "floor(3.7);",
+          "code": "floor(3.7);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-ceil",
+          "icon": "arrow-up",
+          "label": "ceil(3.2);",
+          "code": "ceil(3.2);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-round",
+          "icon": "circle",
+          "label": "round(3.5);",
+          "code": "round(3.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-sin",
+          "icon": "wave-square",
+          "label": "sin(0.5);",
+          "code": "sin(0.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-cos",
+          "icon": "wave-square",
+          "label": "cos(0.5);",
+          "code": "cos(0.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-tan",
+          "icon": "wave-square",
+          "label": "tan(0.5);",
+          "code": "tan(0.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-fmax",
+          "icon": "arrow-up",
+          "label": "fmax(3, 7);",
+          "code": "fmax(3, 7);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-fmin",
+          "icon": "arrow-down",
+          "label": "fmin(3, 7);",
+          "code": "fmin(3, 7);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-exp",
+          "icon": "chart-line",
+          "label": "exp(1);",
+          "code": "exp(1);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-log",
+          "icon": "chart-line",
+          "label": "log(10);",
+          "code": "log(10);",
+          "mode": "exp"
+        }
+      ],
+      "cpp": [
+        {
+          "id": "cpp-abs",
+          "icon": "absolute",
+          "label": "{{STD}}abs(-5);",
+          "code": "{{STD}}abs(-5);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-pow",
+          "icon": "superscript",
+          "label": "{{STD}}pow(2, 3);",
+          "code": "{{STD}}pow(2, 3);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-sqrt",
+          "icon": "square-root-alt",
+          "label": "{{STD}}sqrt(16);",
+          "code": "{{STD}}sqrt(16);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-floor",
+          "icon": "arrow-down",
+          "label": "{{STD}}floor(3.7);",
+          "code": "{{STD}}floor(3.7);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-ceil",
+          "icon": "arrow-up",
+          "label": "{{STD}}ceil(3.2);",
+          "code": "{{STD}}ceil(3.2);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-round",
+          "icon": "circle",
+          "label": "{{STD}}round(3.5);",
+          "code": "{{STD}}round(3.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-sin",
+          "icon": "wave-square",
+          "label": "{{STD}}sin(0.5);",
+          "code": "{{STD}}sin(0.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-cos",
+          "icon": "wave-square",
+          "label": "{{STD}}cos(0.5);",
+          "code": "{{STD}}cos(0.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-tan",
+          "icon": "wave-square",
+          "label": "{{STD}}tan(0.5);",
+          "code": "{{STD}}tan(0.5);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-max",
+          "icon": "arrow-up",
+          "label": "{{STD}}max(3, 7);",
+          "code": "{{STD}}max(3, 7);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-min",
+          "icon": "arrow-down",
+          "label": "{{STD}}min(3, 7);",
+          "code": "{{STD}}min(3, 7);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-exp",
+          "icon": "chart-line",
+          "label": "{{STD}}exp(1);",
+          "code": "{{STD}}exp(1);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-log",
+          "icon": "chart-line",
+          "label": "{{STD}}log(10);",
+          "code": "{{STD}}log(10);",
+          "mode": "exp"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-string",
+    "category": "字符串",
+    "icon": "font",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "c": [
+        {
+          "id": "c-str-decl",
+          "icon": "quote-left",
+          "label": "char s[] = \"hello\";",
+          "code": "char s[] = \"hello\";",
+          "mode": "line"
+        },
+        {
+          "id": "c-str-arr",
+          "icon": "quote-left",
+          "label": "char s[20];",
+          "code": "char s[20];",
+          "mode": "line"
+        },
+        {
+          "id": "c-strlen",
+          "icon": "ruler-horizontal",
+          "label": "strlen(s);",
+          "code": "strlen(s);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-strcpy",
+          "icon": "copy",
+          "label": "strcpy(dest, src);",
+          "code": "strcpy(dest, src);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-strcat",
+          "icon": "link",
+          "label": "strcat(dest, src);",
+          "code": "strcat(dest, src);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-strcmp",
+          "icon": "balance-scale",
+          "label": "strcmp(s1, s2);",
+          "code": "strcmp(s1, s2);",
+          "mode": "exp"
+        },
+        {
+          "id": "c-strchr",
+          "icon": "search",
+          "label": "strchr(s, 'a');",
+          "code": "strchr(s, 'a');",
+          "mode": "exp"
+        },
+        {
+          "id": "c-strstr",
+          "icon": "search",
+          "label": "strstr(s, \"sub\");",
+          "code": "strstr(s, \"sub\");",
+          "mode": "exp"
+        },
+        {
+          "id": "c-sprintf",
+          "icon": "print",
+          "label": "sprintf(buf, \"%d\", x);",
+          "code": "sprintf(buf, \"%d\", x);",
+          "mode": "line"
+        },
+        {
+          "id": "c-sscanf",
+          "icon": "keyboard",
+          "label": "sscanf(buf, \"%d\", &x);",
+          "code": "sscanf(buf, \"%d\", &x);",
+          "mode": "line"
+        }
+      ],
+      "cpp": [
+        {
+          "id": "cpp-str-decl",
+          "icon": "quote-left",
+          "label": "{{STD}}string s = \"hello\";",
+          "code": "{{STD}}string s = \"hello\";",
+          "mode": "line"
+        },
+        {
+          "id": "cpp-strlen",
+          "icon": "ruler-horizontal",
+          "label": "s.length();",
+          "code": "s.length();",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-substr",
+          "icon": "cut",
+          "label": "s.substr(0, 5);",
+          "code": "s.substr(0, 5);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-find",
+          "icon": "search",
+          "label": "s.find(\"sub\");",
+          "code": "s.find(\"sub\");",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-append",
+          "icon": "link",
+          "label": "s.append(\"world\");",
+          "code": "s.append(\"world\");",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-cstr",
+          "icon": "exchange-alt",
+          "label": "s.c_str();",
+          "code": "s.c_str();",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-to-string",
+          "icon": "exchange-alt",
+          "label": "{{STD}}to_string(42);",
+          "code": "{{STD}}to_string(42);",
+          "mode": "exp"
+        },
+        {
+          "id": "cpp-stoi",
+          "icon": "exchange-alt",
+          "label": "{{STD}}stoi(\"42\");",
+          "code": "{{STD}}stoi(\"42\");",
+          "mode": "exp"
+        }
+      ]
+    }
+  }
+]
