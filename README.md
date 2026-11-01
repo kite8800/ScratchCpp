@@ -8,7 +8,7 @@ A browser-based block editor for learning C/C++. Beginners drag ready-made code 
 
 No installation, no build step — just open `ScratchCpp.html`. 
 
-Demo: https://github.com/kite8800/ScratchCpp/
+Demo: https://kite8800.github.io/ScratchCpp/
 
 ## Why this exists
 
