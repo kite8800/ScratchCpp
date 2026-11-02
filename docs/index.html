@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scratch C/C++</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpath d='M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'/%3E%3C/svg%3E">
-    <!-- Prism 本地依赖（离线可用，无需 CDN） -->
-    <!-- 说明：语法配色已全部由下方 :root / html[data-theme="light"] 的 --syn-* 变量接管，
-         故不再引入 prism-okaidia.min.css（否则会覆盖变量化配色）。
-         文件仍保留在 vendor/prism/ 下备用，如需恢复官方 okaidia 主题配色，
-         可取消下一行注释，并删除 .token.* 的变量化颜色规则。 -->
-    <!-- <link href="vendor/prism/prism-okaidia.min.css" rel="stylesheet" /> -->
+<!-- <link href="vendor/prism/prism-okaidia.min.css" rel="stylesheet" /> -->
     <script src="vendor/prism/prism.min.js"></script>
     <script src="vendor/prism/prism-c.min.js"></script>
     <script src="vendor/prism/prism-cpp.min.js"></script>
@@ -296,6 +291,31 @@
         .toolbar button.icon-only { padding: 6px 10px; }
         .toolbar .spacer { flex: 1; }
         .toolbar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+        /* 第二行工具栏右端的帮助提示：靠 margin-left:auto 贴右，空间不足时省略而不是换行撑高 */
+        .toolbar-hint {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            min-width: 0;
+            /* flex-basis 取 0：换行是按基准尺寸判定的，基准为 0 就永远不会被挤到下一行，
+               剩余空间归它，再由 justify-content:flex-end 让图标和文字贴着右边缘 */
+            flex: 1 1 0;
+            font-size: 0.75rem;
+            color: var(--hint);
+            white-space: nowrap;
+        }
+        .toolbar-hint > span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        @media (max-width: 900px) {
+            .toolbar-hint { display: none; }
+        }
 
         .main-container { display: flex; flex: 1; overflow: hidden; gap: 8px; padding: 8px; }
 
@@ -1149,6 +1169,7 @@
         <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></symbol>
         <symbol id="icon-exclamation-triangle" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
         <symbol id="icon-quote-left" viewBox="0 0 24 24"><path d="M3 21c3-1 5-3 5-8H3V6h7v7c0 6-3 9-7 10zM14 21c3-1 5-3 5-8h-5V6h7v7c0 6-3 9-7 10z"/></symbol>
+        <symbol id="icon-comment" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
         <symbol id="icon-ruler-horizontal" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="6" rx="1"/><path d="M6 9v3M10 9v3M14 9v3M18 9v3"/></symbol>
         <symbol id="icon-balance-scale" viewBox="0 0 24 24"><path d="M12 3v18M3 7l4-4 4 4M3 7l-1 5a4 4 0 0 0 8 0L9 7M13 7l4-4 4 4M13 7l-1 5a4 4 0 0 0 8 0l-1-5"/></symbol>
         <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
@@ -1180,9 +1201,6 @@
         <span class="spacer"></span>
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
         <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText" style="font-size:0.8rem; font-weight:600;">中</span></button>
-        <span style="font-size:0.75rem; color:var(--hint);">
-            <svg class="icon"><use href="#icon-search"/></svg> <span data-i18n="toolbarHint">点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+F 查找</span>
-        </span>
         <input type="file" id="openFileInput" accept=".c,.cpp,.h,.hpp,.cc,.txt" style="display:none">
     </div>
 
@@ -1195,6 +1213,9 @@
         <button id="outdentBtn" data-i18n="btnOutdent" data-i18n-title="btnOutdentTitle" title="反缩进当前行 / 选中行 (Shift+Tab)"><svg class="icon"><use href="#icon-outdent"/></svg> 反缩进</button>
         <span class="divider"></span>
         <button id="blockPickerBtn" data-i18n="btnBlockPicker" data-i18n-title="btnBlockPickerTitle" title="插入积木 (Ctrl+/，或 Ctrl+点击编辑器)"><svg class="icon"><use href="#icon-cube"/></svg> 积木</button>
+        <span class="toolbar-hint">
+            <svg class="icon"><use href="#icon-search"/></svg><span data-i18n="toolbarHint">点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+F 查找</span>
+        </span>
     </div>
 
     <div class="main-container">
@@ -1383,6 +1404,7 @@
                     <option value="terminal" data-i18n="icon_terminal">终端</option>
                     <option value="calculator" data-i18n="icon_calculator">计算器</option>
                     <option value="font" data-i18n="icon_font">字体</option>
+                    <option value="comment" data-i18n="icon_comment">注释</option>
                     <option value="file-import" data-i18n="icon_file-import">导入</option>
                     <option value="star" data-i18n="icon_star">星</option>
                     <option value="bolt" data-i18n="icon_bolt">闪电</option>
@@ -1775,7 +1797,8 @@
             tools: ['工具', 'Tools'],
             database: ['数据库', 'Database'],
             font: ['字体', 'Font'],
-            'file-import': ['导入', 'Import']
+            'file-import': ['导入', 'Import'],
+            comment: ['注释', 'Comment']
         };
         Object.keys(ICON_LABELS).forEach(k => {
             I18N.zh['icon_' + k] = ICON_LABELS[k][0];
@@ -1784,11 +1807,43 @@
 
         let currentLang = 'zh';
 
+        // URL 参数 ?lang=zh|en（宽松匹配 zh-CN / zh_cn / en-US 等变体）
+        function getUrlLang() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const v = (params.get('lang') || '').trim().toLowerCase();
+                if (v === 'zh' || v === 'zh-cn' || v === 'zh_cn') return 'zh';
+                if (v === 'en' || v === 'en-us' || v === 'en_us') return 'en';
+                return null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // 用户手动切换语言时清掉 URL 里的 lang，避免刷新后被 URL 拉回去
+        function clearUrlLangParam() {
+            try {
+                const url = new URL(window.location.href);
+                if (!url.searchParams.has('lang')) return;
+                url.searchParams.delete('lang');
+                const newUrl = url.pathname + url.search + url.hash;
+                window.history.replaceState({}, '', newUrl);
+            } catch (e) { }
+        }
+
+        // 语言优先级：URL ?lang= > localStorage > 系统语言 > 兜底 zh
         function getLangPref() {
+            const urlLang = getUrlLang();
+            if (urlLang) return urlLang;
+
             try {
                 const v = localStorage.getItem(LANG_KEY);
                 if (v === 'zh' || v === 'en') return v;
             } catch (e) { }
+
+            const nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+            if (nav.indexOf('zh') === 0) return 'zh';
+            if (nav) return 'en';
             return 'zh';
         }
 
@@ -1893,11 +1948,14 @@
         const DEFAULT_BLOCKS = [
             {
                 id: 'cat-include',
-                category: 'include / 预处理',
+                category: 'Includes / Preprocessor',
                 icon: 'file-import',
                 collapsed: true,
                 subgroups: {
-                    none: [],
+                    none: [
+                        { id: 'c-comment-line', icon: 'comment', label: '// comment', code: '// ', mode: 'line' },
+                        { id: 'c-comment-block', icon: 'comment', label: '/* comment */', code: '/*  */', mode: 'line' },
+                    ],
                     c: [
                         { id: 'c-inc-stdio', icon: 'hashtag', label: '#include <stdio.h>', code: '#include <stdio.h>', mode: 'line' },
                         { id: 'c-inc-stdlib', icon: 'hashtag', label: '#include <stdlib.h>', code: '#include <stdlib.h>', mode: 'line' },
@@ -1929,7 +1987,7 @@
             },
             {
                 id: 'cat-function',
-                category: '函数',
+                category: 'Functions',
                 icon: 'code',
                 collapsed: true,
                 subgroups: {
@@ -1958,7 +2016,7 @@
             },
             {
                 id: 'cat-var',
-                category: '变量',
+                category: 'Variables',
                 icon: 'database',
                 collapsed: false,
                 subgroups: {
@@ -1995,7 +2053,7 @@
             },
             {
                 id: 'cat-control',
-                category: '控制',
+                category: 'Control Flow',
                 icon: 'code-branch',
                 collapsed: false,
                 subgroups: {
@@ -2021,7 +2079,7 @@
             },
             {
                 id: 'cat-io',
-                category: '常用函数',
+                category: 'Common Functions',
                 icon: 'terminal',
                 collapsed: false,
                 subgroups: {
@@ -2044,7 +2102,7 @@
             },
             {
                 id: 'cat-math',
-                category: '数学',
+                category: 'Math',
                 icon: 'calculator',
                 collapsed: false,
                 subgroups: {
@@ -2084,7 +2142,7 @@
             },
             {
                 id: 'cat-string',
-                category: '字符串',
+                category: 'Strings',
                 icon: 'font',
                 collapsed: false,
                 subgroups: {
@@ -2412,6 +2470,9 @@
 
         // ==================== 缩进工具 ====================
         function getLineStart(text, pos) {
+            // pos 为 0 时 lastIndexOf 的 fromIndex=-1 会被钳到 0，
+            // 若文本以 \n 开头会误返回 1（行首跑到行尾之后），必须显式短路
+            if (pos <= 0) return 0;
             return text.lastIndexOf('\n', pos - 1) + 1;
         }
         function getLineEnd(text, pos) {
@@ -2419,19 +2480,41 @@
             return idx === -1 ? text.length : idx;
         }
 
-        function getPrevNonEmptyIndent(text, lineStart) {
+        function getPrevNonEmptyLine(text, lineStart) {
             let pos = lineStart - 1;
             while (pos >= 0) {
-                const prevLineEnd = pos;
                 const prevLineStart = getLineStart(text, pos);
-                const prevLineContent = text.substring(prevLineStart, prevLineEnd);
-                if (prevLineContent.trim().length > 0) {
-                    const match = prevLineContent.match(/^[ \t]*/);
-                    return match ? match[0] : '';
-                }
+                const prevLineContent = text.substring(prevLineStart, pos);
+                if (prevLineContent.trim().length > 0) return prevLineContent;
+                if (prevLineStart === 0) break;
                 pos = prevLineStart - 1;
             }
-            return '';
+            return null;
+        }
+
+        function getPrevNonEmptyIndent(text, lineStart) {
+            const prevLine = getPrevNonEmptyLine(text, lineStart);
+            if (prevLine === null) return '';
+            const match = prevLine.match(/^[ \t]*/);
+            return match ? match[0] : '';
+        }
+
+        // 某一行「本应」所处的缩进：由上一非空行的形态推导（{ 加深一级，} 减退一级，} else { 保持）
+        function getExpectedIndent(text, lineStart) {
+            const prevLine = getPrevNonEmptyLine(text, lineStart);
+            if (prevLine === null) return '';
+            const match = prevLine.match(/^[ \t]*/);
+            const indent = match ? match[0] : '';
+            const trimmed = prevLine.trim();
+
+            if (trimmed.startsWith('}')) {
+                const outer = indent.length >= INDENT.length
+                    ? indent.substring(0, indent.length - INDENT.length)
+                    : '';
+                return trimmed.endsWith('{') ? outer + INDENT : outer;
+            }
+            if (trimmed.endsWith('{')) return indent + INDENT;
+            return indent;
         }
 
         function handleEmptyLineTab(direction) {
@@ -2443,19 +2526,19 @@
 
             if (lineContent.trim().length !== 0) return false;
 
-            const prevIndent = lineStart > 0 ? getPrevNonEmptyIndent(text, lineStart) : '';
+            const expectedIndent = lineStart > 0 ? getExpectedIndent(text, lineStart) : '';
             let targetIndent;
 
             if (direction > 0) {
-                targetIndent = prevIndent + INDENT;
+                // 正缩进：缩进不足本行期望值时先一次性对齐，已对齐则再加一级（与非空行一样加在行首）
+                targetIndent = lineContent.length < expectedIndent.length
+                    ? expectedIndent
+                    : INDENT + lineContent;
             } else {
-                if (lineContent.length > prevIndent.length) {
-                    targetIndent = prevIndent;
-                } else if (prevIndent.length >= INDENT.length) {
-                    targetIndent = prevIndent.substring(0, prevIndent.length - INDENT.length);
-                } else {
-                    targetIndent = '';
-                }
+                // 反缩进：从行首去掉一级，最低退到行首，与上一行无关。
+                // 必须用正则按「一级」去，不能按长度截断，否则 "    \t" 会被截成 " "
+                const m = lineContent.match(/^(\t| {1,4})/);
+                targetIndent = m ? lineContent.substring(m[0].length) : '';
             }
 
             if (targetIndent === lineContent) return true;
@@ -2497,26 +2580,18 @@
             const linesBlock = text.substring(startLineStart, endLineEnd);
             const lines = linesBlock.split('\n');
 
-            let prevIndent = '';
-            if (startLineStart > 0) {
-                prevIndent = getPrevNonEmptyIndent(text, startLineStart);
-            }
-
             const newLines = lines.map((line) => {
                 const trimmed = line.trim();
                 let newIndent;
 
                 if (trimmed.length === 0) {
+                    // 空行只跟随整块平移一级，保证 Tab / Shift+Tab 可逆、反复切换不累积空格。
+                    // 必须与非空行一样在行首加，才能和下面「从行首去掉一级」的花括号逻辑严格互逆
                     if (direction > 0) {
-                        newIndent = prevIndent + INDENT;
+                        newIndent = INDENT + line;
                     } else {
-                        if (line.length > prevIndent.length) {
-                            newIndent = prevIndent;
-                        } else if (prevIndent.length >= INDENT.length) {
-                            newIndent = prevIndent.substring(0, prevIndent.length - INDENT.length);
-                        } else {
-                            newIndent = '';
-                        }
+                        const m = line.match(/^(\t| {1,4})/);
+                        newIndent = m ? line.substring(m[0].length) : '';
                     }
                 } else {
                     let processed;
@@ -2528,16 +2603,6 @@
                     }
                     const m = processed.match(/^[ \t]*/);
                     newIndent = m ? m[0] : '';
-
-                    if (trimmed.endsWith('{')) {
-                        prevIndent = newIndent + INDENT;
-                    } else if (trimmed.startsWith('}')) {
-                        prevIndent = newIndent.length >= INDENT.length
-                            ? newIndent.substring(0, newIndent.length - INDENT.length)
-                            : '';
-                    } else {
-                        prevIndent = newIndent;
-                    }
                 }
 
                 return newIndent + (trimmed.length === 0 ? '' : trimmed);
@@ -2554,11 +2619,13 @@
 
             let newSelStart;
             if (startCol === 0) {
-                newSelStart = startLineStart;
+                // 行首位置锚定在缩进之前：有选区时选区仍从行首开始；
+                // 无选区时让光标跟着缩进右移，否则接着输入会破坏缩进
+                newSelStart = hasSelection ? startLineStart : startLineStart + Math.max(0, firstLineDelta);
             } else {
                 newSelStart = startLineStart + startCol + firstLineDelta;
-                newSelStart = Math.max(startLineStart, newSelStart);
             }
+            newSelStart = Math.max(startLineStart, Math.min(newSelStart, newText.length));
 
             let newSelEnd;
             if (hasSelection) {
@@ -2604,7 +2671,11 @@
 
             let prevIndent = '';
             if (startLineStart > 0) {
-                prevIndent = getPrevNonEmptyIndent(text, startLineStart);
+                // 首行基准取「上一行形态推导出的期望缩进」（上一行以 { 结尾要加一级、以 } 结尾要减一级）；
+                // 例外：首行本身以 } 开头时，下面还要再减一级回到外层，基准必须仍是上一行的原始缩进
+                prevIndent = lines[0].trim().startsWith('}')
+                    ? getPrevNonEmptyIndent(text, startLineStart)
+                    : getExpectedIndent(text, startLineStart);
             }
 
             const newLines = lines.map((line) => {
@@ -3527,8 +3598,10 @@
             blocksScroll.querySelectorAll('.block').forEach(div => {
                 const labelEl = div.querySelector('.block-label');
                 if (!labelEl) return;
-                const template = div.dataset.code;
-                labelEl.textContent = renderCode(template.split('\n')[0]);
+                // 优先用积木自身的 label（如注释积木的 label 与 code 不同），没有才退回代码首行
+                const item = findBlock(div.dataset.catId, div.dataset.sub, div.dataset.id);
+                const text = (item && item.label) ? item.label : div.dataset.code.split('\n')[0];
+                labelEl.textContent = renderCode(text);
             });
             buildCompletionIndex();
         }
@@ -4421,6 +4494,7 @@ int main() {
             const btn = document.getElementById('langToggleBtn');
             if (!btn) return;
             btn.addEventListener('click', () => {
+                clearUrlLangParam();   // 用户主动切换，URL 参数不再生效
                 setLang(currentLang === 'zh' ? 'en' : 'zh');
             });
         })();
@@ -4446,6 +4520,12 @@ int main() {
             normalizeBlocksModes(BLOCKS);   // 旧的 localStorage 里可能是 'lc'
 
             renderBlocksPanel();
+
+            // URL 显式指定语言时写入 localStorage，让后续不带参数的访问也保持
+            const urlLang = getUrlLang();
+            if (urlLang) {
+                try { localStorage.setItem(LANG_KEY, urlLang); } catch (e) { }
+            }
             setLang(getLangPref(), { persist: false });   // 应用界面语言（首帧即生效，不会闪）
 
             const defaultCode = `#include <stdio.h>
