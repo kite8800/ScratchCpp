@@ -8,7 +8,10 @@ A browser-based block editor for learning C/C++. Beginners drag ready-made code 
 
 No installation, no build step — just open `ScratchCpp.html`. 
 
-Demo: https://kite8800.github.io/ScratchCpp/
+# Demo:
+
+English: https://kite8800.github.io/ScratchCpp/?lang=en
+Chinese: https://kite8800.github.io/ScratchCpp/?lang=zh
 
 ## Why this exists
 
@@ -145,4 +148,3 @@ Blocks are stored as a JSON array of categories:
 **C++ `std::` 前缀** — 在 `code` / `label` 里写 `{{STD}}`，会根据「省略 std::」开关替换为 `std::` 或空串。
 
 **图标**（不带 `fa-` 前缀）：`cube` `folder` `database` `code` `code-branch` `terminal` `calculator` `font` `file-import` `star` `bolt` `tools` `hashtag` `list` `equals` `plus` `minus` `times` `divide` `percent` `play` `print` `keyboard` `search` `link` `cut` `copy` `exchange-alt` `sign-out-alt` `globe` `arrow-up` `arrow-down` `arrow-right` `location-arrow` `cubes` `square-root-alt` `circle` `wave-square` `chart-line` `absolute` `superscript` `exclamation-triangle` `quote-left` `ruler-horizontal` `balance-scale` `file-signature` `stop` `forward` `redo`
-
