@@ -11,7 +11,9 @@ No installation, no build step — just open `ScratchCpp.html`.
 # Demo:
 
 English: https://kite8800.github.io/ScratchCpp/?lang=en
+
 Chinese: https://kite8800.github.io/ScratchCpp/?lang=zh
+
 
 ## Why this exists
 
@@ -63,7 +65,7 @@ Open `ScratchCpp.html` in a modern browser (Chrome, Edge, Firefox, Safari). Pris
 
 It is easy to add customized blocks for Arduino etc.
 
-You can use AI to generate customized blocks easily. The reference propmpt is here: https://github.com/kite8800/ScratchCpp/blob/main/ScratchCpp/scratchcpp_block_json_ai_prompt.txt 
+You can use AI to generate customized blocks easily. The reference propmpt is here: https://github.com/kite8800/ScratchCpp/blob/main/docs/scratchcpp_block_json_ai_prompt_20261109.txt
 
 ## Block Configuration
 
