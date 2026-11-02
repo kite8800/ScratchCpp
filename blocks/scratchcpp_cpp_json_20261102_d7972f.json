@@ -1,0 +1,244 @@
+[
+  {
+    "id": "cat-cpp-preproc",
+    "category": "C++ Preprocessor",
+    "icon": "tools",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-pre-pragma-once", "icon": "equals", "label": "#pragma once", "code": "#pragma once", "mode": "line" },
+        { "id": "cpp-pre-define", "icon": "hashtag", "label": "#define MAX 100", "code": "#define MAX 100", "mode": "line" },
+        { "id": "cpp-pre-include-io", "icon": "file-import", "label": "#include <iostream>", "code": "#include <iostream>", "mode": "line" },
+        { "id": "cpp-pre-include-iomanip", "icon": "file-import", "label": "#include <iomanip>", "code": "#include <iomanip>", "mode": "line" },
+        { "id": "cpp-pre-include-fstream", "icon": "file-import", "label": "#include <fstream>", "code": "#include <fstream>", "mode": "line" },
+        { "id": "cpp-pre-include-stdexcept", "icon": "file-import", "label": "#include <stdexcept>", "code": "#include <stdexcept>", "mode": "line" },
+        { "id": "cpp-pre-include-local", "icon": "file-import", "label": "#include \"myheader.h\"", "code": "#include \"myheader.h\"", "mode": "line" },
+        { "id": "cpp-pre-ifdef", "icon": "code-branch", "label": "#ifdef DEBUG", "code": "#ifdef DEBUG\n    \n#endif", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-namespace",
+    "category": "C++ Namespace",
+    "icon": "folder",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-ns-using", "icon": "file-import", "label": "using namespace {{STD}};", "code": "using namespace {{STD}};", "mode": "line" },
+        { "id": "cpp-ns-def", "icon": "folder", "label": "namespace foo { }", "code": "namespace foo {\n    \n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-type",
+    "category": "C++ Type",
+    "icon": "cube",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-type-typedef", "icon": "equals", "label": "typedef long long ll;", "code": "typedef long long ll;", "mode": "line" },
+        { "id": "cpp-type-using", "icon": "equals", "label": "using ll = long long;", "code": "using ll = long long;", "mode": "line" },
+        { "id": "cpp-type-enum", "icon": "list", "label": "enum Color { RED, GREEN, BLUE };", "code": "enum Color {\n    RED,\n    GREEN,\n    BLUE\n};", "mode": "line" },
+        { "id": "cpp-type-enum-class", "icon": "list", "label": "enum class State { IDLE, RUN };", "code": "enum class State {\n    IDLE,\n    RUN\n};", "mode": "line" },
+        { "id": "cpp-type-struct", "icon": "cube", "label": "struct Node { int val; Node* next; };", "code": "struct Node {\n    int val;\n    Node* next;\n};", "mode": "line" },
+        { "id": "cpp-type-class", "icon": "cube", "label": "class Point { };", "code": "class Point {\npublic:\n    int x;\n    int y;\n    \n};", "mode": "line" },
+        { "id": "cpp-type-array", "icon": "list", "label": "int arr[10];", "code": "int arr[10];", "mode": "line" },
+        { "id": "cpp-type-array-init", "icon": "list", "label": "int arr[5] = {1, 2, 3, 4, 5};", "code": "int arr[5] = {1, 2, 3, 4, 5};", "mode": "line" },
+        { "id": "cpp-type-2d-array", "icon": "list", "label": "int mat[3][3];", "code": "int mat[3][3];", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-global",
+    "category": "C++ Global Variable",
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-glob-int", "icon": "hashtag", "label": "int g_count = 0;", "code": "int g_count = 0;", "mode": "line" },
+        { "id": "cpp-glob-const", "icon": "star", "label": "const int N = 100;", "code": "const int N = 100;", "mode": "line" },
+        { "id": "cpp-glob-constexpr", "icon": "star", "label": "constexpr int SIZE = 100;", "code": "constexpr int SIZE = 100;", "mode": "line" },
+        { "id": "cpp-glob-static", "icon": "database", "label": "static int count = 0;", "code": "static int count = 0;", "mode": "line" },
+        { "id": "cpp-glob-extern", "icon": "link", "label": "extern int g_var;", "code": "extern int g_var;", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-function",
+    "category": "C++ Function",
+    "icon": "cubes",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-func-decl", "icon": "file-signature", "label": "int add(int a, int b);", "code": "int add(int a, int b);", "mode": "line" },
+        { "id": "cpp-func-def", "icon": "cubes", "label": "int add(int a, int b) { }", "code": "int add(int a, int b) {\n    return a + b;\n}", "mode": "line" },
+        { "id": "cpp-func-void", "icon": "cubes", "label": "void func() { }", "code": "void func() {\n    \n}", "mode": "line" },
+        { "id": "cpp-func-default", "icon": "cubes", "label": "int add(int a, int b = 0) { }", "code": "int add(int a, int b = 0) {\n    return a + b;\n}", "mode": "line" },
+        { "id": "cpp-func-overload", "icon": "cubes", "label": "int add(double a, double b) { }", "code": "int add(double a, double b) {\n    return (int)(a + b);\n}", "mode": "line" },
+        { "id": "cpp-func-inline", "icon": "bolt", "label": "inline int add(int a, int b) { }", "code": "inline int add(int a, int b) {\n    return a + b;\n}", "mode": "line" },
+        { "id": "cpp-func-recursive", "icon": "exchange-alt", "label": "int fact(int n) { }", "code": "int fact(int n) {\n    if (n <= 1) return 1;\n    return n * fact(n - 1);\n}", "mode": "line" },
+        { "id": "cpp-func-lambda", "icon": "bolt", "label": "auto f = [](int x) { return x * 2; };", "code": "auto f = [](int x) { return x * 2; };", "mode": "line" },
+        { "id": "cpp-func-ref-param", "icon": "link", "label": "void func(int& x) { }", "code": "void func(int& x) {\n    \n}", "mode": "line" },
+        { "id": "cpp-func-const-ref", "icon": "link", "label": "void func(const int& x) { }", "code": "void func(const int& x) {\n    \n}", "mode": "line" },
+        { "id": "cpp-func-call", "icon": "play", "label": "func();", "code": "func();", "mode": "line" },
+        { "id": "cpp-func-call-ret", "icon": "play", "label": "int r = func();", "code": "int r = func();", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-class",
+    "category": "C++ Class",
+    "icon": "cube",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-class-def", "icon": "cube", "label": "class Point { };", "code": "class Point {\npublic:\n    int x;\n    int y;\n    \n};", "mode": "line" },
+        { "id": "cpp-class-ctor", "icon": "cube", "label": "Point(int x, int y) { }", "code": "Point(int x, int y) {\n    this->x = x;\n    this->y = y;\n}", "mode": "line" },
+        { "id": "cpp-class-ctor-init", "icon": "cube", "label": "Point(int x, int y) : x(x), y(y) { }", "code": "Point(int x, int y) : x(x), y(y) {\n    \n}", "mode": "line" },
+        { "id": "cpp-class-dtor", "icon": "times", "label": "~Point() { }", "code": "~Point() {\n    \n}", "mode": "line" },
+        { "id": "cpp-class-method", "icon": "cubes", "label": "int getX() const { return x; }", "code": "int getX() const {\n    return x;\n}", "mode": "line" },
+        { "id": "cpp-class-static", "icon": "database", "label": "static int count;", "code": "static int count;", "mode": "line" },
+        { "id": "cpp-class-inherit", "icon": "code-branch", "label": "class Derived : public Base { };", "code": "class Derived : public Base {\npublic:\n    \n};", "mode": "line" },
+        { "id": "cpp-class-virtual", "icon": "bolt", "label": "virtual void show() { }", "code": "virtual void show() {\n    \n}", "mode": "line" },
+        { "id": "cpp-class-override", "icon": "bolt", "label": "void show() override { }", "code": "void show() override {\n    \n}", "mode": "line" },
+        { "id": "cpp-class-object", "icon": "cube", "label": "Point p(1, 2);", "code": "Point p(1, 2);", "mode": "line" },
+        { "id": "cpp-class-call", "icon": "play", "label": "p.getX();", "code": "p.getX();", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-main",
+    "category": "C++ Main",
+    "icon": "play",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-main-def", "icon": "play", "label": "int main() { }", "code": "int main() {\n    \n    return 0;\n}", "mode": "line" },
+        { "id": "cpp-main-args", "icon": "play", "label": "int main(int argc, char* argv[]) { }", "code": "int main(int argc, char* argv[]) {\n    \n    return 0;\n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-stmt",
+    "category": "C++ Statement",
+    "icon": "code",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-stmt-comment", "icon": "quote-left", "label": "// 注释", "code": "// 注释", "mode": "exp" },
+        { "id": "cpp-stmt-block-comment", "icon": "quote-left", "label": "/* 块注释 */", "code": "/* 块注释 */", "mode": "exp" },
+        { "id": "cpp-stmt-decl-int", "icon": "hashtag", "label": "int x = 10;", "code": "int x = 10;", "mode": "line" },
+        { "id": "cpp-stmt-decl-double", "icon": "hashtag", "label": "double d = 3.14;", "code": "double d = 3.14;", "mode": "line" },
+        { "id": "cpp-stmt-decl-char", "icon": "font", "label": "char c = 'A';", "code": "char c = 'A';", "mode": "line" },
+        { "id": "cpp-stmt-decl-bool", "icon": "equals", "label": "bool flag = true;", "code": "bool flag = true;", "mode": "line" },
+        { "id": "cpp-stmt-decl-auto", "icon": "exchange-alt", "label": "auto x = 10;", "code": "auto x = 10;", "mode": "line" },
+        { "id": "cpp-stmt-assign", "icon": "equals", "label": "x = 10;", "code": "x = 10;", "mode": "line" },
+        { "id": "cpp-stmt-inc", "icon": "plus", "label": "i++;", "code": "i++;", "mode": "exp" },
+        { "id": "cpp-stmt-dec", "icon": "minus", "label": "i--;", "code": "i--;", "mode": "exp" },
+        { "id": "cpp-stmt-plus-eq", "icon": "plus", "label": "x += 1;", "code": "x += 1;", "mode": "line" },
+        { "id": "cpp-stmt-minus-eq", "icon": "minus", "label": "x -= 1;", "code": "x -= 1;", "mode": "line" },
+        { "id": "cpp-stmt-times-eq", "icon": "times", "label": "x *= 2;", "code": "x *= 2;", "mode": "line" },
+        { "id": "cpp-stmt-div-eq", "icon": "divide", "label": "x /= 2;", "code": "x /= 2;", "mode": "line" },
+        { "id": "cpp-stmt-mod-eq", "icon": "percent", "label": "x %= 2;", "code": "x %= 2;", "mode": "line" },
+        { "id": "cpp-stmt-return", "icon": "sign-out-alt", "label": "return 0;", "code": "return 0;", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-control",
+    "category": "C++ Control",
+    "icon": "code-branch",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-ctrl-if", "icon": "code-branch", "label": "if (cond) { }", "code": "if (cond) {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-if-else", "icon": "code-branch", "label": "if (cond) { } else { }", "code": "if (cond) {\n    \n} else {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-else-if", "icon": "code-branch", "label": "else if (cond) { }", "code": "else if (cond) {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-switch", "icon": "code-branch", "label": "switch (x) { case 1: break; default: break; }", "code": "switch (x) {\n    case 1:\n        \n        break;\n    default:\n        break;\n}", "mode": "line" },
+        { "id": "cpp-ctrl-for", "icon": "forward", "label": "for (int i = 0; i < n; i++) { }", "code": "for (int i = 0; i < n; i++) {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-for-rev", "icon": "arrow-right", "label": "for (int i = n - 1; i >= 0; i--) { }", "code": "for (int i = n - 1; i >= 0; i--) {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-range-for", "icon": "forward", "label": "for (int x : arr) { }", "code": "for (int x : arr) {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-while", "icon": "forward", "label": "while (cond) { }", "code": "while (cond) {\n    \n}", "mode": "line" },
+        { "id": "cpp-ctrl-do-while", "icon": "forward", "label": "do { } while (cond);", "code": "do {\n    \n} while (cond);", "mode": "line" },
+        { "id": "cpp-ctrl-break", "icon": "sign-out-alt", "label": "break;", "code": "break;", "mode": "line" },
+        { "id": "cpp-ctrl-continue", "icon": "forward", "label": "continue;", "code": "continue;", "mode": "line" },
+        { "id": "cpp-ctrl-ternary", "icon": "code-branch", "label": "cond ? a : b", "code": "cond ? a : b", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-pointer",
+    "category": "C++ Pointer Reference",
+    "icon": "location-arrow",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-ptr-decl", "icon": "location-arrow", "label": "int* p = nullptr;", "code": "int* p = nullptr;", "mode": "line" },
+        { "id": "cpp-ptr-addr", "icon": "location-arrow", "label": "int* p = &x;", "code": "int* p = &x;", "mode": "line" },
+        { "id": "cpp-ptr-deref", "icon": "star", "label": "*p", "code": "*p", "mode": "exp" },
+        { "id": "cpp-ptr-new", "icon": "plus", "label": "int* p = new int(10);", "code": "int* p = new int(10);", "mode": "line" },
+        { "id": "cpp-ptr-new-arr", "icon": "list", "label": "int* arr = new int[n];", "code": "int* arr = new int[n];", "mode": "line" },
+        { "id": "cpp-ptr-delete", "icon": "times", "label": "delete p;", "code": "delete p;", "mode": "line" },
+        { "id": "cpp-ptr-delete-arr", "icon": "times", "label": "delete[] arr;", "code": "delete[] arr;", "mode": "line" },
+        { "id": "cpp-ref-decl", "icon": "link", "label": "int& r = x;", "code": "int& r = x;", "mode": "line" },
+        { "id": "cpp-smart-unique", "icon": "bolt", "label": "{{STD}}unique_ptr<int> p = {{STD}}make_unique<int>(10);", "code": "{{STD}}unique_ptr<int> p = {{STD}}make_unique<int>(10);", "mode": "line" },
+        { "id": "cpp-smart-shared", "icon": "bolt", "label": "{{STD}}shared_ptr<int> p = {{STD}}make_shared<int>(10);", "code": "{{STD}}shared_ptr<int> p = {{STD}}make_shared<int>(10);", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-io",
+    "category": "C++ IO",
+    "icon": "terminal",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-io-cin", "icon": "keyboard", "label": "{{STD}}cin >> x;", "code": "{{STD}}cin >> x;", "mode": "line" },
+        { "id": "cpp-io-getline", "icon": "keyboard", "label": "{{STD}}getline({{STD}}cin, s);", "code": "{{STD}}getline({{STD}}cin, s);", "mode": "line" },
+        { "id": "cpp-io-cout", "icon": "print", "label": "{{STD}}cout << \"Hello\";", "code": "{{STD}}cout << \"Hello\";", "mode": "line" },
+        { "id": "cpp-io-cout-var", "icon": "print", "label": "{{STD}}cout << x << {{STD}}endl;", "code": "{{STD}}cout << x << {{STD}}endl;", "mode": "line" },
+        { "id": "cpp-io-cerr", "icon": "exclamation-triangle", "label": "{{STD}}cerr << \"Error\";", "code": "{{STD}}cerr << \"Error\";", "mode": "line" },
+        { "id": "cpp-io-fixed", "icon": "calculator", "label": "{{STD}}cout << {{STD}}fixed << {{STD}}setprecision(2) << x;", "code": "{{STD}}cout << {{STD}}fixed << {{STD}}setprecision(2) << x;", "mode": "line" },
+        { "id": "cpp-io-ifstream", "icon": "file-import", "label": "{{STD}}ifstream fin(\"in.txt\");", "code": "{{STD}}ifstream fin(\"in.txt\");", "mode": "line" },
+        { "id": "cpp-io-ofstream", "icon": "file-import", "label": "{{STD}}ofstream fout(\"out.txt\");", "code": "{{STD}}ofstream fout(\"out.txt\");", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-cpp-exception",
+    "category": "C++ Exception",
+    "icon": "exclamation-triangle",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "cpp-exc-throw", "icon": "exclamation-triangle", "label": "throw {{STD}}runtime_error(\"error\");", "code": "throw {{STD}}runtime_error(\"error\");", "mode": "line" },
+        { "id": "cpp-exc-try-catch", "icon": "exclamation-triangle", "label": "try { } catch ({{STD}}exception& e) { }", "code": "try {\n    \n} catch ({{STD}}exception& e) {\n    \n}", "mode": "line" },
+        { "id": "cpp-exc-what", "icon": "search", "label": "e.what()", "code": "e.what()", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  }
+]

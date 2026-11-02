@@ -1,0 +1,295 @@
+[
+  {
+    "id": "cat-stl-vector",
+    "category": "STL Vector",
+    "icon": "list",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-vec-decl", "icon": "list", "label": "{{STD}}vector<int> v;", "code": "{{STD}}vector<int> v;", "mode": "line" },
+        { "id": "stl-vec-init", "icon": "list", "label": "{{STD}}vector<int> v = {1, 2, 3};", "code": "{{STD}}vector<int> v = {1, 2, 3};", "mode": "line" },
+        { "id": "stl-vec-size-init", "icon": "list", "label": "{{STD}}vector<int> v(5, 0);", "code": "{{STD}}vector<int> v(5, 0);", "mode": "line" },
+        { "id": "stl-vec-push", "icon": "plus", "label": "v.push_back(x);", "code": "v.push_back(x);", "mode": "line" },
+        { "id": "stl-vec-emplace", "icon": "plus", "label": "v.emplace_back(x);", "code": "v.emplace_back(x);", "mode": "line" },
+        { "id": "stl-vec-pop", "icon": "minus", "label": "v.pop_back();", "code": "v.pop_back();", "mode": "line" },
+        { "id": "stl-vec-size", "icon": "ruler-horizontal", "label": "v.size()", "code": "v.size()", "mode": "exp" },
+        { "id": "stl-vec-empty", "icon": "equals", "label": "v.empty()", "code": "v.empty()", "mode": "exp" },
+        { "id": "stl-vec-clear", "icon": "times", "label": "v.clear();", "code": "v.clear();", "mode": "line" },
+        { "id": "stl-vec-at", "icon": "location-arrow", "label": "v.at(i)", "code": "v.at(i)", "mode": "exp" },
+        { "id": "stl-vec-front", "icon": "arrow-up", "label": "v.front()", "code": "v.front()", "mode": "exp" },
+        { "id": "stl-vec-back", "icon": "arrow-down", "label": "v.back()", "code": "v.back()", "mode": "exp" },
+        { "id": "stl-vec-insert", "icon": "plus", "label": "v.insert(v.begin() + i, x);", "code": "v.insert(v.begin() + i, x);", "mode": "line" },
+        { "id": "stl-vec-erase", "icon": "cut", "label": "v.erase(v.begin() + i);", "code": "v.erase(v.begin() + i);", "mode": "line" },
+        { "id": "stl-vec-resize", "icon": "exchange-alt", "label": "v.resize(10);", "code": "v.resize(10);", "mode": "line" },
+        { "id": "stl-vec-reserve", "icon": "exchange-alt", "label": "v.reserve(100);", "code": "v.reserve(100);", "mode": "line" },
+        { "id": "stl-vec-for", "icon": "forward", "label": "for (int x : v) { }", "code": "for (int x : v) {\n    \n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-string",
+    "category": "STL String",
+    "icon": "font",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-str-decl", "icon": "font", "label": "{{STD}}string s = \"abc\";", "code": "{{STD}}string s = \"abc\";", "mode": "line" },
+        { "id": "stl-str-len", "icon": "ruler-horizontal", "label": "s.length()", "code": "s.length()", "mode": "exp" },
+        { "id": "stl-str-empty", "icon": "equals", "label": "s.empty()", "code": "s.empty()", "mode": "exp" },
+        { "id": "stl-str-append", "icon": "plus", "label": "s += \"abc\";", "code": "s += \"abc\";", "mode": "line" },
+        { "id": "stl-str-substr", "icon": "cut", "label": "s.substr(pos, len)", "code": "s.substr(pos, len)", "mode": "exp" },
+        { "id": "stl-str-find", "icon": "search", "label": "s.find(\"abc\")", "code": "s.find(\"abc\")", "mode": "exp" },
+        { "id": "stl-str-at", "icon": "location-arrow", "label": "s.at(i)", "code": "s.at(i)", "mode": "exp" },
+        { "id": "stl-str-compare", "icon": "balance-scale", "label": "s.compare(\"abc\")", "code": "s.compare(\"abc\")", "mode": "exp" },
+        { "id": "stl-str-cstr", "icon": "code", "label": "s.c_str()", "code": "s.c_str()", "mode": "exp" },
+        { "id": "stl-str-toint", "icon": "calculator", "label": "{{STD}}stoi(s)", "code": "{{STD}}stoi(s)", "mode": "exp" },
+        { "id": "stl-str-tostr", "icon": "calculator", "label": "{{STD}}to_string(x)", "code": "{{STD}}to_string(x)", "mode": "exp" },
+        { "id": "stl-str-getline", "icon": "keyboard", "label": "{{STD}}getline({{STD}}cin, s);", "code": "{{STD}}getline({{STD}}cin, s);", "mode": "line" },
+        { "id": "stl-str-replace", "icon": "exchange-alt", "label": "s.replace(pos, len, \"abc\");", "code": "s.replace(pos, len, \"abc\");", "mode": "line" },
+        { "id": "stl-str-erase", "icon": "cut", "label": "s.erase(pos, len);", "code": "s.erase(pos, len);", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-map",
+    "category": "STL Map",
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-map-decl", "icon": "database", "label": "{{STD}}map<{{STD}}string, int> m;", "code": "{{STD}}map<{{STD}}string, int> m;", "mode": "line" },
+        { "id": "stl-map-init", "icon": "database", "label": "{{STD}}map<{{STD}}string, int> m = {{\"a\", 1}, {\"b\", 2}};", "code": "{{STD}}map<{{STD}}string, int> m = {{\"a\", 1}, {\"b\", 2}};", "mode": "line" },
+        { "id": "stl-map-insert", "icon": "plus", "label": "m[\"key\"] = val;", "code": "m[\"key\"] = val;", "mode": "line" },
+        { "id": "stl-map-at", "icon": "location-arrow", "label": "m.at(\"key\")", "code": "m.at(\"key\")", "mode": "exp" },
+        { "id": "stl-map-find", "icon": "search", "label": "m.find(\"key\")", "code": "m.find(\"key\")", "mode": "exp" },
+        { "id": "stl-map-count", "icon": "calculator", "label": "m.count(\"key\")", "code": "m.count(\"key\")", "mode": "exp" },
+        { "id": "stl-map-erase", "icon": "cut", "label": "m.erase(\"key\");", "code": "m.erase(\"key\");", "mode": "line" },
+        { "id": "stl-map-size", "icon": "ruler-horizontal", "label": "m.size()", "code": "m.size()", "mode": "exp" },
+        { "id": "stl-map-empty", "icon": "equals", "label": "m.empty()", "code": "m.empty()", "mode": "exp" },
+        { "id": "stl-map-clear", "icon": "times", "label": "m.clear();", "code": "m.clear();", "mode": "line" },
+        { "id": "stl-map-for", "icon": "forward", "label": "for (auto& p : m) { }", "code": "for (auto& p : m) {\n    \n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-set",
+    "category": "STL Set",
+    "icon": "star",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-set-decl", "icon": "star", "label": "{{STD}}set<int> s;", "code": "{{STD}}set<int> s;", "mode": "line" },
+        { "id": "stl-set-init", "icon": "star", "label": "{{STD}}set<int> s = {1, 2, 3};", "code": "{{STD}}set<int> s = {1, 2, 3};", "mode": "line" },
+        { "id": "stl-set-insert", "icon": "plus", "label": "s.insert(x);", "code": "s.insert(x);", "mode": "line" },
+        { "id": "stl-set-erase", "icon": "cut", "label": "s.erase(x);", "code": "s.erase(x);", "mode": "line" },
+        { "id": "stl-set-find", "icon": "search", "label": "s.find(x)", "code": "s.find(x)", "mode": "exp" },
+        { "id": "stl-set-count", "icon": "calculator", "label": "s.count(x)", "code": "s.count(x)", "mode": "exp" },
+        { "id": "stl-set-size", "icon": "ruler-horizontal", "label": "s.size()", "code": "s.size()", "mode": "exp" },
+        { "id": "stl-set-empty", "icon": "equals", "label": "s.empty()", "code": "s.empty()", "mode": "exp" },
+        { "id": "stl-set-clear", "icon": "times", "label": "s.clear();", "code": "s.clear();", "mode": "line" },
+        { "id": "stl-set-for", "icon": "forward", "label": "for (int x : s) { }", "code": "for (int x : s) {\n    \n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-stack",
+    "category": "STL Stack Queue",
+    "icon": "cubes",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-stack-decl", "icon": "cubes", "label": "{{STD}}stack<int> st;", "code": "{{STD}}stack<int> st;", "mode": "line" },
+        { "id": "stl-stack-push", "icon": "arrow-down", "label": "st.push(x);", "code": "st.push(x);", "mode": "line" },
+        { "id": "stl-stack-pop", "icon": "arrow-up", "label": "st.pop();", "code": "st.pop();", "mode": "line" },
+        { "id": "stl-stack-top", "icon": "arrow-up", "label": "st.top()", "code": "st.top()", "mode": "exp" },
+        { "id": "stl-stack-empty", "icon": "equals", "label": "st.empty()", "code": "st.empty()", "mode": "exp" },
+        { "id": "stl-stack-size", "icon": "ruler-horizontal", "label": "st.size()", "code": "st.size()", "mode": "exp" },
+        { "id": "stl-queue-decl", "icon": "cubes", "label": "{{STD}}queue<int> q;", "code": "{{STD}}queue<int> q;", "mode": "line" },
+        { "id": "stl-queue-push", "icon": "arrow-right", "label": "q.push(x);", "code": "q.push(x);", "mode": "line" },
+        { "id": "stl-queue-pop", "icon": "arrow-right", "label": "q.pop();", "code": "q.pop();", "mode": "line" },
+        { "id": "stl-queue-front", "icon": "arrow-up", "label": "q.front()", "code": "q.front()", "mode": "exp" },
+        { "id": "stl-queue-back", "icon": "arrow-down", "label": "q.back()", "code": "q.back()", "mode": "exp" },
+        { "id": "stl-queue-empty", "icon": "equals", "label": "q.empty()", "code": "q.empty()", "mode": "exp" },
+        { "id": "stl-queue-size", "icon": "ruler-horizontal", "label": "q.size()", "code": "q.size()", "mode": "exp" },
+        { "id": "stl-pq-decl", "icon": "cubes", "label": "{{STD}}priority_queue<int> pq;", "code": "{{STD}}priority_queue<int> pq;", "mode": "line" },
+        { "id": "stl-pq-push", "icon": "arrow-down", "label": "pq.push(x);", "code": "pq.push(x);", "mode": "line" },
+        { "id": "stl-pq-pop", "icon": "arrow-up", "label": "pq.pop();", "code": "pq.pop();", "mode": "line" },
+        { "id": "stl-pq-top", "icon": "arrow-up", "label": "pq.top()", "code": "pq.top()", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-deque-list",
+    "category": "STL Deque List",
+    "icon": "list",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-deque-decl", "icon": "list", "label": "{{STD}}deque<int> dq;", "code": "{{STD}}deque<int> dq;", "mode": "line" },
+        { "id": "stl-deque-push-front", "icon": "arrow-up", "label": "dq.push_front(x);", "code": "dq.push_front(x);", "mode": "line" },
+        { "id": "stl-deque-push-back", "icon": "arrow-down", "label": "dq.push_back(x);", "code": "dq.push_back(x);", "mode": "line" },
+        { "id": "stl-deque-pop-front", "icon": "arrow-up", "label": "dq.pop_front();", "code": "dq.pop_front();", "mode": "line" },
+        { "id": "stl-deque-pop-back", "icon": "arrow-down", "label": "dq.pop_back();", "code": "dq.pop_back();", "mode": "line" },
+        { "id": "stl-deque-front", "icon": "arrow-up", "label": "dq.front()", "code": "dq.front()", "mode": "exp" },
+        { "id": "stl-deque-back", "icon": "arrow-down", "label": "dq.back()", "code": "dq.back()", "mode": "exp" },
+        { "id": "stl-list-decl", "icon": "list", "label": "{{STD}}list<int> lt;", "code": "{{STD}}list<int> lt;", "mode": "line" },
+        { "id": "stl-list-push-back", "icon": "arrow-down", "label": "lt.push_back(x);", "code": "lt.push_back(x);", "mode": "line" },
+        { "id": "stl-list-remove", "icon": "cut", "label": "lt.remove(x);", "code": "lt.remove(x);", "mode": "line" },
+        { "id": "stl-list-splice", "icon": "exchange-alt", "label": "lt.splice(lt.begin(), lt2);", "code": "lt.splice(lt.begin(), lt2);", "mode": "line" },
+        { "id": "stl-array-decl", "icon": "list", "label": "{{STD}}array<int, 5> a;", "code": "{{STD}}array<int, 5> a;", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-unordered",
+    "category": "STL Unordered",
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-umap-decl", "icon": "database", "label": "{{STD}}unordered_map<{{STD}}string, int> um;", "code": "{{STD}}unordered_map<{{STD}}string, int> um;", "mode": "line" },
+        { "id": "stl-umap-insert", "icon": "plus", "label": "um[\"key\"] = val;", "code": "um[\"key\"] = val;", "mode": "line" },
+        { "id": "stl-umap-find", "icon": "search", "label": "um.find(\"key\")", "code": "um.find(\"key\")", "mode": "exp" },
+        { "id": "stl-umap-count", "icon": "calculator", "label": "um.count(\"key\")", "code": "um.count(\"key\")", "mode": "exp" },
+        { "id": "stl-uset-decl", "icon": "star", "label": "{{STD}}unordered_set<int> us;", "code": "{{STD}}unordered_set<int> us;", "mode": "line" },
+        { "id": "stl-uset-insert", "icon": "plus", "label": "us.insert(x);", "code": "us.insert(x);", "mode": "line" },
+        { "id": "stl-uset-count", "icon": "calculator", "label": "us.count(x)", "code": "us.count(x)", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-bitset",
+    "category": "STL Bitset",
+    "icon": "cubes",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-bitset-decl", "icon": "cubes", "label": "{{STD}}bitset<32> b;", "code": "{{STD}}bitset<32> b;", "mode": "line" },
+        { "id": "stl-bitset-set", "icon": "plus", "label": "b.set(i);", "code": "b.set(i);", "mode": "line" },
+        { "id": "stl-bitset-reset", "icon": "times", "label": "b.reset(i);", "code": "b.reset(i);", "mode": "line" },
+        { "id": "stl-bitset-flip", "icon": "exchange-alt", "label": "b.flip(i);", "code": "b.flip(i);", "mode": "line" },
+        { "id": "stl-bitset-test", "icon": "equals", "label": "b.test(i)", "code": "b.test(i)", "mode": "exp" },
+        { "id": "stl-bitset-count", "icon": "calculator", "label": "b.count()", "code": "b.count()", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-bsearch",
+    "category": "STL Binary Search",
+    "icon": "search",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-bsearch-lower", "icon": "search", "label": "{{STD}}lower_bound(v.begin(), v.end(), x)", "code": "{{STD}}lower_bound(v.begin(), v.end(), x)", "mode": "exp" },
+        { "id": "stl-bsearch-upper", "icon": "search", "label": "{{STD}}upper_bound(v.begin(), v.end(), x)", "code": "{{STD}}upper_bound(v.begin(), v.end(), x)", "mode": "exp" },
+        { "id": "stl-bsearch-exists", "icon": "equals", "label": "{{STD}}binary_search(v.begin(), v.end(), x)", "code": "{{STD}}binary_search(v.begin(), v.end(), x)", "mode": "exp" },
+        { "id": "stl-bsearch-map-lower", "icon": "database", "label": "m.lower_bound(key)", "code": "m.lower_bound(key)", "mode": "exp" },
+        { "id": "stl-bsearch-map-upper", "icon": "database", "label": "m.upper_bound(key)", "code": "m.upper_bound(key)", "mode": "exp" },
+        { "id": "stl-bsearch-set-lower", "icon": "star", "label": "s.lower_bound(x)", "code": "s.lower_bound(x)", "mode": "exp" },
+        { "id": "stl-bsearch-set-upper", "icon": "star", "label": "s.upper_bound(x)", "code": "s.upper_bound(x)", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-algo",
+    "category": "STL Algorithm",
+    "icon": "tools",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-algo-sort", "icon": "exchange-alt", "label": "{{STD}}sort(v.begin(), v.end());", "code": "{{STD}}sort(v.begin(), v.end());", "mode": "line" },
+        { "id": "stl-algo-sort-desc", "icon": "exchange-alt", "label": "{{STD}}sort(v.begin(), v.end(), {{STD}}greater<int>());", "code": "{{STD}}sort(v.begin(), v.end(), {{STD}}greater<int>());", "mode": "line" },
+        { "id": "stl-algo-sort-lambda", "icon": "exchange-alt", "label": "{{STD}}sort(v.begin(), v.end(), [](int a, int b) { return a < b; });", "code": "{{STD}}sort(v.begin(), v.end(), [](int a, int b) { return a < b; });", "mode": "line" },
+        { "id": "stl-algo-reverse", "icon": "exchange-alt", "label": "{{STD}}reverse(v.begin(), v.end());", "code": "{{STD}}reverse(v.begin(), v.end());", "mode": "line" },
+        { "id": "stl-algo-find", "icon": "search", "label": "{{STD}}find(v.begin(), v.end(), x)", "code": "{{STD}}find(v.begin(), v.end(), x)", "mode": "exp" },
+        { "id": "stl-algo-count", "icon": "calculator", "label": "{{STD}}count(v.begin(), v.end(), x)", "code": "{{STD}}count(v.begin(), v.end(), x)", "mode": "exp" },
+        { "id": "stl-algo-max", "icon": "arrow-up", "label": "{{STD}}max(a, b)", "code": "{{STD}}max(a, b)", "mode": "exp" },
+        { "id": "stl-algo-min", "icon": "arrow-down", "label": "{{STD}}min(a, b)", "code": "{{STD}}min(a, b)", "mode": "exp" },
+        { "id": "stl-algo-max-element", "icon": "arrow-up", "label": "{{STD}}max_element(v.begin(), v.end())", "code": "{{STD}}max_element(v.begin(), v.end())", "mode": "exp" },
+        { "id": "stl-algo-min-element", "icon": "arrow-down", "label": "{{STD}}min_element(v.begin(), v.end())", "code": "{{STD}}min_element(v.begin(), v.end())", "mode": "exp" },
+        { "id": "stl-algo-sum", "icon": "plus", "label": "{{STD}}accumulate(v.begin(), v.end(), 0)", "code": "{{STD}}accumulate(v.begin(), v.end(), 0)", "mode": "exp" },
+        { "id": "stl-algo-swap", "icon": "exchange-alt", "label": "{{STD}}swap(a, b);", "code": "{{STD}}swap(a, b);", "mode": "line" },
+        { "id": "stl-algo-unique", "icon": "cut", "label": "v.erase({{STD}}unique(v.begin(), v.end()), v.end());", "code": "v.erase({{STD}}unique(v.begin(), v.end()), v.end());", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-perm",
+    "category": "STL Permutation",
+    "icon": "forward",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-perm-next", "icon": "forward", "label": "{{STD}}next_permutation(v.begin(), v.end());", "code": "{{STD}}next_permutation(v.begin(), v.end());", "mode": "line" },
+        { "id": "stl-perm-prev", "icon": "arrow-right", "label": "{{STD}}prev_permutation(v.begin(), v.end());", "code": "{{STD}}prev_permutation(v.begin(), v.end());", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-iter",
+    "category": "STL Iterator",
+    "icon": "forward",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-iter-begin", "icon": "forward", "label": "v.begin()", "code": "v.begin()", "mode": "exp" },
+        { "id": "stl-iter-end", "icon": "forward", "label": "v.end()", "code": "v.end()", "mode": "exp" },
+        { "id": "stl-iter-rbegin", "icon": "arrow-right", "label": "v.rbegin()", "code": "v.rbegin()", "mode": "exp" },
+        { "id": "stl-iter-rend", "icon": "arrow-right", "label": "v.rend()", "code": "v.rend()", "mode": "exp" },
+        { "id": "stl-iter-for", "icon": "forward", "label": "for (auto it = v.begin(); it != v.end(); ++it) { }", "code": "for (auto it = v.begin(); it != v.end(); ++it) {\n    \n}", "mode": "line" },
+        { "id": "stl-iter-for-rev", "icon": "arrow-right", "label": "for (auto it = v.rbegin(); it != v.rend(); ++it) { }", "code": "for (auto it = v.rbegin(); it != v.rend(); ++it) {\n    \n}", "mode": "line" },
+        { "id": "stl-iter-deref", "icon": "star", "label": "*it", "code": "*it", "mode": "exp" },
+        { "id": "stl-iter-advance", "icon": "forward", "label": "{{STD}}advance(it, n);", "code": "{{STD}}advance(it, n);", "mode": "line" },
+        { "id": "stl-iter-distance", "icon": "ruler-horizontal", "label": "{{STD}}distance(v.begin(), v.end())", "code": "{{STD}}distance(v.begin(), v.end())", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-stl-util",
+    "category": "STL Utility",
+    "icon": "tools",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "stl-util-pair", "icon": "link", "label": "{{STD}}pair<int, int> p = {1, 2};", "code": "{{STD}}pair<int, int> p = {1, 2};", "mode": "line" },
+        { "id": "stl-util-make-pair", "icon": "link", "label": "{{STD}}make_pair(a, b)", "code": "{{STD}}make_pair(a, b)", "mode": "exp" },
+        { "id": "stl-util-tuple", "icon": "cubes", "label": "{{STD}}tuple<int, int, int> t = {1, 2, 3};", "code": "{{STD}}tuple<int, int, int> t = {1, 2, 3};", "mode": "line" },
+        { "id": "stl-util-get", "icon": "location-arrow", "label": "{{STD}}get<0>(t)", "code": "{{STD}}get<0>(t)", "mode": "exp" },
+        { "id": "stl-util-include", "icon": "file-import", "label": "#include <vector>", "code": "#include <vector>", "mode": "line" },
+        { "id": "stl-util-include-algo", "icon": "file-import", "label": "#include <algorithm>", "code": "#include <algorithm>", "mode": "line" },
+        { "id": "stl-util-include-map", "icon": "file-import", "label": "#include <map>", "code": "#include <map>", "mode": "line" },
+        { "id": "stl-util-include-set", "icon": "file-import", "label": "#include <set>", "code": "#include <set>", "mode": "line" },
+        { "id": "stl-util-include-string", "icon": "file-import", "label": "#include <string>", "code": "#include <string>", "mode": "line" },
+        { "id": "stl-util-include-queue", "icon": "file-import", "label": "#include <queue>", "code": "#include <queue>", "mode": "line" },
+        { "id": "stl-util-include-stack", "icon": "file-import", "label": "#include <stack>", "code": "#include <stack>", "mode": "line" },
+        { "id": "stl-util-include-numeric", "icon": "file-import", "label": "#include <numeric>", "code": "#include <numeric>", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  }
+]

@@ -1,0 +1,212 @@
+[
+  {
+    "id": "cat-oi-template",
+    "category": "OI Template",
+    "icon": "star",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-tpl-fastio-inc", "icon": "file-import", "label": "#include <bits/stdc++.h>", "code": "#include <bits/stdc++.h>", "mode": "line" },
+        { "id": "oi-tpl-using", "icon": "file-import", "label": "using namespace {{STD}};", "code": "using namespace {{STD}};", "mode": "line" },
+        { "id": "oi-tpl-typedef-ll", "icon": "equals", "label": "typedef long long ll;", "code": "typedef long long ll;", "mode": "line" },
+        { "id": "oi-tpl-typedef-pii", "icon": "equals", "label": "typedef pair<int, int> pii;", "code": "typedef pair<int, int> pii;", "mode": "line" },
+        { "id": "oi-tpl-main", "icon": "play", "label": "int main() { }", "code": "int main() {\n    {{STD}}ios::sync_with_stdio(false);\n    {{STD}}cin.tie(0);\n    \n    return 0;\n}", "mode": "line" },
+        { "id": "oi-tpl-sync", "icon": "bolt", "label": "{{STD}}ios::sync_with_stdio(false);", "code": "{{STD}}ios::sync_with_stdio(false);", "mode": "line" },
+        { "id": "oi-tpl-cin-tie", "icon": "bolt", "label": "{{STD}}cin.tie(0);", "code": "{{STD}}cin.tie(0);", "mode": "line" },
+        { "id": "oi-tpl-endl", "icon": "bolt", "label": "{{STD}}cout.tie(0);", "code": "{{STD}}cout.tie(0);", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-io",
+    "category": "OI Fast IO",
+    "icon": "terminal",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-io-cin", "icon": "keyboard", "label": "{{STD}}cin >> n;", "code": "{{STD}}cin >> n;", "mode": "line" },
+        { "id": "oi-io-cin-multi", "icon": "keyboard", "label": "{{STD}}cin >> n >> m;", "code": "{{STD}}cin >> n >> m;", "mode": "line" },
+        { "id": "oi-io-cout", "icon": "print", "label": "{{STD}}cout << ans << \"\\n\";", "code": "{{STD}}cout << ans << \"\\n\";", "mode": "line" },
+        { "id": "oi-io-printf", "icon": "print", "label": "printf(\"%d\\n\", ans);", "code": "printf(\"%d\\n\", ans);", "mode": "line" },
+        { "id": "oi-io-printf-ll", "icon": "print", "label": "printf(\"%lld\\n\", ans);", "code": "printf(\"%lld\\n\", ans);", "mode": "line" },
+        { "id": "oi-io-scanf", "icon": "keyboard", "label": "scanf(\"%d\", &n);", "code": "scanf(\"%d\", &n);", "mode": "line" },
+        { "id": "oi-io-getline", "icon": "keyboard", "label": "{{STD}}getline({{STD}}cin, s);", "code": "{{STD}}getline({{STD}}cin, s);", "mode": "line" },
+        { "id": "oi-io-read-int", "icon": "bolt", "label": "快读模板 int read()", "code": "inline int read() {\n    int x = 0, f = 1;\n    char c = getchar();\n    while (c < '0' || c > '9') { if (c == '-') f = -1; c = getchar(); }\n    while (c >= '0' && c <= '9') { x = x * 10 + c - '0'; c = getchar(); }\n    return x * f;\n}", "mode": "line" },
+        { "id": "oi-io-write-int", "icon": "bolt", "label": "快写模板 void write(int x)", "code": "inline void write(int x) {\n    if (x < 0) { putchar('-'); x = -x; }\n    if (x > 9) write(x / 10);\n    putchar(x % 10 + '0');\n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-bit",
+    "category": "OI Bit Operation",
+    "icon": "bolt",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-bit-and", "icon": "equals", "label": "a & b", "code": "a & b", "mode": "exp" },
+        { "id": "oi-bit-or", "icon": "equals", "label": "a | b", "code": "a | b", "mode": "exp" },
+        { "id": "oi-bit-xor", "icon": "equals", "label": "a ^ b", "code": "a ^ b", "mode": "exp" },
+        { "id": "oi-bit-not", "icon": "equals", "label": "~a", "code": "~a", "mode": "exp" },
+        { "id": "oi-bit-shl", "icon": "arrow-up", "label": "a << b", "code": "a << b", "mode": "exp" },
+        { "id": "oi-bit-shr", "icon": "arrow-down", "label": "a >> b", "code": "a >> b", "mode": "exp" },
+        { "id": "oi-bit-lowbit", "icon": "bolt", "label": "x & -x", "code": "x & -x", "mode": "exp" },
+        { "id": "oi-bit-check", "icon": "search", "label": "(x >> i) & 1", "code": "(x >> i) & 1", "mode": "exp" },
+        { "id": "oi-bit-set", "icon": "plus", "label": "x | (1 << i)", "code": "x | (1 << i)", "mode": "exp" },
+        { "id": "oi-bit-clear", "icon": "times", "label": "x & ~(1 << i)", "code": "x & ~(1 << i)", "mode": "exp" },
+        { "id": "oi-bit-flip", "icon": "exchange-alt", "label": "x ^ (1 << i)", "code": "x ^ (1 << i)", "mode": "exp" },
+        { "id": "oi-bit-count", "icon": "calculator", "label": "__builtin_popcount(x)", "code": "__builtin_popcount(x)", "mode": "exp" },
+        { "id": "oi-bit-countll", "icon": "calculator", "label": "__builtin_popcountll(x)", "code": "__builtin_popcountll(x)", "mode": "exp" },
+        { "id": "oi-bit-ctz", "icon": "calculator", "label": "__builtin_ctz(x)", "code": "__builtin_ctz(x)", "mode": "exp" },
+        { "id": "oi-bit-clz", "icon": "calculator", "label": "__builtin_clz(x)", "code": "__builtin_clz(x)", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-math",
+    "category": "OI Math",
+    "icon": "calculator",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-math-abs", "icon": "absolute", "label": "abs(x)", "code": "abs(x)", "mode": "exp" },
+        { "id": "oi-math-max", "icon": "arrow-up", "label": "{{STD}}max(a, b)", "code": "{{STD}}max(a, b)", "mode": "exp" },
+        { "id": "oi-math-min", "icon": "arrow-down", "label": "{{STD}}min(a, b)", "code": "{{STD}}min(a, b)", "mode": "exp" },
+        { "id": "oi-math-swap", "icon": "exchange-alt", "label": "{{STD}}swap(a, b);", "code": "{{STD}}swap(a, b);", "mode": "line" },
+        { "id": "oi-math-sqrt", "icon": "square-root-alt", "label": "sqrt(x)", "code": "sqrt(x)", "mode": "exp" },
+        { "id": "oi-math-pow", "icon": "superscript", "label": "pow(x, n)", "code": "pow(x, n)", "mode": "exp" },
+        { "id": "oi-math-floor", "icon": "arrow-down", "label": "floor(x)", "code": "floor(x)", "mode": "exp" },
+        { "id": "oi-math-ceil", "icon": "arrow-up", "label": "ceil(x)", "code": "ceil(x)", "mode": "exp" },
+        { "id": "oi-math-gcd", "icon": "calculator", "label": "{{STD}}gcd(a, b)", "code": "{{STD}}gcd(a, b)", "mode": "exp" },
+        { "id": "oi-math-lcm", "icon": "calculator", "label": "{{STD}}lcm(a, b)", "code": "{{STD}}lcm(a, b)", "mode": "exp" },
+        { "id": "oi-math-gcd-func", "icon": "calculator", "label": "int gcd(int a, int b) { }", "code": "int gcd(int a, int b) {\n    return b == 0 ? a : gcd(b, a % b);\n}", "mode": "line" },
+        { "id": "oi-math-pow-mod", "icon": "superscript", "label": "快速幂 ll qpow(ll a, ll b, ll mod)", "code": "ll qpow(ll a, ll b, ll mod) {\n    ll res = 1;\n    while (b) {\n        if (b & 1) res = res * a % mod;\n        a = a * a % mod;\n        b >>= 1;\n    }\n    return res;\n}", "mode": "line" },
+        { "id": "oi-math-mod", "icon": "percent", "label": "const int MOD = 1e9 + 7;", "code": "const int MOD = 1e9 + 7;", "mode": "line" },
+        { "id": "oi-math-pi", "icon": "circle", "label": "const double PI = acos(-1.0);", "code": "const double PI = acos(-1.0);", "mode": "line" },
+        { "id": "oi-math-inf", "icon": "exclamation-triangle", "label": "const int INF = 0x3f3f3f3f;", "code": "const int INF = 0x3f3f3f3f;", "mode": "line" },
+        { "id": "oi-math-random", "icon": "exchange-alt", "label": "{{STD}}mt19937 rng({{STD}}random_device{}());", "code": "{{STD}}mt19937 rng({{STD}}random_device{}());", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-dp",
+    "category": "OI DP",
+    "icon": "chart-line",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-dp-init", "icon": "equals", "label": "dp[0] = 0;", "code": "dp[0] = 0;", "mode": "line" },
+        { "id": "oi-dp-memset", "icon": "equals", "label": "memset(dp, 0x3f, sizeof(dp));", "code": "memset(dp, 0x3f, sizeof(dp));", "mode": "line" },
+        { "id": "oi-dp-trans", "icon": "exchange-alt", "label": "dp[i] = max(dp[i], dp[i - 1] + a[i]);", "code": "dp[i] = {{STD}}max(dp[i], dp[i - 1] + a[i]);", "mode": "line" },
+        { "id": "oi-dp-trans-min", "icon": "exchange-alt", "label": "dp[i] = min(dp[i], dp[i - 1] + a[i]);", "code": "dp[i] = {{STD}}min(dp[i], dp[i - 1] + a[i]);", "mode": "line" },
+        { "id": "oi-dp-fill", "icon": "equals", "label": "{{STD}}fill(dp, dp + n + 1, 0);", "code": "{{STD}}fill(dp, dp + n + 1, 0);", "mode": "line" },
+        { "id": "oi-dp-fill-inf", "icon": "equals", "label": "{{STD}}fill(dp, dp + n + 1, INF);", "code": "{{STD}}fill(dp, dp + n + 1, INF);", "mode": "line" },
+        { "id": "oi-dp-2d", "icon": "chart-line", "label": "dp[i][j] = dp[i - 1][j] + dp[i][j - 1];", "code": "dp[i][j] = dp[i - 1][j] + dp[i][j - 1];", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-graph",
+    "category": "OI Graph",
+    "icon": "code-branch",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-graph-adj", "icon": "code-branch", "label": "{{STD}}vector<int> adj[N];", "code": "{{STD}}vector<int> adj[N];", "mode": "line" },
+        { "id": "oi-graph-add", "icon": "link", "label": "adj[u].push_back(v);", "code": "adj[u].push_back(v);", "mode": "line" },
+        { "id": "oi-graph-add2", "icon": "link", "label": "adj[u].push_back(v); adj[v].push_back(u);", "code": "adj[u].push_back(v);\nadj[v].push_back(u);", "mode": "line" },
+        { "id": "oi-graph-edge", "icon": "link", "label": "{{STD}}vector<pair<int, int>> edges;", "code": "{{STD}}vector<pair<int, int>> edges;", "mode": "line" },
+        { "id": "oi-graph-bfs", "icon": "forward", "label": "BFS 模板", "code": "{{STD}}queue<int> q;\nq.push(s);\nvis[s] = true;\nwhile (!q.empty()) {\n    int u = q.front(); q.pop();\n    for (int v : adj[u]) {\n        if (!vis[v]) { vis[v] = true; q.push(v); }\n    }\n}", "mode": "line" },
+        { "id": "oi-graph-dfs", "icon": "forward", "label": "DFS 模板 void dfs(int u)", "code": "void dfs(int u) {\n    vis[u] = true;\n    for (int v : adj[u]) {\n        if (!vis[v]) dfs(v);\n    }\n}", "mode": "line" },
+        { "id": "oi-graph-dij", "icon": "calculator", "label": "Dijkstra 模板", "code": "{{STD}}priority_queue<pair<int, int>, {{STD}}vector<pair<int, int>>, {{STD}}greater<pair<int, int>>> pq;\npq.push({0, s});\n{{STD}}fill(dist, dist + n + 1, INF);\ndist[s] = 0;\nwhile (!pq.empty()) {\n    auto [d, u] = pq.top(); pq.pop();\n    if (d > dist[u]) continue;\n    for (auto [v, w] : adj[u]) {\n        if (dist[v] > dist[u] + w) {\n            dist[v] = dist[u] + w;\n            pq.push({dist[v], v});\n        }\n    }\n}", "mode": "line" },
+        { "id": "oi-graph-dsu", "icon": "exchange-alt", "label": "并查集模板", "code": "int fa[N];\nint find(int x) { return fa[x] == x ? x : fa[x] = find(fa[x]); }\nvoid merge(int a, int b) { fa[find(a)] = find(b); }", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-ds",
+    "category": "OI Data Structure",
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-ds-arr", "icon": "list", "label": "int a[N];", "code": "int a[N];", "mode": "line" },
+        { "id": "oi-ds-arr-init", "icon": "list", "label": "int a[N] = {0};", "code": "int a[N] = {0};", "mode": "line" },
+        { "id": "oi-ds-2d", "icon": "list", "label": "int a[N][N];", "code": "int a[N][N];", "mode": "line" },
+        { "id": "oi-ds-vec", "icon": "list", "label": "{{STD}}vector<int> v;", "code": "{{STD}}vector<int> v;", "mode": "line" },
+        { "id": "oi-ds-vec-resize", "icon": "list", "label": "v.resize(n + 1);", "code": "v.resize(n + 1);", "mode": "line" },
+        { "id": "oi-ds-stack", "icon": "cubes", "label": "{{STD}}stack<int> st;", "code": "{{STD}}stack<int> st;", "mode": "line" },
+        { "id": "oi-ds-queue", "icon": "cubes", "label": "{{STD}}queue<int> q;", "code": "{{STD}}queue<int> q;", "mode": "line" },
+        { "id": "oi-ds-deque", "icon": "cubes", "label": "{{STD}}deque<int> dq;", "code": "{{STD}}deque<int> dq;", "mode": "line" },
+        { "id": "oi-ds-pq-min", "icon": "arrow-up", "label": "{{STD}}priority_queue<int, {{STD}}vector<int>, {{STD}}greater<int>> pq;", "code": "{{STD}}priority_queue<int, {{STD}}vector<int>, {{STD}}greater<int>> pq;", "mode": "line" },
+        { "id": "oi-ds-pq-max", "icon": "arrow-down", "label": "{{STD}}priority_queue<int> pq;", "code": "{{STD}}priority_queue<int> pq;", "mode": "line" },
+        { "id": "oi-ds-set", "icon": "star", "label": "{{STD}}set<int> s;", "code": "{{STD}}set<int> s;", "mode": "line" },
+        { "id": "oi-ds-multiset", "icon": "star", "label": "{{STD}}multiset<int> ms;", "code": "{{STD}}multiset<int> ms;", "mode": "line" },
+        { "id": "oi-ds-map", "icon": "database", "label": "{{STD}}map<int, int> mp;", "code": "{{STD}}map<int, int> mp;", "mode": "line" },
+        { "id": "oi-ds-umap", "icon": "database", "label": "{{STD}}unordered_map<int, int> mp;", "code": "{{STD}}unordered_map<int, int> mp;", "mode": "line" },
+        { "id": "oi-ds-lowbit", "icon": "bolt", "label": "树状数组模板", "code": "int tr[N];\nvoid add(int i, int x) { for (; i <= n; i += i & -i) tr[i] += x; }\nint query(int i) { int s = 0; for (; i; i -= i & -i) s += tr[i]; return s; }", "mode": "line" },
+        { "id": "oi-ds-seg", "icon": "code-branch", "label": "线段树模板", "code": "int tr[N << 2];\nvoid build(int p, int l, int r) {\n    if (l == r) { tr[p] = a[l]; return; }\n    int mid = (l + r) >> 1;\n    build(p << 1, l, mid);\n    build(p << 1 | 1, mid + 1, r);\n    tr[p] = tr[p << 1] + tr[p << 1 | 1];\n}", "mode": "line" },
+        { "id": "oi-ds-seg-push", "icon": "code-branch", "label": "线段树 pushdown", "code": "void pushdown(int p, int l, int r) {\n    if (tag[p]) {\n        int mid = (l + r) >> 1;\n        tr[p << 1] += tag[p] * (mid - l + 1);\n        tr[p << 1 | 1] += tag[p] * (r - mid);\n        tag[p << 1] += tag[p];\n        tag[p << 1 | 1] += tag[p];\n        tag[p] = 0;\n    }\n}", "mode": "line" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-string",
+    "category": "OI String",
+    "icon": "font",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-str-chararr", "icon": "font", "label": "char s[N];", "code": "char s[N];", "mode": "line" },
+        { "id": "oi-str-scanf", "icon": "keyboard", "label": "scanf(\"%s\", s);", "code": "scanf(\"%s\", s);", "mode": "line" },
+        { "id": "oi-str-strlen", "icon": "ruler-horizontal", "label": "strlen(s)", "code": "strlen(s)", "mode": "exp" },
+        { "id": "oi-str-strcmp", "icon": "balance-scale", "label": "strcmp(a, b)", "code": "strcmp(a, b)", "mode": "exp" },
+        { "id": "oi-str-strcpy", "icon": "exchange-alt", "label": "strcpy(dst, src);", "code": "strcpy(dst, src);", "mode": "line" },
+        { "id": "oi-str-memset", "icon": "equals", "label": "memset(s, 0, sizeof(s));", "code": "memset(s, 0, sizeof(s));", "mode": "line" },
+        { "id": "oi-str-cpp", "icon": "font", "label": "{{STD}}string s;", "code": "{{STD}}string s;", "mode": "line" },
+        { "id": "oi-str-substr", "icon": "cut", "label": "s.substr(pos, len)", "code": "s.substr(pos, len)", "mode": "exp" },
+        { "id": "oi-str-find", "icon": "search", "label": "s.find(\"abc\")", "code": "s.find(\"abc\")", "mode": "exp" },
+        { "id": "oi-str-stoi", "icon": "calculator", "label": "{{STD}}stoi(s)", "code": "{{STD}}stoi(s)", "mode": "exp" },
+        { "id": "oi-str-tostr", "icon": "calculator", "label": "{{STD}}to_string(x)", "code": "{{STD}}to_string(x)", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-oi-trick",
+    "category": "OI Trick",
+    "icon": "bolt",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "oi-trick-sort", "icon": "exchange-alt", "label": "{{STD}}sort(a + 1, a + n + 1);", "code": "{{STD}}sort(a + 1, a + n + 1);", "mode": "line" },
+        { "id": "oi-trick-sort-desc", "icon": "exchange-alt", "label": "{{STD}}sort(a + 1, a + n + 1, {{STD}}greater<int>());", "code": "{{STD}}sort(a + 1, a + n + 1, {{STD}}greater<int>());", "mode": "line" },
+        { "id": "oi-trick-unique", "icon": "cut", "label": "n = {{STD}}unique(a + 1, a + n + 1) - a - 1;", "code": "n = {{STD}}unique(a + 1, a + n + 1) - a - 1;", "mode": "line" },
+        { "id": "oi-trick-reverse", "icon": "exchange-alt", "label": "{{STD}}reverse(a + 1, a + n + 1);", "code": "{{STD}}reverse(a + 1, a + n + 1);", "mode": "line" },
+        { "id": "oi-trick-lower", "icon": "search", "label": "{{STD}}lower_bound(a + 1, a + n + 1, x) - a", "code": "{{STD}}lower_bound(a + 1, a + n + 1, x) - a", "mode": "exp" },
+        { "id": "oi-trick-upper", "icon": "search", "label": "{{STD}}upper_bound(a + 1, a + n + 1, x) - a", "code": "{{STD}}upper_bound(a + 1, a + n + 1, x) - a", "mode": "exp" },
+        { "id": "oi-trick-prefix", "icon": "plus", "label": "前缀和 s[i] = s[i - 1] + a[i];", "code": "s[i] = s[i - 1] + a[i];", "mode": "line" },
+        { "id": "oi-trick-diff", "icon": "minus", "label": "差分 d[l] += x; d[r + 1] -= x;", "code": "d[l] += x;\nd[r + 1] -= x;", "mode": "line" },
+        { "id": "oi-trick-two-ptr", "icon": "forward", "label": "双指针模板", "code": "int j = 0;\nfor (int i = 1; i <= n; i++) {\n    while (j < n && check(i, j + 1)) j++;\n    \n}", "mode": "line" },
+        { "id": "oi-trick-discrete", "icon": "exchange-alt", "label": "离散化模板", "code": "{{STD}}sort(b + 1, b + n + 1);\nint m = {{STD}}unique(b + 1, b + n + 1) - b - 1;\nfor (int i = 1; i <= n; i++)\n    a[i] = {{STD}}lower_bound(b + 1, b + m + 1, a[i]) - b;", "mode": "line" },
+        { "id": "oi-trick-compress", "icon": "tools", "label": "int 与 long long 混用注意", "code": "// 注意：1LL * a * b 防溢出", "mode": "exp" }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  }
+]

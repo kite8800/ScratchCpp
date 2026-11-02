@@ -1,0 +1,595 @@
+[
+  {
+    "id": "cat-arduino-cpp",
+    "category": "Arduino C++",
+    "icon": "code",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "ard-c-delay",
+          "icon": "stop",
+          "label": "delay(1000);",
+          "code": "delay(1000);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-delay-us",
+          "icon": "stop",
+          "label": "delayMicroseconds(1000);",
+          "code": "delayMicroseconds(1000);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-comment",
+          "icon": "quote-left",
+          "label": "// 注释",
+          "code": "// 注释",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-c-block-comment",
+          "icon": "quote-left",
+          "label": "/* 块注释 */",
+          "code": "/* 块注释 */",
+          "mode": "lc"
+        }
+      ],
+      "string": [
+        {
+          "id": "ard-c-string-decl",
+          "icon": "font",
+          "label": "String s = \"abc\";",
+          "code": "String s = \"abc\";",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-string-len",
+          "icon": "ruler-horizontal",
+          "label": "s.length()",
+          "code": "s.length()",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-c-string-toint",
+          "icon": "calculator",
+          "label": "s.toInt()",
+          "code": "s.toInt()",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-c-string-charat",
+          "icon": "font",
+          "label": "s.charAt(i)",
+          "code": "s.charAt(i)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-c-string-substr",
+          "icon": "cut",
+          "label": "s.substring(a, b)",
+          "code": "s.substring(a, b)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-c-string-indexof",
+          "icon": "search",
+          "label": "s.indexOf(\"x\")",
+          "code": "s.indexOf(\"x\")",
+          "mode": "lc"
+        }
+      ],
+      "math": [
+        {
+          "id": "ard-c-random",
+          "icon": "exchange-alt",
+          "label": "random(min, max)",
+          "code": "random(min, max)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-c-randomseed",
+          "icon": "exchange-alt",
+          "label": "randomSeed(analogRead(A0));",
+          "code": "randomSeed(analogRead(A0));",
+          "mode": "line"
+        }
+      ],
+      "interrupt": [
+        {
+          "id": "ard-c-isr",
+          "icon": "bolt",
+          "label": "void isr() { }",
+          "code": "void isr() {\n  \n}",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-volatile-flag",
+          "icon": "exclamation-triangle",
+          "label": "volatile int flag = 0;",
+          "code": "volatile int flag = 0;",
+          "mode": "line"
+        }
+      ],
+      "global": [
+        {
+          "id": "ard-c-define",
+          "icon": "hashtag",
+          "label": "#define LED 13",
+          "code": "#define LED 13",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-const",
+          "icon": "hashtag",
+          "label": "const int LED = 13;",
+          "code": "const int LED = 13;",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-global-var",
+          "icon": "database",
+          "label": "int ledPin = 13;",
+          "code": "int ledPin = 13;",
+          "mode": "line"
+        },
+        {
+          "id": "ard-c-volatile-count",
+          "icon": "exclamation-triangle",
+          "label": "volatile unsigned long count = 0;",
+          "code": "volatile unsigned long count = 0;",
+          "mode": "line"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-arduino-setup",
+    "category": "Arduino Setup",
+    "icon": "play",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "ard-s-setup",
+          "icon": "play",
+          "label": "void setup() { }",
+          "code": "void setup() {\n  \n}",
+          "mode": "line"
+        }
+      ],
+      "pin": [
+        {
+          "id": "ard-s-pinmode-out",
+          "icon": "location-arrow",
+          "label": "pinMode(13, OUTPUT);",
+          "code": "pinMode(13, OUTPUT);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-pinmode-in",
+          "icon": "location-arrow",
+          "label": "pinMode(13, INPUT);",
+          "code": "pinMode(13, INPUT);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-pinmode-pullup",
+          "icon": "location-arrow",
+          "label": "pinMode(13, INPUT_PULLUP);",
+          "code": "pinMode(13, INPUT_PULLUP);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-pinmode-builtin",
+          "icon": "location-arrow",
+          "label": "pinMode(LED_BUILTIN, OUTPUT);",
+          "code": "pinMode(LED_BUILTIN, OUTPUT);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-attach-interrupt",
+          "icon": "bolt",
+          "label": "attachInterrupt(digitalPinToInterrupt(2), isr, RISING);",
+          "code": "attachInterrupt(digitalPinToInterrupt(2), isr, RISING);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-define",
+          "icon": "hashtag",
+          "label": "#define LED 13",
+          "code": "#define LED 13",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-const",
+          "icon": "hashtag",
+          "label": "const int LED = 13;",
+          "code": "const int LED = 13;",
+          "mode": "line"
+        }
+      ],
+      "serial": [
+        {
+          "id": "ard-s-serial-9600",
+          "icon": "terminal",
+          "label": "Serial.begin(9600);",
+          "code": "Serial.begin(9600);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-serial-115200",
+          "icon": "terminal",
+          "label": "Serial.begin(115200);",
+          "code": "Serial.begin(115200);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-serial-timeout",
+          "icon": "terminal",
+          "label": "Serial.setTimeout(100);",
+          "code": "Serial.setTimeout(100);",
+          "mode": "line"
+        }
+      ],
+      "bus": [
+        {
+          "id": "ard-s-wire-begin",
+          "icon": "link",
+          "label": "Wire.begin();",
+          "code": "Wire.begin();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-spi-begin",
+          "icon": "link",
+          "label": "SPI.begin();",
+          "code": "SPI.begin();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-wire-clock",
+          "icon": "link",
+          "label": "Wire.setClock(400000);",
+          "code": "Wire.setClock(400000);",
+          "mode": "line"
+        }
+      ],
+      "servo": [
+        {
+          "id": "ard-s-servo-inc",
+          "icon": "file-import",
+          "label": "#include <Servo.h>",
+          "code": "#include <Servo.h>",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-servo-obj",
+          "icon": "cubes",
+          "label": "Servo myservo;",
+          "code": "Servo myservo;",
+          "mode": "line"
+        },
+        {
+          "id": "ard-s-servo-attach",
+          "icon": "link",
+          "label": "myservo.attach(9);",
+          "code": "myservo.attach(9);",
+          "mode": "line"
+        }
+      ],
+      "eeprom": [
+        {
+          "id": "ard-s-eeprom-begin",
+          "icon": "database",
+          "label": "EEPROM.begin();",
+          "code": "EEPROM.begin();",
+          "mode": "line"
+        }
+      ],
+      "analog": [
+        {
+          "id": "ard-s-analog-reference",
+          "icon": "ruler-horizontal",
+          "label": "analogReference(DEFAULT);",
+          "code": "analogReference(DEFAULT);",
+          "mode": "line"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-arduino-loop",
+    "category": "Arduino Loop",
+    "icon": "forward",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "ard-l-loop",
+          "icon": "forward",
+          "label": "void loop() { }",
+          "code": "void loop() {\n  \n}",
+          "mode": "line"
+        }
+      ],
+      "io": [
+        {
+          "id": "ard-l-dwrite-h",
+          "icon": "arrow-up",
+          "label": "digitalWrite(13, HIGH);",
+          "code": "digitalWrite(13, HIGH);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-dwrite-l",
+          "icon": "arrow-down",
+          "label": "digitalWrite(13, LOW);",
+          "code": "digitalWrite(13, LOW);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-dread-stmt",
+          "icon": "search",
+          "label": "int v = digitalRead(13);",
+          "code": "int v = digitalRead(13);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-dread-expr",
+          "icon": "search",
+          "label": "digitalRead(13)",
+          "code": "digitalRead(13)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-aread-stmt",
+          "icon": "chart-line",
+          "label": "int v = analogRead(A0);",
+          "code": "int v = analogRead(A0);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-aread-expr",
+          "icon": "chart-line",
+          "label": "analogRead(A0)",
+          "code": "analogRead(A0)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-awrite",
+          "icon": "wave-square",
+          "label": "analogWrite(9, 128);",
+          "code": "analogWrite(9, 128);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-tone",
+          "icon": "wave-square",
+          "label": "tone(8, 440);",
+          "code": "tone(8, 440);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-notone",
+          "icon": "wave-square",
+          "label": "noTone(8);",
+          "code": "noTone(8);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-pulsein",
+          "icon": "calculator",
+          "label": "long d = pulseIn(7, HIGH);",
+          "code": "long d = pulseIn(7, HIGH);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-map",
+          "icon": "exchange-alt",
+          "label": "map(val, 0, 1023, 0, 255)",
+          "code": "map(val, 0, 1023, 0, 255)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-constrain",
+          "icon": "balance-scale",
+          "label": "constrain(val, 0, 255)",
+          "code": "constrain(val, 0, 255)",
+          "mode": "lc"
+        }
+      ],
+      "serial": [
+        {
+          "id": "ard-l-serial-print",
+          "icon": "print",
+          "label": "Serial.print(\"Hello\");",
+          "code": "Serial.print(\"Hello\");",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-serial-println",
+          "icon": "print",
+          "label": "Serial.println(\"Hello\");",
+          "code": "Serial.println(\"Hello\");",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-serial-read",
+          "icon": "keyboard",
+          "label": "int ch = Serial.read();",
+          "code": "int ch = Serial.read();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-serial-available",
+          "icon": "search",
+          "label": "Serial.available()",
+          "code": "Serial.available()",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-serial-parseint",
+          "icon": "calculator",
+          "label": "Serial.parseInt()",
+          "code": "Serial.parseInt()",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-serial-readstring",
+          "icon": "keyboard",
+          "label": "Serial.readStringUntil('\\n')",
+          "code": "Serial.readStringUntil('\\n')",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-serial-write",
+          "icon": "print",
+          "label": "Serial.write(val);",
+          "code": "Serial.write(val);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-serial-flush",
+          "icon": "print",
+          "label": "Serial.flush();",
+          "code": "Serial.flush();",
+          "mode": "line"
+        }
+      ],
+      "time": [
+        {
+          "id": "ard-l-millis",
+          "icon": "calculator",
+          "label": "unsigned long t = millis();",
+          "code": "unsigned long t = millis();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-micros",
+          "icon": "calculator",
+          "label": "unsigned long t = micros();",
+          "code": "unsigned long t = micros();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-blink",
+          "icon": "bolt",
+          "label": "闪烁模板",
+          "code": "digitalWrite(13, HIGH);\ndelay(500);\ndigitalWrite(13, LOW);\ndelay(500);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-polling",
+          "icon": "calculator",
+          "label": "非阻塞轮询模板",
+          "code": "static unsigned long last = 0;\nif (millis() - last >= 1000) {\n  last = millis();\n  \n}",
+          "mode": "line"
+        }
+      ],
+      "bus": [
+        {
+          "id": "ard-l-wire-begin-tx",
+          "icon": "link",
+          "label": "Wire.beginTransmission(addr);",
+          "code": "Wire.beginTransmission(addr);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-wire-write",
+          "icon": "link",
+          "label": "Wire.write(val);",
+          "code": "Wire.write(val);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-wire-end-tx",
+          "icon": "link",
+          "label": "Wire.endTransmission();",
+          "code": "Wire.endTransmission();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-wire-request",
+          "icon": "link",
+          "label": "Wire.requestFrom(addr, n);",
+          "code": "Wire.requestFrom(addr, n);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-wire-read",
+          "icon": "keyboard",
+          "label": "int v = Wire.read();",
+          "code": "int v = Wire.read();",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-wire-available",
+          "icon": "search",
+          "label": "Wire.available()",
+          "code": "Wire.available()",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-spi-transfer",
+          "icon": "exchange-alt",
+          "label": "SPI.transfer(val);",
+          "code": "SPI.transfer(val);",
+          "mode": "line"
+        }
+      ],
+      "servo": [
+        {
+          "id": "ard-l-servo-write",
+          "icon": "arrow-right",
+          "label": "myservo.write(90);",
+          "code": "myservo.write(90);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-servo-write-us",
+          "icon": "arrow-right",
+          "label": "myservo.writeMicroseconds(1500);",
+          "code": "myservo.writeMicroseconds(1500);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-servo-read",
+          "icon": "search",
+          "label": "myservo.read()",
+          "code": "myservo.read()",
+          "mode": "lc"
+        }
+      ],
+      "eeprom": [
+        {
+          "id": "ard-l-eeprom-read",
+          "icon": "database",
+          "label": "EEPROM.read(addr)",
+          "code": "EEPROM.read(addr)",
+          "mode": "lc"
+        },
+        {
+          "id": "ard-l-eeprom-write",
+          "icon": "database",
+          "label": "EEPROM.write(addr, val);",
+          "code": "EEPROM.write(addr, val);",
+          "mode": "line"
+        },
+        {
+          "id": "ard-l-eeprom-update",
+          "icon": "database",
+          "label": "EEPROM.update(addr, val);",
+          "code": "EEPROM.update(addr, val);",
+          "mode": "line"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  }
+]
