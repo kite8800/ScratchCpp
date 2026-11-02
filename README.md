@@ -67,6 +67,8 @@ It is easy to add customized blocks for Arduino etc.
 
 You can use AI to generate customized blocks easily. The reference propmpt is here: https://github.com/kite8800/ScratchCpp/blob/main/docs/scratchcpp_block_json_ai_prompt_20261109.txt
 
+Example customized blocks: https://github.com/kite8800/ScratchCpp/tree/main/blocks
+
 ## Block Configuration
 
 Blocks are stored as a JSON array of categories:
