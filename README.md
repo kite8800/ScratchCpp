@@ -101,7 +101,7 @@ Blocks are stored as a JSON array of categories:
 
 **Block** — `id`, `icon`, `label`, `code`, `mode`.
 - `mode: "line"` — insert at the start of the current line, preserve indentation.
-- `mode: "lc"` — insert at the cursor as an expression (labelled `Exp` in the UI).
+- `mode: "exp"` — insert at the cursor as an expression (labelled `Exp` in the UI).
 
 **C++ `std::` prefix** — write `{{STD}}` in `code` / `label`; it's replaced with `std::` or empty string based on the "omit std::" checkbox.
 
@@ -147,7 +147,7 @@ Blocks are stored as a JSON array of categories:
 
 **积木** — `id`、`icon`、`label`、`code`、`mode`。
 - `mode: "line"` — 插入到当前行行首，保留缩进。
-- `mode: "lc"` — 插入到光标处作为表达式（UI 中叫 `Exp`）。
+- `mode: "exp"` — 插入到光标处作为表达式（UI 中叫 `Exp`）。
 
 **C++ `std::` 前缀** — 在 `code` / `label` 里写 `{{STD}}`，会根据「省略 std::」开关替换为 `std::` 或空串。
 

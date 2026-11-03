@@ -71,6 +71,9 @@
 
             /* 编辑器 */
             --caret: #fff;
+            /* 代码区字号 / 行高：JS 按用户设置覆盖这两个变量（默认 15 / 24） */
+            --editor-font-size: 15px;
+            --editor-line-height: 24px;
             --selection-bg: rgba(108, 92, 231, 0.45);
             --search-bg: rgba(253, 203, 110, 0.35);
             --search-bg-current: rgba(253, 203, 110, 0.85);
@@ -465,6 +468,37 @@
             transition: 0.12s;
             border: 1px solid transparent;
             position: relative;
+            /* 触摸：纵向平移交给浏览器滚动面板，横向手势留给我们做拖拽（同时避免浏览器前进/后退手势） */
+            touch-action: pan-y;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* 触摸拖拽时的浮动预览（跟随手指，不拦截事件） */
+        .drag-preview {
+            position: fixed;
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent);
+            box-shadow: var(--shadow-lg);
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            pointer-events: none;
+            max-width: 260px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .drag-preview .block-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .block:hover {
@@ -547,6 +581,7 @@
             align-items: center;
             border-bottom: 1px solid var(--border);
             gap: 8px;
+            flex-wrap: wrap;      /* 编辑器很窄时按钮换到第二行，而不是被裁掉 */
             transition: background-color 0.18s ease, border-color 0.18s ease;
         }
 
@@ -555,7 +590,10 @@
             align-items: center;
             gap: 6px;
             flex: 1;
-            min-width: 0;
+            /* 不设 min-width:0：标题框不允许被压缩到内容宽度以下，
+               空间不够时由 .editor-header 的 flex-wrap 把按钮换到下一行，
+               而不是让标题框溢出、压在按钮上 */
+            min-width: auto;
         }
 
         .editor-header .title-area .icon {
@@ -572,8 +610,13 @@
             border-radius: 4px;
             outline: none;
             font-family: 'Courier New', monospace;
-            width: 160px;
-            transition: 0.15s;
+            /* 宽度由 JS 按文件名字符数测量后写入，保证完整显示 */
+            width: 96px;
+            min-width: 92px;
+            max-width: 360px;
+            flex-shrink: 0;        /* 宁可让右侧按钮换行，也不截断文件名 */
+            text-overflow: clip;
+            transition: background-color 0.15s, border-color 0.15s;
         }
         #titleInput:hover { background: var(--bg-input); }
         #titleInput:focus { background: var(--bg-input); border-color: var(--accent); }
@@ -581,8 +624,11 @@
         .editor-header .header-actions {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;      /* 面板极窄时按钮在内部换行，保证一个都不被裁掉 */
             gap: 4px;
             flex-shrink: 0;
+            max-width: 100%;
         }
 
         .header-btn {
@@ -607,6 +653,46 @@
             border-color: var(--accent);
         }
         .header-btn.active svg.icon { color: var(--accent-soft); }
+
+        /* ==================== 字号缩放（+ / − / =）==================== */
+        .header-btn.icon-only-btn {
+            padding: 3px 5px;
+            flex-shrink: 0;
+        }
+        .header-divider {
+            width: 1px;
+            height: 16px;
+            background: var(--border);
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+        .header-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-muted);
+            transform: none;
+        }
+        .header-btn:disabled:hover {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-muted);
+        }
+        .header-btn:disabled:hover svg.icon { color: var(--text-secondary); }
+        /* 窄面板：先让出光标位置，保证文件名与按钮都能完整显示（不被裁切） */
+        @media (max-width: 800px) {
+            .editor-header #cursorPos { display: none; }
+        }
+        /* 极窄面板（视口 < 620px 时编辑器往往只剩 200px 上下）：
+           文件名已放不下，允许标题框收缩到 60px、靠内部滚动查看，
+           但不允许压到更小（否则会溢出容器、压住右侧按钮） */
+        @media (max-width: 620px) {
+            /* 82px = 图标 16 + 间距 6 + 标题框最小 60：保证标题区不被压到 0，
+               否则标题框的 padding 会溢出到按钮下面 */
+            .editor-header .title-area { min-width: 82px; }
+            #titleInput { flex-shrink: 1; min-width: 60px; }
+        }
 
         .editor-header #cursorPos {
             font-size: 0.72rem;
@@ -690,8 +776,8 @@
             margin: 0;
             padding: 16px;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            line-height: 24px;
+            font-size: var(--editor-font-size);
+            line-height: var(--editor-line-height);
             letter-spacing: 0;
             tab-size: 4;
             -moz-tab-size: 4;
@@ -731,8 +817,8 @@
             margin: 0;
             padding: 16px;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            line-height: 24px;
+            font-size: var(--editor-font-size);
+            line-height: var(--editor-line-height);
             letter-spacing: 0;
             tab-size: 4;
             -moz-tab-size: 4;
@@ -777,8 +863,8 @@
             margin: 0;
             padding: 16px;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            line-height: 24px;
+            font-size: var(--editor-font-size);
+            line-height: var(--editor-line-height);
             letter-spacing: 0;
             tab-size: 4;
             -moz-tab-size: 4;
@@ -830,8 +916,8 @@
         .ln-inner {
             padding: 16px 8px 16px 0;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            line-height: 24px;
+            font-size: var(--editor-font-size);
+            line-height: var(--editor-line-height);
             letter-spacing: 0;
             tab-size: 4;
             -moz-tab-size: 4;
@@ -843,8 +929,8 @@
         }
 
         .ln-row {
-            height: 24px;
-            line-height: 24px;
+            height: var(--editor-line-height);
+            line-height: var(--editor-line-height);
             transition: color 0.1s;
         }
 
@@ -946,6 +1032,13 @@
             outline: none;
         }
         .modal .field textarea { resize: vertical; min-height: 80px; }
+        /* 编辑积木弹窗：字段多、代码长，单独加宽加高 */
+        .modal.modal-edit-block {
+            width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-edit-block #configCode { min-height: 160px; }
         .modal .field input:focus, .modal .field textarea:focus, .modal .field select:focus { border-color: var(--accent); }
         .modal .radio-group { display: flex; gap: 12px; }
         .modal .radio-group label {
@@ -1105,6 +1198,15 @@
                 actual = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
             }
             document.documentElement.setAttribute('data-theme', actual);
+
+            /* 首帧防闪烁：代码区字号（10–32，默认 15） */
+            var fs = 15;
+            try {
+                var saved = parseInt(localStorage.getItem('editor-font-size-v1'), 10);
+                if (saved >= 10 && saved <= 32) fs = saved;
+            } catch (e) { }
+            document.documentElement.style.setProperty('--editor-font-size', fs + 'px');
+            document.documentElement.style.setProperty('--editor-line-height', Math.round(fs * 1.6) + 'px');
         })();
     </script>
 </head>
@@ -1253,6 +1355,10 @@
                     <input type="text" id="titleInput" value="main.cpp" spellcheck="false">
                 </div>
                 <div class="header-actions">
+                    <button class="header-btn icon-only-btn" id="fontIncBtn" data-i18n-title="fontIncTitle" title="放大字体 (Ctrl+=)"><svg class="icon"><use href="#icon-plus"/></svg></button>
+                    <button class="header-btn icon-only-btn" id="fontDecBtn" data-i18n-title="fontDecTitle" title="缩小字体 (Ctrl+−)"><svg class="icon"><use href="#icon-minus"/></svg></button>
+                    <button class="header-btn icon-only-btn" id="fontResetBtn" data-i18n-title="fontResetTitle" title="重置字号 (Ctrl+0)"><svg class="icon"><use href="#icon-equals"/></svg></button>
+                    <span class="header-divider"></span>
                     <button class="header-btn" id="findBtn" data-i18n="btnFind" data-i18n-title="btnFindTitle" title="查找 (Ctrl+F)"><svg class="icon"><use href="#icon-search"/></svg> 查找</button>
                     <button class="header-btn" id="replaceBtn" data-i18n="btnReplace" data-i18n-title="btnReplaceTitle" title="替换 (Ctrl+H)"><svg class="icon"><use href="#icon-exchange-alt"/></svg> 替换</button>
                     <button class="header-btn active" id="lineNumBtn" data-i18n="optLineNumbers" data-i18n-title="optLineNumbersTitle" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg> 行号</button>
@@ -1300,12 +1406,51 @@
 
     <!-- 积木编辑弹窗 -->
     <div class="modal-overlay" id="blockConfigModal">
-        <div class="modal">
+        <div class="modal modal-edit-block">
             <h3 data-i18n="modalEditBlockTitle"><svg class="icon"><use href="#icon-sort"/></svg> 编辑积木</h3>
             <div class="field">
                 <label data-i18n="fieldCode">代码内容</label>
-                <textarea id="configCode" rows="5"></textarea>
+                <textarea id="configCode" rows="8"></textarea>
                 <span class="hint" id="configHint"></span>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldLabel">简短描述（可选，默认取代码第一行）</label>
+                <input type="text" id="configLabel" data-i18n-placeholder="addBlockLabelPlaceholder" placeholder="例如: 打印问候">
+            </div>
+            <div class="field">
+                <label data-i18n="fieldIcon">图标</label>
+                <select id="configIconSelect">
+                    <option value="cube" data-i18n="icon_cube">方块</option>
+                    <option value="hashtag" data-i18n="icon_hashtag">井号</option>
+                    <option value="list" data-i18n="icon_list">列表</option>
+                    <option value="equals" data-i18n="icon_equals">等号</option>
+                    <option value="plus" data-i18n="icon_plus">加号</option>
+                    <option value="minus" data-i18n="icon_minus">减号</option>
+                    <option value="times" data-i18n="icon_times">乘号</option>
+                    <option value="divide" data-i18n="icon_divide">除号</option>
+                    <option value="percent" data-i18n="icon_percent">百分号</option>
+                    <option value="play" data-i18n="icon_play">播放</option>
+                    <option value="bolt" data-i18n="icon_bolt">闪电</option>
+                    <option value="stop" data-i18n="icon_stop">停止</option>
+                    <option value="forward" data-i18n="icon_forward">前进</option>
+                    <option value="code" data-i18n="icon_code">代码</option>
+                    <option value="code-branch" data-i18n="icon_code-branch">分支</option>
+                    <option value="terminal" data-i18n="icon_terminal">终端</option>
+                    <option value="calculator" data-i18n="icon_calculator">计算器</option>
+                    <option value="print" data-i18n="icon_print">打印</option>
+                    <option value="keyboard" data-i18n="icon_keyboard">键盘</option>
+                    <option value="search" data-i18n="icon_search">搜索</option>
+                    <option value="link" data-i18n="icon_link">链接</option>
+                    <option value="cut" data-i18n="icon_cut">剪切</option>
+                    <option value="copy" data-i18n="icon_copy">复制</option>
+                    <option value="exchange-alt" data-i18n="icon_exchange-alt">交换</option>
+                    <option value="sign-out-alt" data-i18n="icon_sign-out-alt">返回</option>
+                    <option value="globe" data-i18n="icon_globe">地球</option>
+                    <option value="star" data-i18n="icon_star">星</option>
+                    <option value="tools" data-i18n="icon_tools">工具</option>
+                    <option value="comment" data-i18n="icon_comment">注释</option>
+                </select>
+                <input type="text" id="configIconInput" data-i18n-placeholder="iconInputPlaceholder" placeholder="或直接输入图标名，如 star" style="margin-top:4px; font-size:0.78rem;">
             </div>
             <div class="modal-actions">
                 <button id="blockDeleteBtn" class="danger" data-i18n="btnDelete"><svg class="icon"><use href="#icon-trash"/></svg> 删除</button>
@@ -1359,6 +1504,7 @@
                     <option value="globe" data-i18n="icon_globe">地球</option>
                     <option value="star" data-i18n="icon_star">星</option>
                     <option value="tools" data-i18n="icon_tools">工具</option>
+                    <option value="comment" data-i18n="icon_comment">注释</option>
                 </select>
                 <input type="text" id="addBlockIconInput" data-i18n-placeholder="iconInputPlaceholder" placeholder="或直接输入图标名，如 star" style="margin-top:4px; font-size:0.78rem;">
             </div>
@@ -1529,6 +1675,9 @@
                 btnReplaceTitle: '替换 (Ctrl+H)',
                 optLineNumbers: '行号',
                 optLineNumbersTitle: '显示 / 隐藏行号',
+                fontDecTitle: '缩小字体 (Ctrl+−)',
+                fontIncTitle: '放大字体 (Ctrl+=)',
+                fontResetTitle: '重置字号 (Ctrl+0)',
                 cursorPos: '行 {line}, 列 {col}',
                 // 搜索栏
                 searchPlaceholder: '查找...',
@@ -1673,6 +1822,9 @@
                 btnReplaceTitle: 'Replace (Ctrl+H)',
                 optLineNumbers: 'Line numbers',
                 optLineNumbersTitle: 'Show / hide line numbers',
+                fontDecTitle: 'Decrease font size (Ctrl+−)',
+                fontIncTitle: 'Increase font size (Ctrl+=)',
+                fontResetTitle: 'Reset font size (Ctrl+0)',
                 cursorPos: 'Ln {line}, Col {col}',
                 // Search bar
                 searchPlaceholder: 'Find...',
@@ -1907,6 +2059,13 @@
             updateSearchUI();
             if (Array.isArray(BLOCKS) && BLOCKS.length) renderBlocksPanel();
             if (blockPickerState.visible) renderBlockPickerList();
+            // 编辑积木弹窗开着时，「含 std::」提示也要跟着换语言
+            if (blockConfigModal.classList.contains('show') && editingBlock) {
+                const item = findBlock(editingBlock.catId, editingBlock.sub, editingBlock.blockId);
+                if (item) {
+                    configHint.textContent = item.code.includes('{{STD}}') ? t('hintStdPrefix') : '';
+                }
+            }
         }
 
         function setLang(lang, opts) {
@@ -2185,6 +2344,18 @@
         let addingBlockTo = null;
         let pendingImportData = null;
 
+        // 触摸拖拽（移动端）。桌面仍走 HTML5 Drag & Drop，两者靠事件源天然分流
+        let touchDrag = null;            // { item, catId, sub, startX, startY, started, timer }
+        let touchLongPressFired = false; // 本次触摸已由长按打开编辑弹窗
+        let suppressTapClick = false;    // 拖拽/长按结束后抑制紧随其后的模拟 click
+        let lastLongPressTime = 0;       // 长按已处理时，抑制 Android 的 contextmenu
+        let dragPreviewEl = null;
+        let suppressClickTimer = null;
+
+        const TOUCH_MOVE_THRESHOLD = 8;   // px：低于此不判方向，防手指抖动
+        const TOUCH_DRAG_ANGLE = 30;      // 横向 ±30° 内算拖拽，其余算纵向滚动
+        const LONG_PRESS_MS = 500;        // 长按打开编辑弹窗
+
         const STORAGE_KEY = 'blocks-config-v2';
 
         // ==================== DOM ====================
@@ -2209,8 +2380,30 @@
         const titleInput = document.getElementById('titleInput');
         const openFileInput = document.getElementById('openFileInput');
 
+        /**
+         * 标题框宽度跟随文件名长度：用 canvas 按同样的字体量出文字宽度，
+         * 加上内边距 / 边框，让文件名完整可见（min/max-width 由 CSS 兜底）。
+         * 名字过长时被 max-width 截住，输入框内部可横向滚动查看。
+         */
+        const titleCtx = (() => {
+            try { return document.createElement('canvas').getContext('2d'); } catch (e) { return null; }
+        })();
+        function syncTitleWidth() {
+            if (!titleCtx || !titleInput) return;
+            const cs = getComputedStyle(titleInput);
+            titleCtx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+            const text = titleInput.value || 'M';
+            const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)
+                + (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+            // +6：光标与字体测量的舍入余量，避免最后一个字符被切
+            titleInput.style.width = Math.ceil(titleCtx.measureText(text).width + pad + 6) + 'px';
+        }
+
         const blockConfigModal = document.getElementById('blockConfigModal');
         const configCode = document.getElementById('configCode');
+        const configLabel = document.getElementById('configLabel');
+        const configIconSelect = document.getElementById('configIconSelect');
+        const configIconInput = document.getElementById('configIconInput');
         const configHint = document.getElementById('configHint');
         const blockSaveBtn = document.getElementById('blockSaveBtn');
         const blockCancelBtn = document.getElementById('blockCancelBtn');
@@ -2255,9 +2448,6 @@
         const importIncrementalBtn = document.getElementById('importIncrementalBtn');
         const importOverwriteBtn = document.getElementById('importOverwriteBtn');
         const importCancelBtn = document.getElementById('importCancelBtn');
-
-        const INDENT = '    ';
-        const INDENT_UNIT = 4;
 
         const searchState = {
             visible: false,
@@ -2365,7 +2555,9 @@
 
         /** 按总行数位数计算行号列宽度：3 位 40px，4 位 48px ... */
         function applyGutterWidth(count) {
-            const w = Math.max(40, String(count).length * 8 + 16);
+            // 每位数宽约 0.53em（15px 时 8px，与旧常量一致），字号放大后自动加宽
+            const digitW = Math.max(6, Math.round(editorFontSize * 0.53));
+            const w = Math.max(40, String(count).length * digitW + 16);
             lnGutterWidth = w;
             codeEditorContainer.style.setProperty('--ln-width', w + 'px');
             lineNumbers.style.width = w + 'px';
@@ -2392,6 +2584,85 @@
             if (lnVisible) lnLastCount = -1;
             applyLineNumberVisibility();
             codeInput.focus();
+        });
+
+        // ==================== 代码区字号 ====================
+        const FS_KEY = 'editor-font-size-v1';
+        const FS_MIN = 10, FS_MAX = 32, FS_DEFAULT = 15;
+        const fontIncBtn = document.getElementById('fontIncBtn');
+        const fontDecBtn = document.getElementById('fontDecBtn');
+        const fontResetBtn = document.getElementById('fontResetBtn');
+
+        function readFontSize() {
+            let v = parseInt(localStorage.getItem(FS_KEY), 10);
+            if (!(v >= FS_MIN && v <= FS_MAX)) v = FS_DEFAULT;
+            return v;
+        }
+        let editorFontSize = readFontSize();
+
+        /** 行高固定 1.6 倍：15px → 24px，与改造前完全一致 */
+        function editorLineHeight() {
+            return Math.round(editorFontSize * 1.6);
+        }
+        /** 等宽字体单字符宽度（Courier New 前进宽度 0.6em；15px → 9px，与旧常量一致） */
+        function editorCharWidth() {
+            return editorFontSize * 0.6;
+        }
+
+        /** 三个按钮的可用状态：到边界置灰，「=」在默认字号时置灰 */
+        function updateFontButtons() {
+            if (fontIncBtn) fontIncBtn.disabled = (editorFontSize >= FS_MAX);
+            if (fontDecBtn) fontDecBtn.disabled = (editorFontSize <= FS_MIN);
+            if (fontResetBtn) fontResetBtn.disabled = (editorFontSize === FS_DEFAULT);
+        }
+
+        /**
+         * 应用字号。opts.persist === false 时不写 localStorage（首帧恢复用）。
+         * 三层（高亮层 / 查找层 / textarea）与行号列共用 CSS 变量，改一个变量即可全部同步。
+         */
+        function applyEditorFontSize(size, opts) {
+            const v = Math.max(FS_MIN, Math.min(FS_MAX, Math.round(size)));
+            editorFontSize = v;
+            document.documentElement.style.setProperty('--editor-font-size', v + 'px');
+            document.documentElement.style.setProperty('--editor-line-height', editorLineHeight() + 'px');
+            updateFontButtons();
+            if (!opts || opts.persist !== false) {
+                try { localStorage.setItem(FS_KEY, String(v)); } catch (e) { }
+            }
+            // 行号列宽按新字宽重算，三层的内边距与滚动同步也要重算
+            if (lnLastCount > 0) applyGutterWidth(lnLastCount);
+            syncScrollbarWidth();
+            syncScroll();
+            if (searchState.visible) renderSearchLayer();
+        }
+
+        function stepFontSize(delta) {
+            if (editorFontSize + delta === editorFontSize) return;
+            applyEditorFontSize(editorFontSize + delta);
+            codeInput.focus();
+        }
+
+        fontIncBtn.addEventListener('click', () => stepFontSize(1));
+        fontDecBtn.addEventListener('click', () => stepFontSize(-1));
+        fontResetBtn.addEventListener('click', () => {
+            applyEditorFontSize(FS_DEFAULT);
+            codeInput.focus();
+        });
+
+        // 全局长按快捷键：Ctrl+= 放大、Ctrl+- 缩小、Ctrl+0 还原
+        document.addEventListener('keydown', (e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+            const k = e.key;
+            if (k === '=' || k === '+') {
+                e.preventDefault();
+                applyEditorFontSize(editorFontSize + 1);
+            } else if (k === '-' || k === '_') {
+                e.preventDefault();
+                applyEditorFontSize(editorFontSize - 1);
+            } else if (k === '0') {
+                e.preventDefault();
+                applyEditorFontSize(FS_DEFAULT);
+            }
         });
 
         function updateCursorPosition() {
@@ -2496,29 +2767,111 @@
             return null;
         }
 
-        function getPrevNonEmptyIndent(text, lineStart) {
-            const prevLine = getPrevNonEmptyLine(text, lineStart);
-            if (prevLine === null) return '';
-            const match = prevLine.match(/^[ \t]*/);
-            return match ? match[0] : '';
+        // ==================== 缩进规则（语言无关） ====================
+        // 每种语言只有两项配置：
+        //   indentUnit —— 一级缩进的字符串（'    ' / '\t' / '  '）
+        //   rules      —— 规则表，顺序敏感，第一条命中的生效
+        // 规则字段（除 delta 外都可省）：
+        //   match       判「本行」trim 后内容        unless       本行命中则跳过
+        //   matchPrev   判「上一行」trim 后内容      unlessPrev   上一行命中则跳过
+        //   delta       级数变化：+1 进一级、-1 退一级、0 同级
+        // 缩进只在这里表达，三个入口共用：Enter 读 matchPrev，自动缩进读 match + matchPrev，
+        // Tab / Shift+Tab 不读规则（机械增一级，用户明确要求）
+        const LANG_RULES = {
+            c: {
+                indentUnit: '    ',
+                rules: [
+                    { match: /^\}.*\{\s*$/, delta: 0 },   // } else { → 与上一行同级
+                    { match: /^\}/, delta: -1 },          // } 开头 → 退一级
+                    { matchPrev: /\{\s*$/, delta: 1 }     // 上一行 { 结尾 → 进一级
+                ]
+            },
+            // 下面几套目前没有 UI 入口，随语言表一起留着，换语言只改 ACTIVE_LANG
+            python: {
+                indentUnit: '    ',
+                rules: [
+                    { match: /^(else|elif|except|finally)\b/, delta: -1 },   // else: 等与 if 同级
+                    { matchPrev: /:\s*(#.*)?$/, delta: 1 }                   // 上一行 : 结尾 → 进一级
+                ]
+            },
+            ruby: {
+                indentUnit: '  ',
+                rules: [
+                    { match: /^(else|elsif|when|rescue|ensure)\b/, delta: -1 },
+                    { match: /^end\b/, delta: -1 },                          // end → 退一级
+                    { matchPrev: /\b(do|if|unless|while|until|for|case|begin|def|class|module)\b.*$/, delta: 1 }
+                ]
+            },
+            go: {
+                indentUnit: '\t',
+                rules: [
+                    { match: /^\}.*\{\s*$/, delta: 0 },
+                    { match: /^\}/, delta: -1 },
+                    { matchPrev: /\{\s*$/, delta: 1 }
+                ]
+            }
+        };
+        let ACTIVE_LANG = 'c';   // 本编辑器只编辑 C/C++（Go / Python / Ruby 仅备用）
+
+        function getLangRules() {
+            return LANG_RULES[ACTIVE_LANG] || LANG_RULES.c;
         }
 
-        // 某一行「本应」所处的缩进：由上一非空行的形态推导（{ 加深一级，} 减退一级，} else { 保持）
+        function indentUnit() {
+            return getLangRules().indentUnit;
+        }
+
+        // 去掉行首一级缩进。优先按 indentUnit 的宽度，混合空白（tab / 不足一级的空格）按一级处理
+        function dedentLevel(indent, unit) {
+            if (!indent) return '';
+            unit = unit || indentUnit();
+            const lead = indent.match(/^(\t| +)/);
+            if (!lead) return indent;
+            if (lead[0].charAt(0) === '\t' || unit === '\t') {
+                return lead[0].charAt(0) === '\t' ? indent.slice(1) : indent.slice(lead[0].length);
+            }
+            return lead[0].length >= unit.length ? indent.slice(unit.length) : indent.slice(lead[0].length);
+        }
+
+        function applyDelta(indent, delta, unit) {
+            unit = unit || indentUnit();
+            if (delta > 0) return indent + unit.repeat(delta);
+            if (delta < 0) {
+                let out = indent;
+                for (let i = 0; i < -delta; i++) out = dedentLevel(out, unit);
+                return out;
+            }
+            return indent;
+        }
+
+        // 按规则表求级数变化。self=true 用 match/unless 判「本行」，false 用 matchPrev/unlessPrev 判「上一行」
+        function ruleDelta(content, self) {
+            const rules = getLangRules().rules;
+            const text = String(content == null ? '' : content).trim();
+            if (!text) return 0;
+            for (let i = 0; i < rules.length; i++) {
+                const rule = rules[i];
+                const test = self ? rule.match : rule.matchPrev;
+                if (!test) continue;
+                test.lastIndex = 0;
+                if (!test.test(text)) continue;
+                const skip = self ? rule.unless : rule.unlessPrev;
+                if (skip) {
+                    skip.lastIndex = 0;
+                    if (skip.test(text)) continue;
+                }
+                return rule.delta;
+            }
+            return 0;
+        }
+
+        // 某一行「本应」所处的缩进 = 上一非空行的实际缩进 + 该行形态的 delta（matchPrev）
+        // 上一行的实际缩进已经是它自己的最终位置，因此这里不再叠加 match 的修正
         function getExpectedIndent(text, lineStart) {
             const prevLine = getPrevNonEmptyLine(text, lineStart);
             if (prevLine === null) return '';
-            const match = prevLine.match(/^[ \t]*/);
-            const indent = match ? match[0] : '';
-            const trimmed = prevLine.trim();
-
-            if (trimmed.startsWith('}')) {
-                const outer = indent.length >= INDENT.length
-                    ? indent.substring(0, indent.length - INDENT.length)
-                    : '';
-                return trimmed.endsWith('{') ? outer + INDENT : outer;
-            }
-            if (trimmed.endsWith('{')) return indent + INDENT;
-            return indent;
+            const indent = (prevLine.match(/^[ \t]*/) || [''])[0];
+            return applyDelta(indent, ruleDelta(prevLine, false), indentUnit());
         }
 
         function handleEmptyLineTab(direction) {
@@ -2537,12 +2890,10 @@
                 // 正缩进：缩进不足本行期望值时先一次性对齐，已对齐则再加一级（与非空行一样加在行首）
                 targetIndent = lineContent.length < expectedIndent.length
                     ? expectedIndent
-                    : INDENT + lineContent;
+                    : indentUnit() + lineContent;
             } else {
-                // 反缩进：从行首去掉一级，最低退到行首，与上一行无关。
-                // 必须用正则按「一级」去，不能按长度截断，否则 "    \t" 会被截成 " "
-                const m = lineContent.match(/^(\t| {1,4})/);
-                targetIndent = m ? lineContent.substring(m[0].length) : '';
+                // 反缩进：从行首去掉一级，最低退到行首，与上一行无关
+                targetIndent = dedentLevel(lineContent);
             }
 
             if (targetIndent === lineContent) return true;
@@ -2590,20 +2941,18 @@
 
                 if (trimmed.length === 0) {
                     // 空行只跟随整块平移一级，保证 Tab / Shift+Tab 可逆、反复切换不累积空格。
-                    // 必须与非空行一样在行首加，才能和下面「从行首去掉一级」的花括号逻辑严格互逆
+                    // 必须与非空行一样在行首加，才能和下面「从行首去掉一级」的逻辑严格互逆
                     if (direction > 0) {
-                        newIndent = INDENT + line;
+                        newIndent = indentUnit() + line;
                     } else {
-                        const m = line.match(/^(\t| {1,4})/);
-                        newIndent = m ? line.substring(m[0].length) : '';
+                        newIndent = dedentLevel(line);
                     }
                 } else {
                     let processed;
                     if (direction > 0) {
-                        processed = INDENT + line;
+                        processed = indentUnit() + line;
                     } else {
-                        const match = line.match(/^(\t| {1,4})/);
-                        processed = match ? line.substring(match[0].length) : line;
+                        processed = dedentLevel(line);
                     }
                     const m = processed.match(/^[ \t]*/);
                     newIndent = m ? m[0] : '';
@@ -2675,13 +3024,10 @@
 
             let prevIndent = '';
             if (startLineStart > 0) {
-                // 首行基准取「上一行形态推导出的期望缩进」（上一行以 { 结尾要加一级、以 } 结尾要减一级）；
-                // 例外：首行本身以 } 开头时，下面还要再减一级回到外层，基准必须仍是上一行的原始缩进
-                prevIndent = lines[0].trim().startsWith('}')
-                    ? getPrevNonEmptyIndent(text, startLineStart)
-                    : getExpectedIndent(text, startLineStart);
+                prevIndent = getExpectedIndent(text, startLineStart);
             }
 
+            const unit = indentUnit();
             const newLines = lines.map((line) => {
                 const trimmed = line.trim();
 
@@ -2689,27 +3035,12 @@
                     return prevIndent;
                 }
 
-                let targetIndent = prevIndent;
-                let nextIndent = prevIndent;
+                // 第一步用 match 修正本行缩进，第二步用 matchPrev 推导下一行的基准
+                const targetIndent = applyDelta(prevIndent, ruleDelta(trimmed, true), unit);
+                const nextIndent = applyDelta(targetIndent, ruleDelta(trimmed, false), unit);
 
-                if (trimmed.startsWith('}')) {
-                    targetIndent = targetIndent.length >= INDENT.length
-                        ? targetIndent.substring(0, targetIndent.length - INDENT.length)
-                        : '';
-                    if (trimmed.endsWith('{')) {
-                        nextIndent = targetIndent + INDENT;
-                    } else {
-                        nextIndent = targetIndent;
-                    }
-                } else if (trimmed.endsWith('{')) {
-                    nextIndent = targetIndent + INDENT;
-                } else {
-                    nextIndent = targetIndent;
-                }
-
-                const newLine = targetIndent + trimmed;
                 prevIndent = nextIndent;
-                return newLine;
+                return targetIndent + trimmed;
             });
 
             const newBlock = newLines.join('\n');
@@ -2784,16 +3115,13 @@
             const beforeCursorInLine = lineContent.substring(0, colInLine);
             const afterCursorInLine = lineContent.substring(colInLine);
 
-            const trimmedBefore = beforeCursorInLine.replace(/\s+$/, '');
-            const lastChar = trimmedBefore.length > 0 ? trimmedBefore[trimmedBefore.length - 1] : '';
-
-            let nextIndent = currentIndent;
+            // 只看「上一行」（Enter 之前的本行，光标前的部分）形态：块刚开则进一级，闭合则同级
+            let delta = ruleDelta(beforeCursorInLine, false);
+            // 行内光标后面已经有闭合符号时不加深（Enter 拆分 `{|}` 的场景）
             const afterCursorTrimmed = afterCursorInLine.trim();
-            const afterStartsWithBrace = afterCursorTrimmed.startsWith('}');
+            if (delta > 0 && afterCursorTrimmed.startsWith('}')) delta = 0;
 
-            if (lastChar === '{' && !afterStartsWithBrace) {
-                nextIndent = currentIndent + INDENT;
-            }
+            const nextIndent = applyDelta(currentIndent, delta, indentUnit());
 
             const insertion = '\n' + nextIndent;
             const newText = before + insertion + after;
@@ -2821,10 +3149,7 @@
 
             if (onlyWhitespaceBefore && lineContentBefore.length > 0) {
                 const currentIndent = lineContentBefore;
-                const indentMatch = currentIndent.match(/(\t| {1,4})$/);
-                const newIndent = indentMatch
-                    ? currentIndent.substring(0, currentIndent.length - indentMatch[0].length)
-                    : currentIndent;
+                const newIndent = dedentLevel(currentIndent);
 
                 const lineEnd = getLineEnd(text, selStart);
                 const afterCursorInLine = text.substring(selStart, lineEnd);
@@ -2942,8 +3267,8 @@
             const paddingTop = 16;
             // 行号可见时左侧留白 = 16 + 行号列宽 + 8（与 CSS padding-left 保持一致）
             const paddingLeft = lnVisible ? (24 + lnGutterWidth) : 16;
-            const lineHeight = 24;
-            const charWidth = 9;
+            const lineHeight = editorLineHeight();
+            const charWidth = editorCharWidth();
 
             const relY = clientY - rect.top + codeInput.scrollTop - paddingTop;
             const relX = clientX - rect.left + codeInput.scrollLeft - paddingLeft;
@@ -3137,6 +3462,7 @@
                 const content = ev.target.result;
                 codeInput.value = content;
                 titleInput.value = file.name;
+                syncTitleWidth();
                 updateHighlight();
                 history.stack = [{ text: content, caret: 0 }];
                 history.index = 0;
@@ -3310,6 +3636,38 @@
             return `<svg class="${cls}"><use href="#icon-${name || 'cube'}"/></svg>`;
         }
 
+        // ==================== 触摸拖拽预览 ====================
+        function startDragPreview(item, x, y) {
+            if (!dragPreviewEl) {
+                dragPreviewEl = document.createElement('div');
+                dragPreviewEl.className = 'drag-preview';
+                document.body.appendChild(dragPreviewEl);
+            }
+            dragPreviewEl.innerHTML = iconSvg(item.icon, 'block-icon') +
+                '<span class="block-label">' +
+                escapeHtml(renderCode(item.label || item.code.split('\n')[0])) +
+                '</span>';
+            dragPreviewEl.style.display = 'flex';
+            updateDragPreview(x, y);
+        }
+
+        function updateDragPreview(x, y) {
+            if (!dragPreviewEl) return;
+            const w = dragPreviewEl.offsetWidth || 0;
+            const h = dragPreviewEl.offsetHeight || 0;
+            let left = x + 12;
+            let top = y + 12;
+            // 贴边时翻转，避免预览被视口裁掉
+            if (left + w > window.innerWidth - 4) left = Math.max(4, window.innerWidth - w - 4);
+            if (top + h > window.innerHeight - 4) top = Math.max(4, y - h - 12);
+            dragPreviewEl.style.left = left + 'px';
+            dragPreviewEl.style.top = top + 'px';
+        }
+
+        function hideDragPreview() {
+            if (dragPreviewEl) dragPreviewEl.style.display = 'none';
+        }
+
         function collectAllIds() {
             const ids = new Set();
             BLOCKS.forEach(cat => {
@@ -3458,9 +3816,101 @@
 
                 div.appendChild(modeWrap);
 
-                div.addEventListener('click', () => {
+                div.addEventListener('click', (e) => {
+                    // 触摸拖拽/长按结束后浏览器可能补一个 click，抑制掉，避免误插入
+                    if (suppressTapClick) {
+                        suppressTapClick = false;
+                        clearTimeout(suppressClickTimer);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
                     insertCode(item.code, item.mode);
                 });
+
+                // ---- 触摸：轻点插入 / 横向拖拽插入 / 纵向滑动交给面板滚动 / 长按编辑 ----
+                div.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    if (e.target.closest('input, button')) return;
+                    const t = e.touches[0];
+                    touchLongPressFired = false;
+                    touchDrag = {
+                        item, catId: cat.id, sub,
+                        startX: t.clientX, startY: t.clientY,
+                        started: false,
+                        timer: null,
+                    };
+                    touchDrag.timer = setTimeout(() => {
+                        if (!touchDrag || touchDrag.started) return;
+                        clearTimeout(touchDrag.timer);
+                        touchDrag = null;
+                        touchLongPressFired = true;
+                        lastLongPressTime = Date.now();
+                        openBlockEditor(cat, sub, item);
+                    }, LONG_PRESS_MS);
+                }, { passive: true });
+
+                div.addEventListener('touchmove', (e) => {
+                    if (!touchDrag || e.touches.length !== 1) return;
+                    const t = e.touches[0];
+                    const dx = t.clientX - touchDrag.startX;
+                    const dy = t.clientY - touchDrag.startY;
+
+                    if (!touchDrag.started) {
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < TOUCH_MOVE_THRESHOLD) return;
+                        const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
+                        const horizontal = angle < TOUCH_DRAG_ANGLE || angle > 180 - TOUCH_DRAG_ANGLE;
+                        if (!horizontal) {
+                            // 纵向：放弃候选，不 preventDefault，让面板正常滚动
+                            clearTimeout(touchDrag.timer);
+                            touchDrag = null;
+                            return;
+                        }
+                        touchDrag.started = true;
+                        clearTimeout(touchDrag.timer);
+                        startDragPreview(touchDrag.item, t.clientX, t.clientY);
+                    }
+                    e.preventDefault();   // 已进入拖拽，阻止面板跟着滚
+                    updateDragPreview(t.clientX, t.clientY);
+                }, { passive: false });
+
+                div.addEventListener('touchend', (e) => {
+                    clearTimeout(suppressClickTimer);
+                    if (touchLongPressFired) {
+                        // 长按已打开编辑弹窗，松手时抑制这次 click
+                        touchLongPressFired = false;
+                        suppressTapClick = true;
+                        suppressClickTimer = setTimeout(() => { suppressTapClick = false; }, 400);
+                        return;
+                    }
+                    if (!touchDrag) return;
+                    clearTimeout(touchDrag.timer);
+                    const wasDrag = touchDrag.started;
+                    const drag = touchDrag;
+                    touchDrag = null;
+                    if (!wasDrag) return;   // 没拖：交给 click 走插入
+
+                    suppressTapClick = true;
+                    suppressClickTimer = setTimeout(() => { suppressTapClick = false; }, 400);
+                    hideDragPreview();
+
+                    const t = e.changedTouches[0];
+                    const rect = codeInput.getBoundingClientRect();
+                    const inside = t.clientX >= rect.left && t.clientX <= rect.right &&
+                        t.clientY >= rect.top && t.clientY <= rect.bottom;
+                    if (inside) {
+                        insertCode(drag.item.code, drag.item.mode,
+                            getOffsetFromPoint(t.clientX, t.clientY));
+                    }
+                }, { passive: true });
+
+                div.addEventListener('touchcancel', () => {
+                    if (touchDrag) clearTimeout(touchDrag.timer);
+                    touchDrag = null;
+                    touchLongPressFired = false;
+                    hideDragPreview();
+                }, { passive: true });
 
                 div.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', JSON.stringify({
@@ -3476,6 +3926,8 @@
 
                 div.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
+                    // 移动端长按已处理过，Android 可能再补一次 contextmenu
+                    if (Date.now() - lastLongPressTime < 600) return;
                     openBlockEditor(cat, sub, item);
                 });
             }
@@ -3497,6 +3949,10 @@
         }
 
         function renderBlocksPanel() {
+            // 重绘会移除旧积木元素：清掉进行中的触摸候选/拖拽，避免定时器与预览指向已失效的节点
+            if (touchDrag) { clearTimeout(touchDrag.timer); touchDrag = null; }
+            touchLongPressFired = false;
+            hideDragPreview();
             blocksScroll.innerHTML = '';
             BLOCKS.forEach(cat => {
                 const catEl = document.createElement('div');
@@ -3637,6 +4093,16 @@
             if (blockPickerState.visible) hideBlockPicker(false);
             editingBlock = { catId: cat.id, sub, blockId: item.id };
             configCode.value = item.code.replace(/\{\{STD\}\}/g, 'std::');
+            // 标题：只有用户自定义过才回填。若 label 就是默认值（等于代码首行），
+            // 留空，这样不改就直接保存 = 重新按当前代码首行生成默认标题。
+            const defaultLabel = renderCode(item.code.split('\n')[0]);
+            const hasCustomLabel = !!item.label && renderCode(item.label) !== defaultLabel;
+            configLabel.value = hasCustomLabel ? item.label : '';
+            // 图标：下拉列表里有就选中，否则（自定义图标名）放进自由输入框
+            const icon = item.icon || 'cube';
+            const inList = Array.from(configIconSelect.options).some(o => o.value === icon);
+            configIconSelect.value = inList ? icon : 'cube';
+            configIconInput.value = inList ? '' : icon;
             configHint.textContent = item.code.includes('{{STD}}')
                 ? t('hintStdPrefix')
                 : '';
@@ -3649,12 +4115,23 @@
             const item = findBlock(editingBlock.catId, editingBlock.sub, editingBlock.blockId);
             if (!item) { blockConfigModal.classList.remove('show'); return; }
             const newCode = configCode.value;
+            if (!newCode.trim()) {
+                alert(t('alertNeedCode'));
+                return;
+            }
             let template = newCode;
             if (item.code.includes('{{STD}}')) {
                 template = newCode.replace(/\bstd::/g, '{{STD}}');
             }
             item.code = template;
-            item.label = template.split('\n')[0];
+            // 标题：用户填了就用，没填回退到代码首行
+            const labelInput = configLabel.value.trim();
+            item.label = labelInput || template.split('\n')[0];
+            // 图标：自由输入优先，其次下拉框，最后 cube
+            let icon = configIconInput.value.trim();
+            if (!icon) icon = configIconSelect.value;
+            icon = icon.replace(/^fa-/, '');
+            item.icon = icon || 'cube';
             saveToStorage();
             renderBlocksPanel();
             blockConfigModal.classList.remove('show');
@@ -4084,8 +4561,8 @@
             const lines = textBefore.split('\n');
             const lineIdx = lines.length - 1;
             const col = lines[lineIdx].length;
-            const lineHeight = 24;
-            const charWidth = 9;
+            const lineHeight = editorLineHeight();
+            const charWidth = editorCharWidth();
             const padTop = 16;
             const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
             const rect = codeInput.getBoundingClientRect();
@@ -4439,6 +4916,8 @@ int main() {
                 titleInput.blur();
             }
         });
+        // 输入时同步加宽 / 收窄，保证文件名始终完整可见
+        titleInput.addEventListener('input', syncTitleWidth);
 
         // ==================== 主题切换 ====================
         // 默认暗色；三态循环：dark → light → system → dark
@@ -4555,7 +5034,9 @@ int main() {
             updateUndoRedoButtons();
 
             updateCursorPosition();
+            applyEditorFontSize(editorFontSize, { persist: false });
             applyLineNumberVisibility(true);
+            syncTitleWidth();
             codeInput.focus();
             codeInput.setSelectionRange(defaultCode.length, defaultCode.length);
 
