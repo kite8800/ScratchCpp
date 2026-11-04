@@ -14,6 +14,14 @@ English: https://kite8800.github.io/ScratchCpp/?lang=en
 
 Chinese: https://kite8800.github.io/ScratchCpp/?lang=zh
 
+# Other Languages:
+
+## Verilog / VerilogA / VerilogAMS
+
+English: https://kite8800.github.io/ScratchCpp/index_verilog.html?lang=en
+
+Chinese: https://kite8800.github.io/ScratchCpp/index_verilog.html?lang=zh
+
 
 ## Why this exists
 
