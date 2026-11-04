@@ -1361,6 +1361,7 @@
                     <span class="header-divider"></span>
                     <button class="header-btn" id="findBtn" data-i18n="btnFind" data-i18n-title="btnFindTitle" title="查找 (Ctrl+F)"><svg class="icon"><use href="#icon-search"/></svg> 查找</button>
                     <button class="header-btn" id="replaceBtn" data-i18n="btnReplace" data-i18n-title="btnReplaceTitle" title="替换 (Ctrl+H)"><svg class="icon"><use href="#icon-exchange-alt"/></svg> 替换</button>
+                    <button class="header-btn icon-only-btn active" id="autoFillBtn" data-i18n-title="autoFillOnTitle" title="选中文本自动填入查找框（已开启，点击关闭）"><svg class="icon"><use href="#icon-magic"/></svg></button>
                     <button class="header-btn active" id="lineNumBtn" data-i18n="optLineNumbers" data-i18n-title="optLineNumbersTitle" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg> 行号</button>
                     <span id="cursorPos">行 1, 列 1</span>
                 </div>
@@ -1675,6 +1676,8 @@
                 btnReplaceTitle: '替换 (Ctrl+H)',
                 optLineNumbers: '行号',
                 optLineNumbersTitle: '显示 / 隐藏行号',
+                autoFillOnTitle: '选中文本自动填入查找框（已开启，点击关闭）',
+                autoFillOffTitle: '选中文本自动填入查找框（已关闭，点击开启）',
                 fontDecTitle: '缩小字体 (Ctrl+−)',
                 fontIncTitle: '放大字体 (Ctrl+=)',
                 fontResetTitle: '重置字号 (Ctrl+0)',
@@ -1822,6 +1825,8 @@
                 btnReplaceTitle: 'Replace (Ctrl+H)',
                 optLineNumbers: 'Line numbers',
                 optLineNumbersTitle: 'Show / hide line numbers',
+                autoFillOnTitle: 'Auto-fill find box from selection (on, click to disable)',
+                autoFillOffTitle: 'Auto-fill find box from selection (off, click to enable)',
                 fontDecTitle: 'Decrease font size (Ctrl+−)',
                 fontIncTitle: 'Increase font size (Ctrl+=)',
                 fontResetTitle: 'Reset font size (Ctrl+0)',
@@ -2057,6 +2062,7 @@
             updateThemeButton(getThemePref());
             updateCursorPosition();
             updateSearchUI();
+            updateAutoFillBtn();   // 语言切换后 title 文案要跟着开关状态换
             if (Array.isArray(BLOCKS) && BLOCKS.length) renderBlocksPanel();
             if (blockPickerState.visible) renderBlockPickerList();
             // 编辑积木弹窗开着时，「含 std::」提示也要跟着换语言
@@ -3420,6 +3426,8 @@
             } else {
                 searchBar.classList.remove('show-replace');
             }
+            // 打开查找时若编辑器里有可用的选中文本，先填进查找框（VS Code 习惯）
+            fillSearchFromEditorSelection();
             searchInput.focus();
             searchInput.select();
             if (searchInput.value) performSearch();
@@ -3433,6 +3441,77 @@
             searchCode.innerHTML = '';
             codeInput.focus();
         }
+
+        // ==================== 选中文本自动填入查找框 ====================
+        const AUTO_FILL_KEY = 'auto-fill-find-v1';
+        const AUTO_FILL_MAX = 50;   // 超过 50 字符（整行 / 多行）不填，用户手动复制
+        let autoFillEnabled = true;
+
+        function getAutoFillPref() {
+            try { return localStorage.getItem(AUTO_FILL_KEY) !== '0'; } catch (e) { return true; }
+        }
+
+        function updateAutoFillBtn() {
+            const btn = document.getElementById('autoFillBtn');
+            if (!btn) return;
+            btn.classList.toggle('active', autoFillEnabled);
+            // 两种状态的 key 都写成字面量：语言切换时 applyI18n 按 data-i18n-title 取值
+            btn.dataset.i18nTitle = autoFillEnabled ? 'autoFillOnTitle' : 'autoFillOffTitle';
+            btn.title = autoFillEnabled ? t('autoFillOnTitle') : t('autoFillOffTitle');
+        }
+
+        function setAutoFillEnabled(v, opts) {
+            autoFillEnabled = !!v;
+            if (!opts || opts.persist !== false) {
+                try { localStorage.setItem(AUTO_FILL_KEY, autoFillEnabled ? '1' : '0'); } catch (e) { }
+            }
+            updateAutoFillBtn();
+        }
+
+        /** 可填充的选区：非空、单行、去空白后长度 ≤ AUTO_FILL_MAX */
+        function isFillableSelection(text) {
+            const s = String(text == null ? '' : text).trim();
+            if (!s) return false;
+            if (s.includes('\n') || s.includes('\r')) return false;
+            if (s.length > AUTO_FILL_MAX) return false;
+            return true;
+        }
+
+        /** 把编辑器当前选区写进查找框；不检查焦点，供 openSearch 复用 */
+        function fillSearchFromEditorSelection() {
+            if (!autoFillEnabled) return false;
+            const start = codeInput.selectionStart;
+            const end = codeInput.selectionEnd;
+            if (start === end) return false;
+            const sel = codeInput.value.slice(start, end);
+            if (!isFillableSelection(sel)) return false;
+            const text = sel.trim();
+            if (searchInput.value === text) return false;   // 幂等，避免重复触发搜索
+            searchInput.value = text;
+            if (searchState.visible) performSearch();
+            return true;
+        }
+
+        // 拖选时 select / keyup 会高频触发，防抖一下，避免每次拖动都全量搜索
+        let autoFillTimer = null;
+        function handleSelectionAutoFill(immediate) {
+            const ae = document.activeElement;
+            // 焦点在查找 / 替换框时不覆盖用户正在输入的内容
+            if (ae === searchInput || ae === replaceInput) return;
+            if (ae !== codeInput) return;
+            if (autoFillTimer) { clearTimeout(autoFillTimer); autoFillTimer = null; }
+            if (immediate) fillSearchFromEditorSelection();
+            else autoFillTimer = setTimeout(() => { autoFillTimer = null; fillSearchFromEditorSelection(); }, 120);
+        }
+
+        codeInput.addEventListener('select', () => handleSelectionAutoFill(false));
+        codeInput.addEventListener('mouseup', () => handleSelectionAutoFill(true));
+        codeInput.addEventListener('keyup', () => handleSelectionAutoFill(true));
+
+        document.getElementById('autoFillBtn').addEventListener('click', () => {
+            setAutoFillEnabled(!autoFillEnabled);
+            codeInput.focus();
+        });
 
         searchInput.addEventListener('input', () => performSearch());
         searchInput.addEventListener('keydown', (e) => {
@@ -5056,6 +5135,8 @@ int main() {
             updateCursorPosition();
             applyEditorFontSize(editorFontSize, { persist: false });
             applyLineNumberVisibility(true);
+            autoFillEnabled = getAutoFillPref();
+            updateAutoFillBtn();
             syncTitleWidth();
             codeInput.focus();
             codeInput.setSelectionRange(defaultCode.length, defaultCode.length);
