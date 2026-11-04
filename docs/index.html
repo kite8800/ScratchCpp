@@ -3638,7 +3638,7 @@
         }
 
         // ==================== 拖拽预览 ====================
-        // mode: 'touch' 预览浮在手指上方（手指是肉块，会挡住右下方）
+        // mode: 'touch' 预览居中于手指（手指在预览下方，仍能看清落点）
         //       'mouse' 预览在指针右下方（沿用桌面习惯，也给未来 Pointer 方案留位）
         function startDragPreview(item, x, y, mode) {
             if (!dragPreviewEl) {
@@ -3665,11 +3665,9 @@
             let left, top;
 
             if (mode === 'touch') {
-                // 水平居中于手指，底边压在手指上方 16px（指尖遮挡区之上）
+                // 直接居中于手指，不做偏移（偏移后视觉上会跟手指脱节）
                 left = x - w / 2;
-                top = y - h - 16;
-                // 上方放不下就翻到手指下方，至少能看见
-                if (top < margin) top = y + 16;
+                top = y - h / 2;
             } else {
                 left = x + 12;
                 top = y + 12;
