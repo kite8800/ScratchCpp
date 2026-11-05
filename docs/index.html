@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scratch C/C++</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpath d='M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'/%3E%3C/svg%3E">
-<!-- <link href="vendor/prism/prism-okaidia.min.css" rel="stylesheet" /> -->
+    <!-- prism:loader:begin -->
+    <!-- <link href="vendor/prism/prism-okaidia.min.css" rel="stylesheet" /> -->
     <script src="vendor/prism/prism.min.js"></script>
     <script src="vendor/prism/prism-c.min.js"></script>
     <script src="vendor/prism/prism-cpp.min.js"></script>
+    <!-- prism:loader:end -->
     <style>
         /* ==================== 主题变量 ==================== */
         :root {
@@ -779,8 +781,8 @@
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
-            tab-size: 4;
-            -moz-tab-size: 4;
+            tab-size: var(--tab-size, 4);
+            -moz-tab-size: var(--tab-size, 4);
             white-space: pre;
             word-wrap: normal;
             overflow: visible;
@@ -820,8 +822,8 @@
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
-            tab-size: 4;
-            -moz-tab-size: 4;
+            tab-size: var(--tab-size, 4);
+            -moz-tab-size: var(--tab-size, 4);
             white-space: pre;
             word-wrap: normal;
             overflow: visible;
@@ -866,8 +868,8 @@
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
-            tab-size: 4;
-            -moz-tab-size: 4;
+            tab-size: var(--tab-size, 4);
+            -moz-tab-size: var(--tab-size, 4);
             white-space: pre;
             word-wrap: normal;
             background: transparent;
@@ -919,8 +921,8 @@
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
-            tab-size: 4;
-            -moz-tab-size: 4;
+            tab-size: var(--tab-size, 4);
+            -moz-tab-size: var(--tab-size, 4);
             text-align: right;
             color: var(--gutter-text);
             white-space: nowrap;
@@ -1195,7 +1197,12 @@
             if (pref !== 'light' && pref !== 'dark' && pref !== 'system') pref = 'dark';
             var actual = pref;
             if (pref === 'system') {
-                actual = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                // 旧版微信 WebView 可能没有 matchMedia，兜底当作暗色
+                var light = false;
+                try {
+                    light = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+                } catch (e) { }
+                actual = light ? 'light' : 'dark';
             }
             document.documentElement.setAttribute('data-theme', actual);
 
@@ -1310,9 +1317,10 @@
         <button id="undoBtn" data-i18n="btnUndo" data-i18n-title="btnUndoTitle" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
         <button id="redoBtn" data-i18n="btnRedo" data-i18n-title="btnRedoTitle" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
         <span class="divider"></span>
-        <button id="autoIndentBtn" data-i18n="btnAutoIndent" data-i18n-title="btnAutoIndentTitle" title="自动缩进当前行 / 选中行"><svg class="icon"><use href="#icon-autoindent"/></svg> 自动缩进</button>
+        <button id="autoIndentBtn" data-i18n="btnAutoIndent" data-i18n-title="btnAutoIndentTitle" title="自动缩进当前行 / 选中行"><svg class="icon"><use href="#icon-autoindent"/></svg> 自动</button>
         <button id="indentBtn" data-i18n="btnIndent" data-i18n-title="btnIndentTitle" title="缩进当前行 / 选中行 (Tab)"><svg class="icon"><use href="#icon-indent"/></svg> 缩进</button>
         <button id="outdentBtn" data-i18n="btnOutdent" data-i18n-title="btnOutdentTitle" title="反缩进当前行 / 选中行 (Shift+Tab)"><svg class="icon"><use href="#icon-outdent"/></svg> 反缩进</button>
+        <button id="indentSettingsBtn" class="icon-only" data-i18n-title="btnIndentSettingsTitle" title="缩进设置（宽度 / Tab / 重排）"><svg class="icon"><use href="#icon-tools"/></svg></button>
         <span class="divider"></span>
         <button id="blockPickerBtn" data-i18n="btnBlockPicker" data-i18n-title="btnBlockPickerTitle" title="插入积木 (Ctrl+/，或 Ctrl+点击编辑器)"><svg class="icon"><use href="#icon-cube"/></svg> 积木</button>
         <span class="toolbar-hint">
@@ -1362,7 +1370,7 @@
                     <button class="header-btn" id="findBtn" data-i18n="btnFind" data-i18n-title="btnFindTitle" title="查找 (Ctrl+F)"><svg class="icon"><use href="#icon-search"/></svg> 查找</button>
                     <button class="header-btn" id="replaceBtn" data-i18n="btnReplace" data-i18n-title="btnReplaceTitle" title="替换 (Ctrl+H)"><svg class="icon"><use href="#icon-exchange-alt"/></svg> 替换</button>
                     <button class="header-btn icon-only-btn active" id="autoFillBtn" data-i18n-title="autoFillOnTitle" title="选中文本自动填入查找框（已开启，点击关闭）"><svg class="icon"><use href="#icon-magic"/></svg></button>
-                    <button class="header-btn active" id="lineNumBtn" data-i18n="optLineNumbers" data-i18n-title="optLineNumbersTitle" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg> 行号</button>
+                    <button class="header-btn active" id="lineNumBtn" data-i18n-title="optLineNumbersTitle" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg></button>
                     <span id="cursorPos">行 1, 列 1</span>
                 </div>
             </div>
@@ -1568,6 +1576,44 @@
         </div>
     </div>
 
+    <!-- 缩进设置弹窗 -->
+    <div class="modal-overlay" id="indentModal">
+        <div class="modal" style="width: 400px;">
+            <h3 data-i18n="modalIndentTitle"><svg class="icon"><use href="#icon-tools"/></svg> 缩进设置</h3>
+            <div class="field">
+                <label data-i18n="fieldIndentStyle">缩进字符</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="indentStyle" value="space" checked> <span data-i18n="indentSpace">空格</span></label>
+                    <label><input type="radio" name="indentStyle" value="tab"> <span data-i18n="indentTab">Tab</span></label>
+                </div>
+            </div>
+            <div class="field" id="indentWidthField">
+                <label data-i18n="fieldIndentWidth">缩进宽度（空格数）</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="indentWidth" value="2"> 2</label>
+                    <label><input type="radio" name="indentWidth" value="3"> 3</label>
+                    <label><input type="radio" name="indentWidth" value="4" checked> 4</label>
+                    <label><input type="radio" name="indentWidth" value="8"> 8</label>
+                </div>
+                <span class="hint" id="indentWidthHint"></span>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldIndentApply">应用到当前文件</label>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="panel-btn" id="indentApplyAllBtn" data-i18n="btnIndentApplyAll">重排全文缩进</button>
+                    <button class="panel-btn" id="indentApplySelectionBtn" data-i18n="btnIndentApplySelection">仅重排选区</button>
+                </div>
+                <span class="hint" data-i18n="indentApplyHint">用「自动缩进」规则重新计算缩进；不保证保留手动对齐，建议先保存</span>
+            </div>
+            <div class="modal-actions">
+                <button id="indentResetBtn" data-i18n="btnIndentReset">恢复默认</button>
+                <span style="flex:1"></span>
+                <button id="indentCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="indentSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 粘贴代码弹窗（剪贴板导入兜底） -->
     <div class="modal-overlay" id="pasteModal">
         <div class="modal">
@@ -1622,6 +1668,57 @@
     </div>
 
     <script>
+        // ==================== 存储封装（必须最先定义）====================
+        // 无痕模式 / 站点数据被禁用 / 某些 WebView 里，localStorage 的**任何**访问都会抛
+        // SecurityError。顶层 `let x = localStorage.getItem(...)` 一旦抛错，整个脚本立即中止：
+        // 积木不渲染、后续 addEventListener 全都没绑上 —— 表现就是「积木没显示 + 按钮点不了」。
+        // SafeStore 启动时探测一次，不可用则退化为内存存储，读写永不抛异常。
+        const SafeStore = (function () {
+            let available = false;
+            let blocked = false;          // 访问时才发现被拦（探测通过但后续抛错）
+            const mem = Object.create(null);
+
+            try {
+                const probe = '__sc_probe__';
+                window.localStorage.setItem(probe, '1');
+                window.localStorage.removeItem(probe);
+                available = true;
+            } catch (e) {
+                available = false;
+            }
+
+            function get(key) {
+                if (available) {
+                    try { return window.localStorage.getItem(key); }
+                    catch (e) { available = false; blocked = true; }
+                }
+                return Object.prototype.hasOwnProperty.call(mem, key) ? mem[key] : null;
+            }
+
+            function set(key, val) {
+                mem[key] = String(val);
+                if (!available) { blocked = true; return false; }
+                try { window.localStorage.setItem(key, String(val)); return true; }
+                catch (e) { available = false; blocked = true; return false; }
+            }
+
+            function remove(key) {
+                delete mem[key];
+                if (!available) return;
+                try { window.localStorage.removeItem(key); } catch (e) { available = false; blocked = true; }
+            }
+
+            return {
+                get: get,
+                set: set,
+                remove: remove,
+                /** 存储是否真正可用（false 时设置只在本次会话生效） */
+                isAvailable: function () { return available; },
+                /** 是否因为抛错才不可用（用于状态栏提示） */
+                wasBlocked: function () { return blocked; }
+            };
+        })();
+
         // ==================== 国际化 (i18n) ====================
         const LANG_KEY = 'app-lang-v1';
 
@@ -1648,7 +1745,7 @@
                 btnUndoTitle: '撤销 (Ctrl+Z)',
                 btnRedo: '重做',
                 btnRedoTitle: '重做 (Ctrl+Y / Ctrl+Shift+Z)',
-                btnAutoIndent: '自动缩进',
+                btnAutoIndent: '自动',
                 btnAutoIndentTitle: '自动缩进当前行 / 选中行',
                 btnIndent: '缩进',
                 btnIndentTitle: '缩进当前行 / 选中行 (Tab)',
@@ -1678,6 +1775,22 @@
                 optLineNumbersTitle: '显示 / 隐藏行号',
                 autoFillOnTitle: '选中文本自动填入查找框（已开启，点击关闭）',
                 autoFillOffTitle: '选中文本自动填入查找框（已关闭，点击开启）',
+                // 缩进设置
+                modalIndentTitle: '缩进设置',
+                fieldIndentStyle: '缩进字符',
+                indentSpace: '空格',
+                indentTab: 'Tab',
+                fieldIndentWidth: '缩进宽度（空格数）',
+                indentWidthHint: 'Tab 模式下此项仅影响显示宽度，不改变实际字符',
+                indentWidthHintSpace: '每级缩进使用 {n} 个空格',
+                fieldIndentApply: '应用到当前文件',
+                btnIndentApplyAll: '重排全文缩进',
+                btnIndentApplySelection: '仅重排选区',
+                indentApplyHint: '用「自动缩进」规则重新计算缩进；不保证保留手动对齐，建议先保存',
+                btnIndentReset: '恢复默认',
+                btnIndentSettingsTitle: '缩进设置（宽度 / Tab / 重排）',
+                indentApplied: '已重排 {n} 行缩进',
+                indentNoChange: '缩进无需改动',
                 fontDecTitle: '缩小字体 (Ctrl+−)',
                 fontIncTitle: '放大字体 (Ctrl+=)',
                 fontResetTitle: '重置字号 (Ctrl+0)',
@@ -1766,8 +1879,9 @@
                 alertNeedCustomSub: '请输入自定义子类别名',
                 alertNeedCategoryName: '请输入类别名',
                 alertCopyFail: '复制失败，请手动全选编辑器内容后 Ctrl+C 复制',
-                errInvalidStructure: '结构错误：需为数组，每个分类含 category 和 subgroups（含 none/c/cpp 三个数组）',
+                errInvalidStructure: '结构错误：需为非空数组，每个分类要有 category，subgroups 为对象（缺的分组会自动补齐）',
                 warnPrism: '⚠ Prism 未加载，语法高亮不可用（检查网络或 CDN）',
+                warnStorage: '⚠ 本地存储不可用，修改不会保存',
                 copied: '已复制',
                 // 编辑器占位与主题提示
                 editorPlaceholder: '// 点击左侧积木或直接编写代码...',
@@ -1797,7 +1911,7 @@
                 btnUndoTitle: 'Undo (Ctrl+Z)',
                 btnRedo: 'Redo',
                 btnRedoTitle: 'Redo (Ctrl+Y / Ctrl+Shift+Z)',
-                btnAutoIndent: 'Auto Indent',
+                btnAutoIndent: 'Auto',
                 btnAutoIndentTitle: 'Auto-indent current line / selection',
                 btnIndent: 'Indent',
                 btnIndentTitle: 'Indent current line / selection (Tab)',
@@ -1823,10 +1937,26 @@
                 btnFindTitle: 'Find (Ctrl+F)',
                 btnReplace: 'Replace',
                 btnReplaceTitle: 'Replace (Ctrl+H)',
-                optLineNumbers: 'Line numbers',
+                optLineNumbers: 'LineNum',
                 optLineNumbersTitle: 'Show / hide line numbers',
                 autoFillOnTitle: 'Auto-fill find box from selection (on, click to disable)',
                 autoFillOffTitle: 'Auto-fill find box from selection (off, click to enable)',
+                // Indent settings
+                modalIndentTitle: 'Indent Settings',
+                fieldIndentStyle: 'Indent character',
+                indentSpace: 'Spaces',
+                indentTab: 'Tab',
+                fieldIndentWidth: 'Indent width (spaces)',
+                indentWidthHint: 'In Tab mode this only affects display width, not the actual characters',
+                indentWidthHintSpace: 'Each indent level uses {n} spaces',
+                fieldIndentApply: 'Apply to current file',
+                btnIndentApplyAll: 'Reindent whole file',
+                btnIndentApplySelection: 'Reindent selection only',
+                indentApplyHint: 'Recomputes indentation with the auto-indent rules; manual alignment may not be preserved — save first',
+                btnIndentReset: 'Reset to default',
+                btnIndentSettingsTitle: 'Indent settings (width / Tab / reindent)',
+                indentApplied: 'Reindented {n} lines',
+                indentNoChange: 'No indentation change needed',
                 fontDecTitle: 'Decrease font size (Ctrl+−)',
                 fontIncTitle: 'Increase font size (Ctrl+=)',
                 fontResetTitle: 'Reset font size (Ctrl+0)',
@@ -1915,8 +2045,9 @@
                 alertNeedCustomSub: 'Please enter a custom subcategory name',
                 alertNeedCategoryName: 'Please enter a category name',
                 alertCopyFail: 'Copy failed. Please select all and press Ctrl+C.',
-                errInvalidStructure: 'Invalid structure: expected an array where each category has category and subgroups (with none/c/cpp arrays)',
+                errInvalidStructure: 'Invalid structure: expected a non-empty array where each category has category and an object subgroups (missing groups are auto-filled)',
                 warnPrism: '⚠ Prism not loaded; syntax highlighting unavailable (check network or CDN)',
+                warnStorage: '⚠ Local storage unavailable; changes not saved',
                 copied: 'Copied',
                 // Editor placeholder & theme hints
                 editorPlaceholder: '// Click a block on the left, or just start typing...',
@@ -1997,10 +2128,8 @@
             const urlLang = getUrlLang();
             if (urlLang) return urlLang;
 
-            try {
-                const v = localStorage.getItem(LANG_KEY);
-                if (v === 'zh' || v === 'en') return v;
-            } catch (e) { }
+            const v = SafeStore.get(LANG_KEY);
+            if (v === 'zh' || v === 'en') return v;
 
             const nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
             if (nav.indexOf('zh') === 0) return 'zh';
@@ -2065,6 +2194,17 @@
             updateAutoFillBtn();   // 语言切换后 title 文案要跟着开关状态换
             if (Array.isArray(BLOCKS) && BLOCKS.length) renderBlocksPanel();
             if (blockPickerState.visible) renderBlockPickerList();
+            // 缩进弹窗的 hint 是动态文案（含宽度数字），跟着语言刷新
+            const hint = document.getElementById('indentWidthHint');
+            if (hint) {
+                const styleRadio = document.querySelector('input[name="indentStyle"]:checked');
+                const widthRadio = document.querySelector('input[name="indentWidth"]:checked');
+                const isTab = styleRadio && styleRadio.value === 'tab';
+                const w = widthRadio ? parseInt(widthRadio.value, 10) : INDENT_DEFAULT.width;
+                hint.textContent = isTab
+                    ? t('indentWidthHint')
+                    : t('indentWidthHintSpace', { n: INDENT_WIDTHS.indexOf(w) >= 0 ? w : INDENT_DEFAULT.width });
+            }
             // 编辑积木弹窗开着时，「含 std::」提示也要跟着换语言
             if (blockConfigModal.classList.contains('show') && editingBlock) {
                 const item = findBlock(editingBlock.catId, editingBlock.sub, editingBlock.blockId);
@@ -2079,7 +2219,7 @@
             document.documentElement.setAttribute('lang', currentLang === 'zh' ? 'zh-CN' : 'en');
             document.documentElement.setAttribute('data-lang', currentLang);
             if (!opts || opts.persist !== false) {
-                try { localStorage.setItem(LANG_KEY, currentLang); } catch (e) { }
+                SafeStore.set(LANG_KEY, currentLang);
             }
             document.title = t('appTitle');
             applyI18n();
@@ -2480,8 +2620,15 @@
             if (text === lastHighlightedText) return;
 
             if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages.cpp) {
-                const highlighted = Prism.highlight(text, Prism.languages.cpp, 'cpp');
-                highlightCode.innerHTML = highlighted;
+                // Prism 语法表一旦被扩展/补丁污染（例如把幂等标记挂在 grammar 上），
+                // 每次高亮都会抛 "e.exec is not a function"。这里兜住，失败就退回纯文本，
+                // 绝不让高亮异常把 renderBlocksPanel / init 后续流程带崩。
+                try {
+                    highlightCode.innerHTML = Prism.highlight(text, Prism.languages.cpp, 'cpp');
+                } catch (err) {
+                    highlightCode.textContent = text;
+                    console.warn('Prism 高亮失败，已退回纯文本：', err);
+                }
             } else {
                 highlightCode.textContent = text;
             }
@@ -2510,7 +2657,7 @@
 
         // ==================== 行号 ====================
         const LN_STORAGE_KEY = 'line-numbers-visible';
-        let lnVisible = localStorage.getItem(LN_STORAGE_KEY) !== '0';
+        let lnVisible = SafeStore.get(LN_STORAGE_KEY) !== '0';
         let lnLastCount = -1;
         let lnLastActive = -1;
         let lnGutterWidth = 40;
@@ -2574,7 +2721,7 @@
         function applyLineNumberVisibility(skipRender) {
             codeEditorContainer.classList.toggle('show-ln', lnVisible);
             lineNumBtn.classList.toggle('active', lnVisible);
-            localStorage.setItem(LN_STORAGE_KEY, lnVisible ? '1' : '0');
+            SafeStore.set(LN_STORAGE_KEY, lnVisible ? '1' : '0');
 
             if (lnVisible) {
                 if (!skipRender) renderLineNumbers(codeInput.value);
@@ -2601,7 +2748,7 @@
         const fontResetBtn = document.getElementById('fontResetBtn');
 
         function readFontSize() {
-            let v = parseInt(localStorage.getItem(FS_KEY), 10);
+            let v = parseInt(SafeStore.get(FS_KEY), 10);
             if (!(v >= FS_MIN && v <= FS_MAX)) v = FS_DEFAULT;
             return v;
         }
@@ -2634,7 +2781,7 @@
             document.documentElement.style.setProperty('--editor-line-height', editorLineHeight() + 'px');
             updateFontButtons();
             if (!opts || opts.persist !== false) {
-                try { localStorage.setItem(FS_KEY, String(v)); } catch (e) { }
+                SafeStore.set(FS_KEY, String(v));
             }
             // 行号列宽按新字宽重算，三层的内边距与滚动同步也要重算
             if (lnLastCount > 0) applyGutterWidth(lnLastCount);
@@ -2824,8 +2971,54 @@
             return LANG_RULES[ACTIVE_LANG] || LANG_RULES.c;
         }
 
+        // C++ 与 C 用同一套缩进规则（默认 4 空格）。显式挂别名，
+        // 这样 ACTIVE_LANG 是 'cpp' 时直接命中，不用靠 getLangRules 的兜底
+        LANG_RULES.cpp = LANG_RULES.c;
+
+        // ==================== 缩进配置（用户可调）====================
+        // LANG_RULES[*].indentUnit 只作为「语言默认值」，运行期一律读 indentConfig
+        const INDENT_STYLE_KEY = 'indent-style-v1';
+        const INDENT_WIDTH_KEY = 'indent-width-v1';
+        const INDENT_DEFAULT = { style: 'space', width: 4 };
+        const INDENT_WIDTHS = [2, 3, 4, 8];
+        let indentConfig = { style: INDENT_DEFAULT.style, width: INDENT_DEFAULT.width };
+
+        function readStored(key) { return SafeStore.get(key); }
+        function writeStored(key, val) { return SafeStore.set(key, val); }
+
+        /**
+         * 当前语言的默认缩进（C / C++ 都是 4 空格）。
+         * 只用于「首次加载无存储」和弹窗里的「恢复默认」，运行期一律读 indentConfig。
+         */
+        function langIndentDefault() {
+            const unit = getLangRules().indentUnit;
+            if (unit === '\t') return { style: 'tab', width: INDENT_DEFAULT.width };
+            const w = unit.length;
+            return {
+                style: 'space',
+                width: INDENT_WIDTHS.indexOf(w) >= 0 ? w : INDENT_DEFAULT.width
+            };
+        }
+
+        /** 首次加载（无存储）时回落到当前语言的默认缩进 */
+        function loadIndentConfig() {
+            const def = langIndentDefault();
+            const s = readStored(INDENT_STYLE_KEY);
+            const w = parseInt(readStored(INDENT_WIDTH_KEY), 10);
+            indentConfig = {
+                style: (s === 'tab' || s === 'space') ? s : def.style,
+                width: INDENT_WIDTHS.indexOf(w) >= 0 ? w : def.width
+            };
+        }
+
         function indentUnit() {
-            return getLangRules().indentUnit;
+            if (indentConfig.style === 'tab') return '\t';
+            return ' '.repeat(indentConfig.width);
+        }
+
+        /** Tab 显示宽度跟随设置：空格模式是 width，Tab 模式也按 width 显示 */
+        function applyIndentToEditor() {
+            document.documentElement.style.setProperty('--tab-size', String(indentConfig.width));
         }
 
         // 去掉行首一级缩进。优先按 indentUnit 的宽度，混合空白（tab / 不足一级的空格）按一级处理
@@ -2834,9 +3027,16 @@
             unit = unit || indentUnit();
             const lead = indent.match(/^(\t| +)/);
             if (!lead) return indent;
-            if (lead[0].charAt(0) === '\t' || unit === '\t') {
-                return lead[0].charAt(0) === '\t' ? indent.slice(1) : indent.slice(lead[0].length);
+            if (lead[0].charAt(0) === '\t') {
+                // 行首是 Tab：删一个 Tab
+                return indent.slice(1);
             }
+            if (unit === '\t') {
+                // Tab 模式但行首是空格：只删一级宽度，不整段删光
+                const n = Math.min(indentConfig.width, lead[0].length);
+                return indent.slice(n);
+            }
+            // 空格模式：删一级单位，不足一级则删全部行首空格
             return lead[0].length >= unit.length ? indent.slice(unit.length) : indent.slice(lead[0].length);
         }
 
@@ -3448,7 +3648,7 @@
         let autoFillEnabled = true;
 
         function getAutoFillPref() {
-            try { return localStorage.getItem(AUTO_FILL_KEY) !== '0'; } catch (e) { return true; }
+            return SafeStore.get(AUTO_FILL_KEY) !== '0';
         }
 
         function updateAutoFillBtn() {
@@ -3463,7 +3663,7 @@
         function setAutoFillEnabled(v, opts) {
             autoFillEnabled = !!v;
             if (!opts || opts.persist !== false) {
-                try { localStorage.setItem(AUTO_FILL_KEY, autoFillEnabled ? '1' : '0'); } catch (e) { }
+                SafeStore.set(AUTO_FILL_KEY, autoFillEnabled ? '1' : '0');
             }
             updateAutoFillBtn();
         }
@@ -3665,35 +3865,89 @@
 
         // ==================== 数据保存/加载 ====================
         function saveToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(BLOCKS));
-            } catch (e) {
-                console.warn('保存失败', e);
+            if (!SafeStore.set(STORAGE_KEY, JSON.stringify(BLOCKS))) {
+                // 存储不可用：数据仍在内存里，只是刷新会丢，状态栏提示一次
+                showStorageWarn();
             }
         }
 
+        /** 状态栏追加一条警示（同一 tag 只出现一次） */
+        function appendStatusWarn(text, tag) {
+            const bar = document.querySelector('.status-bar');
+            if (!bar) return;
+            if (tag && bar.querySelector('[data-warn="' + tag + '"]')) return;
+            const span = document.createElement('span');
+            span.style.color = 'var(--danger)';
+            span.style.marginLeft = '10px';
+            if (tag) span.dataset.warn = tag;
+            span.textContent = text;
+            bar.appendChild(span);
+        }
+
+        function showStorageWarn() {
+            appendStatusWarn(t('warnStorage'), 'storage');
+        }
+
+        // 分组键：none 通用（不分组）、c / cpp 对应 C 与 C++、v / va 为 Verilog 系列预留
+        const BLOCK_SUBGROUP_KEYS = ['none', 'c', 'cpp', 'v', 'va'];
+
+        /**
+         * 宽松校验：只要求「非空数组 + 每项有 category 与 subgroups 对象」。
+         * 旧数据缺 none / v / va，或只有 c 组没有 cpp 组，都不再整体拒绝
+         * （原实现强制要求 none+c+cpp 三个数组齐全，一份旧 JSON 就能让导入失败）。
+         */
         function isValidBlockData(data) {
             if (!Array.isArray(data) || data.length === 0) return false;
-            return data.every(c => 
-                c && c.category && c.subgroups &&
-                typeof c.subgroups === 'object' &&
-                Array.isArray(c.subgroups.none) &&
-                Array.isArray(c.subgroups.c) &&
-                Array.isArray(c.subgroups.cpp)
-            );
+            return data.every(c => c && typeof c === 'object' &&
+                typeof c.category === 'string' &&
+                c.subgroups && typeof c.subgroups === 'object' && !Array.isArray(c.subgroups));
+        }
+
+        /**
+         * 就地补齐结构（读取存储、文件导入都走这里）：
+         * 1) 缺的 none / c / cpp / v / va 补空数组，避免渲染、查找、拖拽时踩 undefined
+         * 2) 旧版本的合并分组名（如 'c-cpp'）里的积木并入 none，不丢内容
+         * 3) 旧数据只有 c 组时不复制到 cpp —— 面板是按 subgroup 原样渲染的，
+         *    复制同一批积木会在「C」和「C++」两个分组里各显示一遍
+         */
+        function normalizeBlockStructure(blocks) {
+            if (!Array.isArray(blocks)) return [];
+            const list = blocks.filter(c => c && typeof c === 'object');
+            list.forEach(cat => {
+                if (!cat.subgroups || typeof cat.subgroups !== 'object' || Array.isArray(cat.subgroups)) {
+                    cat.subgroups = {};
+                }
+                const sg = cat.subgroups;
+                if (!cat.id) cat.id = genId('cat');
+                if (typeof cat.category !== 'string') cat.category = String(cat.category == null ? '' : cat.category);
+                Object.keys(sg).forEach(k => {
+                    if (BLOCK_SUBGROUP_KEYS.indexOf(k) >= 0) return;
+                    if (Array.isArray(sg[k])) {
+                        sg.none = (Array.isArray(sg.none) ? sg.none : []).concat(sg[k]);
+                    }
+                    delete sg[k];
+                });
+                BLOCK_SUBGROUP_KEYS.forEach(k => {
+                    if (!Array.isArray(sg[k])) sg[k] = [];
+                });
+            });
+            return list;
         }
 
         function loadFromStorage() {
+            const raw = SafeStore.get(STORAGE_KEY);
+            if (!raw) return null;
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    const data = JSON.parse(raw);
-                    if (isValidBlockData(data)) return data;
+                const data = JSON.parse(raw);
+                if (!isValidBlockData(data)) {
+                    console.warn('存储中的积木数据结构不合法，已回退到默认数据');
+                    return null;
                 }
+                return normalizeBlockStructure(data);
             } catch (e) {
                 console.warn('加载失败', e);
+                return null;
             }
-            return null;
         }
 
         // ==================== 工具 ====================
@@ -4455,7 +4709,8 @@
                     if (!isValidBlockData(data)) {
                         throw new Error(t('errInvalidStructure'));
                     }
-                    normalizeBlocksModes(data);   // 'lc' 等历史值统一升级为 'exp'
+                    normalizeBlockStructure(data);  // 补 none/c/cpp/v/va，合并旧分组名
+                    normalizeBlocksModes(data);     // 'lc' 等历史值统一升级为 'exp'
                     pendingImportData = data;
                     importModeModal.classList.add('show');
                 } catch (err) {
@@ -4966,6 +5221,155 @@
             codeInput.focus();
         });
 
+        // ==================== 缩进设置弹窗 ====================
+        const indentModal = document.getElementById('indentModal');
+        const indentWidthField = document.getElementById('indentWidthField');
+        const indentWidthHint = document.getElementById('indentWidthHint');
+        const indentApplyAllBtn = document.getElementById('indentApplyAllBtn');
+        const indentApplySelectionBtn = document.getElementById('indentApplySelectionBtn');
+        const indentResetBtn = document.getElementById('indentResetBtn');
+        const indentCancelBtn = document.getElementById('indentCancelBtn');
+        const indentSaveBtn = document.getElementById('indentSaveBtn');
+        const indentSettingsBtn = document.getElementById('indentSettingsBtn');
+
+        /** 状态栏临时提示（非阻塞，替代 alert） */
+        let flashStatusTimer = null;
+        function flashStatus(msg) {
+            const el = document.getElementById('execTime');
+            if (!el) return;
+            el.textContent = msg;
+            if (flashStatusTimer) clearTimeout(flashStatusTimer);
+            flashStatusTimer = setTimeout(() => {
+                el.textContent = '';
+                flashStatusTimer = null;
+            }, 2600);
+        }
+
+        /** 从弹窗 DOM 读取当前选中的缩进配置（不落盘、不改全局） */
+        function readPendingIndent() {
+            const styleRadio = document.querySelector('input[name="indentStyle"]:checked');
+            const widthRadio = document.querySelector('input[name="indentWidth"]:checked');
+            const width = widthRadio ? parseInt(widthRadio.value, 10) : INDENT_DEFAULT.width;
+            return {
+                style: (styleRadio && styleRadio.value === 'tab') ? 'tab' : 'space',
+                width: INDENT_WIDTHS.indexOf(width) >= 0 ? width : INDENT_DEFAULT.width
+            };
+        }
+
+        /**
+         * 重排期间临时把全局 indentConfig 换成弹窗当前值，结束后恢复。
+         * 缩进工具函数（indentUnit / dedentLevel / applyDelta / autoIndentSelection…）
+         * 都读全局 indentConfig，因此无需给它们加参数。同步执行，无并发。
+         */
+        function reindentWithPending(fn) {
+            const saved = indentConfig;
+            indentConfig = readPendingIndent();
+            try {
+                fn();
+            } finally {
+                indentConfig = saved;
+            }
+        }
+
+        function updateIndentWidthFieldState() {
+            const isTab = readPendingIndent().style === 'tab';
+            // 视觉降级但保持可用
+            indentWidthField.style.opacity = isTab ? '0.6' : '1';
+            indentWidthHint.textContent = isTab
+                ? t('indentWidthHint')
+                : t('indentWidthHintSpace', { n: readPendingIndent().width });
+        }
+
+        function openIndentSettings() {
+            if (blockPickerState.visible) hideBlockPicker(false);
+            const styleRadio = document.querySelector('input[name="indentStyle"][value="' + indentConfig.style + '"]');
+            if (styleRadio) styleRadio.checked = true;
+            const widthRadio = document.querySelector('input[name="indentWidth"][value="' + indentConfig.width + '"]');
+            if (widthRadio) widthRadio.checked = true;
+            updateIndentWidthFieldState();
+            indentModal.classList.add('show');
+        }
+
+        function closeIndentSettings() {
+            indentModal.classList.remove('show');
+        }
+
+        function saveIndentConfig() {
+            const pending = readPendingIndent();
+            indentConfig.style = pending.style;
+            indentConfig.width = pending.width;
+            writeStored(INDENT_STYLE_KEY, indentConfig.style);
+            writeStored(INDENT_WIDTH_KEY, String(indentConfig.width));
+            applyIndentToEditor();
+            closeIndentSettings();
+            codeInput.focus();
+        }
+
+        /** 重排全文：临时全选后用「弹窗当前缩进」重排，再恢复原选区 */
+        function reindentAll() {
+            const before = codeInput.value;
+            const selStart = codeInput.selectionStart;
+            const selEnd = codeInput.selectionEnd;
+
+            reindentWithPending(() => {
+                codeInput.setSelectionRange(0, before.length);
+                autoIndentSelection();
+            });
+
+            const after = codeInput.value;
+            if (after !== before) {
+                const beforeLines = before.split('\n');
+                const afterLines = after.split('\n');
+                let changed = 0;
+                const n = Math.max(beforeLines.length, afterLines.length);
+                for (let i = 0; i < n; i++) {
+                    if (beforeLines[i] !== afterLines[i]) changed++;
+                }
+                const ns = Math.min(selStart, after.length);
+                const ne = Math.min(selEnd, after.length);
+                codeInput.setSelectionRange(ns, Math.max(ns, ne));
+                flashStatus(t('indentApplied', { n: changed }));
+            } else {
+                codeInput.setSelectionRange(Math.min(selStart, after.length), Math.min(selEnd, after.length));
+                flashStatus(t('indentNoChange'));
+            }
+            codeInput.focus();
+        }
+
+        /** 重排选区（无选区时按光标所在行）：用「弹窗当前缩进」重排 */
+        function reindentSelection() {
+            reindentWithPending(() => autoIndentSelection());
+            updateCursorPosition();
+            codeInput.focus();
+        }
+
+        indentSettingsBtn.addEventListener('click', openIndentSettings);
+        indentCancelBtn.addEventListener('click', closeIndentSettings);
+        indentSaveBtn.addEventListener('click', saveIndentConfig);
+        indentApplyAllBtn.addEventListener('click', reindentAll);
+        indentApplySelectionBtn.addEventListener('click', reindentSelection);
+        indentResetBtn.addEventListener('click', () => {
+            // 回填「当前语言默认值」（C/C++ = 4 空格），不立即保存（点保存才生效）
+            const def = langIndentDefault();
+            const styleRadio = document.querySelector('input[name="indentStyle"][value="' + def.style + '"]');
+            const widthRadio = document.querySelector('input[name="indentWidth"][value="' + def.width + '"]');
+            if (styleRadio) styleRadio.checked = true;
+            if (widthRadio) widthRadio.checked = true;
+            updateIndentWidthFieldState();
+        });
+        indentModal.addEventListener('click', (e) => {
+            if (e.target === indentModal) closeIndentSettings();
+        });
+        document.querySelectorAll('input[name="indentStyle"], input[name="indentWidth"]').forEach(r => {
+            r.addEventListener('change', updateIndentWidthFieldState);
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && indentModal.classList.contains('show')) {
+                closeIndentSettings();
+                e.preventDefault();
+            }
+        });
+
         document.getElementById('clearBtn').addEventListener('click', () => {
             codeInput.value = '';
             lastHighlightedText = null;
@@ -5025,15 +5429,21 @@ int main() {
         const THEME_ORDER = ['dark', 'light', 'system'];
 
         const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const mqlLight = window.matchMedia('(prefers-color-scheme: light)');
+        // 旧版微信 WebView 可能没有 matchMedia：给出一个「永不匹配」的空实现，代码后续无需判空
+        const mqlLight = (function () {
+            try {
+                if (typeof window.matchMedia === 'function') return window.matchMedia('(prefers-color-scheme: light)');
+            } catch (e) { }
+            return {
+                matches: false,
+                addEventListener: null,
+                addListener: null
+            };
+        })();
 
         function getThemePref() {
-            try {
-                const v = localStorage.getItem(THEME_KEY);
-                return THEME_ORDER.includes(v) ? v : THEME_DEFAULT;
-            } catch (e) {
-                return THEME_DEFAULT;
-            }
+            const v = SafeStore.get(THEME_KEY);
+            return THEME_ORDER.includes(v) ? v : THEME_DEFAULT;
         }
 
         function resolveTheme(pref) {
@@ -5055,9 +5465,7 @@ int main() {
 
         function applyTheme(pref) {
             document.documentElement.setAttribute('data-theme', resolveTheme(pref));
-            try {
-                localStorage.setItem(THEME_KEY, pref);
-            } catch (e) { }
+            SafeStore.set(THEME_KEY, pref);
             updateThemeButton(pref);
         }
 
@@ -5099,14 +5507,15 @@ int main() {
         (function init() {
             const saved = loadFromStorage();
             BLOCKS = saved || JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
-            normalizeBlocksModes(BLOCKS);   // 旧的 localStorage 里可能是 'lc'
+            normalizeBlockStructure(BLOCKS);   // 补 none/c/cpp/v/va（默认数据也走一遍，行为统一）
+            normalizeBlocksModes(BLOCKS);      // 旧的 localStorage 里可能是 'lc'
 
             renderBlocksPanel();
 
             // URL 显式指定语言时写入 localStorage，让后续不带参数的访问也保持
             const urlLang = getUrlLang();
             if (urlLang) {
-                try { localStorage.setItem(LANG_KEY, urlLang); } catch (e) { }
+                SafeStore.set(LANG_KEY, urlLang);
             }
             setLang(getLangPref(), { persist: false });   // 应用界面语言（首帧即生效，不会闪）
 
@@ -5134,6 +5543,8 @@ int main() {
 
             updateCursorPosition();
             applyEditorFontSize(editorFontSize, { persist: false });
+            loadIndentConfig();
+            applyIndentToEditor();
             applyLineNumberVisibility(true);
             autoFillEnabled = getAutoFillPref();
             updateAutoFillBtn();
@@ -5141,10 +5552,29 @@ int main() {
             codeInput.focus();
             codeInput.setSelectionRange(defaultCode.length, defaultCode.length);
 
-            if (typeof Prism === 'undefined') {
-                document.querySelector('.status-bar').insertAdjacentHTML('beforeend',
-                    '<span style="color:var(--danger);">' + t('warnPrism') + '</span>');
+            // ==================== Prism 异步加载收尾 ====================
+            // head 里的 loader 不阻塞解析，所以 init 跑到这里时 Prism 可能还没就绪：
+            // 就绪 → 重新着色；仍在加载 → 挂回调，到了再着色；失败 → 只提示，其他功能不受影响
+            const prismReady = () => (typeof Prism !== 'undefined' &&
+                !!Prism.languages && !!Prism.languages.cpp);
+            const rehighlightNow = () => {
+                lastHighlightedText = null;   // 强制重算，绕过「文本没变就跳过」的短路
+                updateHighlight();
+            };
+            if (prismReady()) {
+                rehighlightNow();
+            } else if (window.__prismState === 'loading') {
+                window.__onPrismReady = function (state) {
+                    if (state === 'ready' && prismReady()) rehighlightNow();
+                    else appendStatusWarn(t('warnPrism'), 'prism');
+                };
+            } else {
+                // 'failed' 或页面里压根没有 loader（离线版 vendor 缺失）
+                appendStatusWarn(t('warnPrism'), 'prism');
             }
+
+            // 存储不可用（无痕 / 站点数据被禁）：明确告知，不静默降级
+            if (!SafeStore.isAvailable()) showStorageWarn();
         })();
     </script>
 </body>

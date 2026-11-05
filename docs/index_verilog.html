@@ -1347,7 +1347,7 @@
         <button id="undoBtn" data-i18n="btnUndo" data-i18n-title="btnUndoTitle" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
         <button id="redoBtn" data-i18n="btnRedo" data-i18n-title="btnRedoTitle" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
         <span class="divider"></span>
-        <button id="autoIndentBtn" data-i18n="btnAutoIndent" data-i18n-title="btnAutoIndentTitle" title="自动缩进当前行 / 选中行"><svg class="icon"><use href="#icon-autoindent"/></svg> 自动缩进</button>
+        <button id="autoIndentBtn" data-i18n="btnAutoIndent" data-i18n-title="btnAutoIndentTitle" title="自动缩进当前行 / 选中行"><svg class="icon"><use href="#icon-autoindent"/></svg> 自动</button>
         <button id="indentBtn" data-i18n="btnIndent" data-i18n-title="btnIndentTitle" title="缩进当前行 / 选中行 (Tab)"><svg class="icon"><use href="#icon-indent"/></svg> 缩进</button>
         <button id="outdentBtn" data-i18n="btnOutdent" data-i18n-title="btnOutdentTitle" title="反缩进当前行 / 选中行 (Shift+Tab)"><svg class="icon"><use href="#icon-outdent"/></svg> 反缩进</button>
         <button id="indentSettingsBtn" class="icon-only" data-i18n-title="btnIndentSettingsTitle" title="缩进设置"><svg class="icon"><use href="#icon-tools"/></svg></button>
@@ -1627,7 +1627,7 @@
                     <button class="panel-btn" id="indentApplyAllBtn" data-i18n="btnIndentApplyAll">重排全文缩进</button>
                     <button class="panel-btn" id="indentApplySelectionBtn" data-i18n="btnIndentApplySelection">仅重排选区</button>
                 </div>
-                <span class="hint" data-i18n="indentApplyHint">用「自动缩进」规则重新计算缩进；不保证保留手动对齐，建议先保存</span>
+                <span class="hint" data-i18n="indentApplyHint">用「自动」按钮的规则重新计算缩进；不保证保留手动对齐，建议先保存</span>
             </div>
             <div class="modal-actions">
                 <button id="indentResetBtn" data-i18n="btnIndentReset">恢复默认</button>
@@ -1749,7 +1749,7 @@
                 btnUndoTitle: '撤销 (Ctrl+Z)',
                 btnRedo: '重做',
                 btnRedoTitle: '重做 (Ctrl+Y / Ctrl+Shift+Z)',
-                btnAutoIndent: '自动缩进',
+                btnAutoIndent: '自动',
                 btnAutoIndentTitle: '自动缩进当前行 / 选中行',
                 btnIndent: '缩进',
                 btnIndentTitle: '缩进当前行 / 选中行 (Tab)',
@@ -1779,7 +1779,7 @@
                 fieldIndentApply: '应用到当前文件',
                 btnIndentApplyAll: '重排全文缩进',
                 btnIndentApplySelection: '仅重排选区',
-                indentApplyHint: '用「自动缩进」规则重新计算缩进；不保证保留手动对齐，建议先保存',
+                indentApplyHint: '用「自动」按钮的规则重新计算缩进；不保证保留手动对齐，建议先保存',
                 btnIndentReset: '恢复默认',
                 btnIndentSettingsTitle: '缩进设置（宽度 / Tab / 重排）',
                 indentApplied: '已重排 {n} 行缩进',
@@ -1912,7 +1912,7 @@
                 btnUndoTitle: 'Undo (Ctrl+Z)',
                 btnRedo: 'Redo',
                 btnRedoTitle: 'Redo (Ctrl+Y / Ctrl+Shift+Z)',
-                btnAutoIndent: 'Auto Indent',
+                btnAutoIndent: 'Auto',
                 btnAutoIndentTitle: 'Auto-indent current line / selection',
                 btnIndent: 'Indent',
                 btnIndentTitle: 'Indent current line / selection (Tab)',
@@ -1942,7 +1942,7 @@
                 fieldIndentApply: 'Apply to current file',
                 btnIndentApplyAll: 'Reindent whole file',
                 btnIndentApplySelection: 'Reindent selection only',
-                indentApplyHint: 'Recomputes indentation with the auto-indent rules; manual alignment may not be preserved — save first',
+                indentApplyHint: 'Recomputes indentation with the same rules as the Auto button; manual alignment may not be preserved — save first',
                 btnIndentReset: 'Reset to default',
                 btnIndentSettingsTitle: 'Indent settings (width / Tab / reindent)',
                 indentApplied: 'Reindented {n} lines',
@@ -2993,8 +2993,8 @@
         }
 
         // ==================== 缩进配置（用户可调）====================
-        const INDENT_STYLE_KEY = 'indent-style-v1';
-        const INDENT_WIDTH_KEY = 'indent-width-v1';
+        const INDENT_STYLE_KEY = 'indent-style-verilog-v1';
+        const INDENT_WIDTH_KEY = 'indent-width-verilog-v1';
         const INDENT_DEFAULT = { style: 'space', width: 3 };
         const INDENT_WIDTHS = [2, 3, 4, 8];
         let indentConfig = Object.assign({}, INDENT_DEFAULT);
