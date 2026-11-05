@@ -30,8 +30,22 @@
             // 2) 模拟/数学函数单独高亮（ddt / idt / noise 等）
             g['function'] = /\b(?:ddt|idt|ddx|abs|min|max|pow|sqrt|exp|ln|log|floor|ceil|sin|cos|tan|atan2|atan|asin|acos|hypot|white_noise|flicker_noise|limexp|laplace_nd|laplace_np|transition|slew|absdelay|last_crossing|cross)\b/;
 
-            // 3) 重排 token 顺序：`include / `define 先于 keyword 匹配，反引号一起着色为指令色
-            var order = ['preprocessor', 'comment', 'string', 'keyword', 'number', 'operator', 'punctuation', 'function'];
+            // 3) 用户自定义 task / function 调用：标识符紧贴 '(' （前瞻，不消费括号，'(' 仍归 punctuation）
+            //    "xxx (" / "xxx  (" / 跨行 "xxx\n(" 一律不算调用，不着色 —— 必须是紧贴的 xxx( 形式。
+            //    顺序很关键：放 keyword 之后 → if/for/while/case 已被 keyword 吃掉，不会误判；
+            //                放 string/comment 之后 → 字符串、注释里的 xxx( 不着色；
+            //                放 operator/punctuation 之前 → 否则 '(' 先被吃掉，这里永远匹配不到。
+            //    Prism 1.29 的 verilog grammar 本身没有 function token（$display 原本完全不着色），
+            //    所以这里连 $ 前缀一起收进来，$display( / $finish( 也统一成函数色。
+            g['user-function'] = {
+                pattern: /(?:\$|\b)[A-Za-z_]\w*(?=\()/,
+                alias: 'function'
+            };
+
+            // 4) 重排 token 顺序：`include / `define 先于 keyword 匹配，反引号一起着色为指令色
+            //    user-function 必须落在 keyword 之后、number/operator 之前
+            var order = ['preprocessor', 'comment', 'string', 'keyword',
+                'user-function', 'number', 'operator', 'punctuation', 'function'];
             var rebuilt = {};
             order.forEach(function (k) { if (g[k]) rebuilt[k] = g[k]; });
             Object.keys(g).forEach(function (k) { if (!(k in rebuilt)) rebuilt[k] = g[k]; });
