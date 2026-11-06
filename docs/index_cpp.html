@@ -1398,6 +1398,7 @@
     <!-- ===== 内联 SVG 图标定义 ===== -->
     <svg style="display:none" aria-hidden="true">
         <symbol id="icon-cube" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></symbol>
+        <symbol id="icon-cube-plus" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/><path d="M19 17v6M16 20h6"/></symbol>
         <symbol id="icon-folder-open" viewBox="0 0 24 24"><path d="M6 14l1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"/></symbol>
         <symbol id="icon-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
         <symbol id="icon-paste" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
@@ -1505,9 +1506,10 @@
         <button id="outdentBtn" data-i18n="btnOutdent" data-i18n-title="btnOutdentTitle" title="反缩进当前行 / 选中行 (Shift+Tab)"><svg class="icon"><use href="#icon-outdent"/></svg> 反缩进</button>
         <button id="indentSettingsBtn" class="icon-only" data-i18n-title="btnIndentSettingsTitle" title="缩进设置"><svg class="icon"><use href="#icon-tools"/></svg></button>
         <span class="divider"></span>
-        <button id="blockPickerBtn" data-i18n="btnBlockPicker" data-i18n-title="btnBlockPickerTitle" title="插入积木 (Ctrl+/，或 Ctrl+点击编辑器)"><svg class="icon"><use href="#icon-cube"/></svg> 积木</button>
+        <button id="blockPickerBtn" data-i18n="btnBlockPicker" data-i18n-title="btnBlockPickerTitle" title="插入积木 (Ctrl+/，或 Ctrl+点击编辑器)；快速生成积木 (Ctrl+Shift+/)"><svg class="icon"><use href="#icon-cube"/></svg> 积木</button>
+        <button id="quickAddBtn" data-i18n="btnQuickAdd" data-i18n-title="btnQuickAddTitle" title="新增积木 (Ctrl+Shift+/)"><svg class="icon"><use href="#icon-cube-plus"/></svg> 新增</button>
         <span class="toolbar-hint">
-            <svg class="icon"><use href="#icon-search"/></svg><span data-i18n="toolbarHint">点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+F 查找</span>
+            <svg class="icon"><use href="#icon-search"/></svg><span data-i18n="toolbarHint">点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+Shift+/ 生成 · Ctrl+F 查找</span>
         </span>
     </div>
 
@@ -1599,7 +1601,7 @@
 
     <div class="status-bar">
         <span data-i18n="statusReady"><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
-        <span data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+F 查找 / Ctrl+H 替换</span>
+        <span data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Ctrl+F 查找 / Ctrl+H 替换</span>
         <span id="execTime"></span>
     </div>
 
@@ -1724,6 +1726,47 @@
             <div class="modal-actions">
                 <button id="addBlockCancelBtn" data-i18n="btnCancel">取消</button>
                 <button id="addBlockSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速生成积木弹窗（Ctrl+Shift+/ 触发；有选中则预填，无选中则空） -->
+    <div class="modal-overlay" id="quickAddBlockModal">
+        <div class="modal">
+            <h3 data-i18n="modalQuickAddBlockTitle"><svg class="icon"><use href="#icon-cube"/></svg> 快速生成积木</h3>
+            <div class="field">
+                <label data-i18n="fieldCode">代码内容</label>
+                <textarea id="quickAddCode" rows="4" data-i18n-placeholder="addBlockCodePlaceholder" placeholder="例如: assign y = a & b;"></textarea>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldLabel">简短描述（可选，默认取代码第一行）</label>
+                <input type="text" id="quickAddLabel" data-i18n-placeholder="addBlockLabelPlaceholder" placeholder="例如: 与门赋值">
+            </div>
+            <div class="field">
+                <label data-i18n="fieldIcon">图标</label>
+                <!-- 选项由 JS 从「新增积木」的 #addBlockIconSelect 克隆，避免两处清单漂移 -->
+                <select id="quickAddIconSelect"></select>
+                <input type="text" id="quickAddIconInput" data-i18n-placeholder="iconInputPlaceholder" placeholder="或直接输入图标名，如 star" style="margin-top:4px; font-size:0.78rem;">
+            </div>
+            <div class="field">
+                <label data-i18n="fieldCategory">分类</label>
+                <select id="quickAddCategorySelect"></select>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldSubcategory">子类别归属</label>
+                <div class="radio-group" id="quickAddSubRadioGroup" style="flex-wrap:wrap;"></div>
+                <input type="text" id="quickAddCustomSub" data-i18n-placeholder="subCustomPlaceholder" placeholder="自定义子类别名，如 advanced / 示例" style="margin-top:6px;">
+            </div>
+            <div class="field">
+                <label data-i18n="fieldInsertMode">插入方式</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="quickAddMode" value="line" checked> <span data-i18n="modeLine">行</span></label>
+                    <label><input type="radio" name="quickAddMode" value="exp"> <span data-i18n="modeExp">公式</span></label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="quickAddCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="quickAddSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
             </div>
         </div>
     </div>
@@ -1917,7 +1960,7 @@
                 btnClearTitle: '清空编辑器（可撤销）',
                 btnExample: '示例',
                 btnExampleTitle: '插入示例代码',
-                toolbarHint: '点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+F 查找',
+                toolbarHint: '点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+Shift+/ 生成 · Ctrl+F 查找',
                 langToggleTitle: '切换语言 / Switch language',
                 // 第二栏工具栏
                 btnUndo: '撤销',
@@ -1931,7 +1974,9 @@
                 btnOutdent: '反缩进',
                 btnOutdentTitle: '反缩进当前行 / 选中行 (Shift+Tab)',
                 btnBlockPicker: '积木',
-                btnBlockPickerTitle: '插入积木 (Ctrl+/，或 Ctrl+点击编辑器)',
+                btnBlockPickerTitle: '插入积木 (Ctrl+/，或 Ctrl+点击编辑器)；快速生成积木 (Ctrl+Shift+/)',
+                btnQuickAdd: '新增',
+                btnQuickAddTitle: '新增积木 (Ctrl+Shift+/)',
                 // 积木面板头部
                 optExpStripSemicolon: '表达式去分号',
                 optExpStripSemicolonTitle: '勾选后，公式插入单行时自动去掉末尾分号',
@@ -1989,7 +2034,7 @@
                 btnCloseTitle: '关闭 (Esc)',
                 // 状态栏
                 statusReady: '就绪',
-                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+F 查找 / Ctrl+H 替换',
+                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Ctrl+F 查找 / Ctrl+H 替换',
                 // 积木选择浮层
                 pickerPlaceholder: '筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）',
                 pickerEmpty: '没有匹配的积木',
@@ -2017,6 +2062,7 @@
                 btnSave: '保存',
                 // 新增积木弹窗
                 modalAddBlockTitle: '新增积木',
+                modalQuickAddBlockTitle: '快速生成积木',
                 addBlockCodePlaceholder: '例如: assign y = a & b;',
                 fieldLabel: '简短描述（可选，默认取代码第一行）',
                 addBlockLabelPlaceholder: '例如: 与门赋值',
@@ -2035,6 +2081,7 @@
                 modalAddCategoryTitle: '新增类别',
                 modalEditCategoryTitle: '编辑类别',
                 fieldCategoryName: '类别名',
+                fieldCategory: '分类',
                 categoryNamePlaceholder: '例如: 我的工具',
                 btnSaveCategory: '保存',
                 confirmDeleteCategory: '确定删除类别「{name}」吗？该类别下的所有积木也会一起删除。',
@@ -2056,6 +2103,8 @@
                 alertImportFail: '导入失败: {msg}',
                 alertNoImportText: '没有可导入的文本',
                 alertNeedCode: '请输入代码内容',
+                alertNeedCategory: '请选择分类',
+                noCategoryToAdd: '请先在左侧面板新建分类',
                 alertNeedCustomSub: '请输入自定义子类别名',
                 alertNeedCategoryName: '请输入类别名',
                 alertCopyFail: '复制失败，请手动全选编辑器内容后 Ctrl+C 复制',
@@ -2103,7 +2152,7 @@
                 btnClearTitle: 'Clear the editor (undoable)',
                 btnExample: 'Example',
                 btnExampleTitle: 'Insert example code',
-                toolbarHint: 'Click/drag blocks · Right-click to edit · Ctrl+/ insert · Ctrl+F find',
+                toolbarHint: 'Click/drag blocks · Right-click to edit · Ctrl+/ insert · Ctrl+Shift+/ quick add · Ctrl+F find',
                 langToggleTitle: '切换语言 / Switch language',
                 // Toolbar 2
                 btnUndo: 'Undo',
@@ -2117,7 +2166,9 @@
                 btnOutdent: 'Outdent',
                 btnOutdentTitle: 'Outdent current line / selection (Shift+Tab)',
                 btnBlockPicker: 'Blocks',
-                btnBlockPickerTitle: 'Insert block (Ctrl+/, or Ctrl+click editor)',
+                btnBlockPickerTitle: 'Insert block (Ctrl+/, or Ctrl+click editor); quick add (Ctrl+Shift+/)',
+                btnQuickAdd: 'Add',
+                btnQuickAddTitle: 'Add block (Ctrl+Shift+/)',
                 // Blocks panel header
                 optExpStripSemicolon: 'Strip semicolon (Exp)',
                 optExpStripSemicolonTitle: 'When checked, single-line expression inserts drop the trailing semicolon',
@@ -2175,7 +2226,7 @@
                 btnCloseTitle: 'Close (Esc)',
                 // Status bar
                 statusReady: 'Ready',
-                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+F find / Ctrl+H replace',
+                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+Shift+/ quick add · Ctrl+F find / Ctrl+H replace',
                 // Block picker
                 pickerPlaceholder: 'Filter blocks... (↑↓ select, Enter insert, Esc close)',
                 pickerEmpty: 'No matching blocks',
@@ -2203,6 +2254,7 @@
                 btnSave: 'Save',
                 // Add block modal
                 modalAddBlockTitle: 'Add Block',
+                modalQuickAddBlockTitle: 'Quick Add Block',
                 addBlockCodePlaceholder: 'e.g. assign y = a & b;',
                 fieldLabel: 'Short label (optional; defaults to the first line)',
                 addBlockLabelPlaceholder: 'e.g. AND gate assign',
@@ -2221,6 +2273,7 @@
                 modalAddCategoryTitle: 'Add Category',
                 modalEditCategoryTitle: 'Edit Category',
                 fieldCategoryName: 'Category name',
+                fieldCategory: 'Category',
                 categoryNamePlaceholder: 'e.g. My tools',
                 btnSaveCategory: 'Save',
                 confirmDeleteCategory: 'Delete category "{name}"? All blocks in it will be removed as well.',
@@ -2242,6 +2295,8 @@
                 alertImportFail: 'Import failed: {msg}',
                 alertNoImportText: 'No text to import',
                 alertNeedCode: 'Please enter code content',
+                alertNeedCategory: 'Please select a category',
+                noCategoryToAdd: 'Create a category in the left panel first',
                 alertNeedCustomSub: 'Please enter a custom subcategory name',
                 alertNeedCategoryName: 'Please enter a category name',
                 alertCopyFail: 'Copy failed. Please select all and press Ctrl+C.',
@@ -3134,6 +3189,7 @@ int main() {
         let editingBlock = null;
         let editingCategory = null;
         let addingBlockTo = null;
+        let lastUsedCategoryId = null;   // 快速生成积木时默认选中的分类（仅内存，不持久化）
         let pendingImportData = null;
 
         // 触摸拖拽（移动端）。桌面仍走 HTML5 Drag & Drop，两者靠事件源天然分流
@@ -5228,23 +5284,71 @@ int main() {
             }
         });
 
+        // ==================== 公共提交逻辑 ====================
+        /**
+         * 「新增积木」与「快速生成积木」共用的提交：校验 → 组装 → 入组 → 保存 → 刷新。
+         * 返回 false 表示校验没过，调用方不要关弹窗（这样用户填的内容还在）。
+         */
+        function commitNewBlock(v) {
+            const code = String(v.code || '').trim();
+            if (!code) { alert(t('alertNeedCode')); return false; }
+
+            const cat = findCategory(v.catId);
+            if (!cat) { alert(t('alertNeedCategory')); return false; }
+
+            let sub = v.sub;
+            if (sub === 'custom') {
+                const custom = String(v.customSub || '').trim();
+                if (!custom) { alert(t('alertNeedCustomSub')); return false; }
+                sub = custom;
+            }
+            if (!sub) sub = 'none';
+
+            if (!cat.subgroups[sub]) cat.subgroups[sub] = [];
+
+            cat.subgroups[sub].unshift({
+                id: genId('custom'),
+                icon: v.icon || 'cube',
+                label: String(v.label || '').trim() || code.split('\n')[0],
+                code: code,
+                mode: normalizeMode(v.mode)
+            });
+
+            lastUsedCategoryId = cat.id;
+            saveToStorage();
+            renderBlocksPanel();
+            return true;
+        }
+
         // ==================== 新增积木弹窗 ====================
         /**
          * 弹窗里的子类别单选按编辑语言重建：Verilog → 通用 / v / va，C++ → 通用 / c / cpp。
          * 值必须跟着换：C++ 的子类别键是 c/cpp，继续用 v/va 会写进一个不存在的分组。
          * 文案不走 i18n（v / va / c / cpp 是语言记号，不翻译），「通用」「自定义」照常翻译。
+         * @param {string} containerId 容器 id（两个弹窗共用这段渲染逻辑）
          */
-        function renderAddBlockSubRadios() {
-            const wrap = document.getElementById('addBlockSubRadioGroup');
+        function renderAddBlockSubRadios(containerId) {
+            const wrap = document.getElementById(containerId || 'addBlockSubRadioGroup');
             if (!wrap) return;
             const subs = currentEditorLang === 'cpp'
                 ? [{ value: 'none', label: t('subGeneral') }, { value: 'c', label: t('subC') }, { value: 'cpp', label: t('subCpp') }]
                 : [{ value: 'none', label: t('subGeneral') }, { value: 'v', label: t('subV') }, { value: 'va', label: t('subVa') }];
+            const name = containerId === 'quickAddSubRadioGroup' ? 'quickAddSubRadio' : 'addBlockSubRadio';
             wrap.innerHTML = subs.map(function (s, i) {
-                return '<label><input type="radio" name="addBlockSubRadio" value="' + s.value + '"' +
+                return '<label><input type="radio" name="' + name + '" value="' + s.value + '"' +
                     (i === 0 ? ' checked' : '') + '> <span>' + s.label + '</span></label>';
             }).join('') +
-                '<label><input type="radio" name="addBlockSubRadio" value="custom"> <span>' + t('subCustom') + '</span></label>';
+                '<label><input type="radio" name="' + name + '" value="custom"> <span>' + t('subCustom') + '</span></label>';
+        }
+
+        /**
+         * 读图标值：手输框优先于下拉框，并去掉 fa- 前缀（懒得多写）。
+         * 两个弹窗共用，避免一处改了一处忘了。
+         */
+        function readBlockIcon(selectEl, inputEl) {
+            let icon = inputEl ? inputEl.value.trim() : '';
+            if (!icon && selectEl) icon = selectEl.value;
+            return icon.replace(/^fa-/, '');
         }
 
         function openAddBlockModal(cat) {
@@ -5254,58 +5358,31 @@ int main() {
             addBlockLabel.value = '';
             addBlockIconSelect.value = 'cube';
             addBlockIconInput.value = '';
-            renderAddBlockSubRadios();
-            document.querySelector('input[name="addBlockSubRadio"][value="none"]').checked = true;
             addBlockCustomSub.value = '';
+            renderAddBlockSubRadios('addBlockSubRadioGroup');
             document.querySelector('input[name="addBlockMode"][value="line"]').checked = true;
             addBlockModal.classList.add('show');
             addBlockCode.focus();
         }
 
+        /** 读「新增积木」弹窗的表单值 */
+        function getAddBlockFormValues() {
+            const mode = document.querySelector('input[name="addBlockMode"]:checked');
+            const sub = document.querySelector('input[name="addBlockSubRadio"]:checked');
+            return {
+                catId: addingBlockTo ? addingBlockTo.catId : null,
+                code: addBlockCode.value,
+                label: addBlockLabel.value,
+                icon: readBlockIcon(addBlockIconSelect, addBlockIconInput),
+                sub: sub ? sub.value : 'none',
+                customSub: addBlockCustomSub.value,
+                mode: mode ? mode.value : 'line'
+            };
+        }
+
         addBlockSaveBtn.addEventListener('click', () => {
             if (!addingBlockTo) return;
-            const cat = findCategory(addingBlockTo.catId);
-            if (!cat) { addBlockModal.classList.remove('show'); return; }
-
-            const code = addBlockCode.value.trim();
-            if (!code) {
-                alert(t('alertNeedCode'));
-                return;
-            }
-            const label = addBlockLabel.value.trim() || code.split('\n')[0];
-            const mode = document.querySelector('input[name="addBlockMode"]:checked').value;
-
-            let icon = addBlockIconInput.value.trim();
-            if (!icon) icon = addBlockIconSelect.value;
-            icon = icon.replace(/^fa-/, '');
-
-            const selectedRadio = document.querySelector('input[name="addBlockSubRadio"]:checked').value;
-            let sub;
-            if (selectedRadio === 'custom') {
-                const customName = addBlockCustomSub.value.trim();
-                if (!customName) {
-                    alert(t('alertNeedCustomSub'));
-                    return;
-                }
-                sub = customName;
-            } else {
-                sub = selectedRadio;
-            }
-
-            if (!cat.subgroups[sub]) {
-                cat.subgroups[sub] = [];
-            }
-
-            const newItem = {
-                id: genId('custom'),
-                icon: icon,
-                label,
-                code,
-                mode
-            };
-            cat.subgroups[sub].unshift(newItem);
-            saveToStorage();
-            renderBlocksPanel();
+            if (!commitNewBlock(getAddBlockFormValues())) return;   // 校验没过，弹窗保持打开
             addBlockModal.classList.remove('show');
             addingBlockTo = null;
         });
@@ -5320,6 +5397,95 @@ int main() {
                 addBlockModal.classList.remove('show');
                 addingBlockTo = null;
             }
+        });
+
+        // ==================== 快速生成积木弹窗 ====================
+        const quickAddBlockModal = document.getElementById('quickAddBlockModal');
+        const quickAddCode = document.getElementById('quickAddCode');
+        const quickAddLabel = document.getElementById('quickAddLabel');
+        const quickAddCategorySelect = document.getElementById('quickAddCategorySelect');
+        const quickAddIconSelect = document.getElementById('quickAddIconSelect');
+        const quickAddIconInput = document.getElementById('quickAddIconInput');
+        const quickAddCustomSub = document.getElementById('quickAddCustomSub');
+        const quickAddSaveBtn = document.getElementById('quickAddSaveBtn');
+        const quickAddCancelBtn = document.getElementById('quickAddCancelBtn');
+
+        // 图标清单只有一份（「新增积木」的静态 option），这里克隆过来；
+        // 克隆出的 option 带 data-i18n，后续 setLang 的 applyI18n 会照常刷新文案。
+        if (quickAddIconSelect && addBlockIconSelect) {
+            quickAddIconSelect.innerHTML = addBlockIconSelect.innerHTML;
+            applyI18n(quickAddIconSelect);
+        }
+
+        /** 按当前语言填充分类下拉，默认选中上次用过的分类（否则第一个） */
+        function renderQuickAddCategorySelect() {
+            if (!quickAddCategorySelect) return;
+            quickAddCategorySelect.innerHTML = '';
+            BLOCKS.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.category;
+                quickAddCategorySelect.appendChild(opt);
+            });
+            const last = lastUsedCategoryId && BLOCKS.find(c => c.id === lastUsedCategoryId);
+            quickAddCategorySelect.value = last ? last.id : (BLOCKS[0] ? BLOCKS[0].id : '');
+        }
+
+        /**
+         * 打开快速生成弹窗。
+         * @param {string|null} text 选中的代码；null/空表示没有选中，代码框留空。
+         */
+        function openQuickAddBlockModal(text) {
+            if (blockPickerState.visible) hideBlockPicker(false);
+            if (!BLOCKS.length) { flashStatus(t('noCategoryToAdd')); return; }
+
+            quickAddCode.value = text || '';
+            quickAddLabel.value = '';          // 描述留空，保存时自动取代码第一行
+            quickAddCustomSub.value = '';
+            if (quickAddIconSelect) quickAddIconSelect.value = 'cube';
+            if (quickAddIconInput) quickAddIconInput.value = '';
+            renderQuickAddCategorySelect();
+            renderAddBlockSubRadios('quickAddSubRadioGroup');
+            document.querySelector('input[name="quickAddMode"][value="line"]').checked = true;
+
+            quickAddBlockModal.classList.add('show');
+            quickAddCode.focus();
+            if (text) quickAddCode.setSelectionRange(text.length, text.length);
+        }
+
+        function closeQuickAddBlockModal() {
+            quickAddBlockModal.classList.remove('show');
+            quickAddCode.value = '';
+            quickAddLabel.value = '';
+            quickAddCustomSub.value = '';
+            if (quickAddIconInput) quickAddIconInput.value = '';
+        }
+
+        /** 读「快速生成积木」弹窗的表单值 */
+        function getQuickAddFormValues() {
+            const mode = document.querySelector('input[name="quickAddMode"]:checked');
+            const sub = document.querySelector('input[name="quickAddSubRadio"]:checked');
+            return {
+                catId: quickAddCategorySelect ? quickAddCategorySelect.value : null,
+                code: quickAddCode.value,
+                label: quickAddLabel.value,
+                icon: readBlockIcon(quickAddIconSelect, quickAddIconInput),
+                sub: sub ? sub.value : 'none',
+                customSub: quickAddCustomSub.value,
+                mode: mode ? mode.value : 'line'
+            };
+        }
+
+        quickAddSaveBtn.addEventListener('click', () => {
+            if (!commitNewBlock(getQuickAddFormValues())) return;
+            closeQuickAddBlockModal();
+            codeInput.focus();
+        });
+
+        quickAddCancelBtn.addEventListener('click', closeQuickAddBlockModal);
+
+        quickAddBlockModal.addEventListener('click', (e) => {
+            if (e.target === quickAddBlockModal) closeQuickAddBlockModal();
         });
 
         // ==================== 类别弹窗 ====================
@@ -5828,6 +5994,19 @@ int main() {
                 openBlockPicker('keyboard');
                 return;
             }
+            // Ctrl+Shift+/ 快速生成积木：有选中就把选中内容预填进去，没选中就空着
+            // 注意按住 Shift 后 e.key 会变成 '?'，所以同时看 e.code
+            const isSlashWithShift = e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '?' || e.key === '/';
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && isSlashWithShift) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (quickAddBlockModal.classList.contains('show')) return;   // 已经开着就别再弹一层
+                const selStart = codeInput.selectionStart;
+                const selEnd = codeInput.selectionEnd;
+                const selected = selStart !== selEnd ? codeInput.value.substring(selStart, selEnd) : null;
+                openQuickAddBlockModal(selected);
+                return;
+            }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
                 openSearch(false);
@@ -5889,6 +6068,17 @@ int main() {
                 if (!typing) {
                     e.preventDefault();
                     openBlockPicker('toolbar');
+                }
+            }
+            // Ctrl+Shift+/ 全局兜底：与 Ctrl+/ 保持一致，焦点不在编辑器时也能唤起快速生成弹窗。
+            // 此时拿不到「用户看得见的选中」，所以不预填代码（编辑器内按下时由 codeInput 处理，会预填）。
+            const isSlashWithShift = e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '?' || e.key === '/';
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && isSlashWithShift) {
+                const ae = document.activeElement;
+                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+                if (!typing && !quickAddBlockModal.classList.contains('show')) {
+                    e.preventDefault();
+                    openQuickAddBlockModal(null);
                 }
             }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -6347,6 +6537,14 @@ int main() {
             openBlockPicker('toolbar');
         });
 
+        // 工具栏「新增」入口：与 Ctrl+Shift+/ 同一个弹窗，有选中则预填
+        document.getElementById('quickAddBtn').addEventListener('click', () => {
+            const start = codeInput.selectionStart;
+            const end = codeInput.selectionEnd;
+            const selected = start !== end ? codeInput.value.substring(start, end) : null;
+            openQuickAddBlockModal(selected);
+        });
+
         document.getElementById('autoIndentBtn').addEventListener('click', () => {
             autoIndentSelection();
             codeInput.focus();
@@ -6703,13 +6901,18 @@ int main() {
 
             // 4. 文件打开 / 保存的扩展名
             updateFileAccept();
-            // 添加积木弹窗里的子类别单选（v/va ↔ c/cpp）
-            renderAddBlockSubRadios();
 
             // 5. 语言相关文案（占位符等）
             applyI18n();
             updateEditorLangUi();
             updateCursorPosition();
+
+            // 6. 弹窗开着时重建子类别 radio（两个弹窗的子类别键不同：v/va ↔ c/cpp）
+            if (addBlockModal.classList.contains('show')) renderAddBlockSubRadios('addBlockSubRadioGroup');
+            if (quickAddBlockModal.classList.contains('show')) {
+                renderAddBlockSubRadios('quickAddSubRadioGroup');
+                renderQuickAddCategorySelect();
+            }
         }
 
         if (editorLangSelect) {
@@ -6771,7 +6974,7 @@ int main() {
             loadIndentConfig();
             applyIndentToEditor();
             updateFileAccept();
-            renderAddBlockSubRadios();
+            renderAddBlockSubRadios('addBlockSubRadioGroup');
             applyLineNumberVisibility(true);
             autoFillEnabled = getAutoFillPref();
             updateAutoFillBtn();
