@@ -1,0 +1,429 @@
+[
+  {
+    "id": "cat-sv-file",
+    "category": "SV File and Preprocessor",
+    "icon": "file-import",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-timescale", "icon": "ruler-horizontal", "label": "`timescale 1ns/1ps", "code": "`timescale 1ns/1ps", "mode": "line" },
+        { "id": "sv-include", "icon": "file-import", "label": "`include \"file.svh\"", "code": "`include \"file.svh\"", "mode": "line" },
+        { "id": "sv-define", "icon": "hashtag", "label": "`define MACRO", "code": "`define WIDTH 8", "mode": "line" },
+        { "id": "sv-define-func", "icon": "hashtag", "label": "`define 带参数宏", "code": "`define MAX(a, b) ((a) > (b) ? (a) : (b))", "mode": "line" },
+        { "id": "sv-ifdef", "icon": "code-branch", "label": "`ifdef ... `endif", "code": "`ifdef SIM\n   \n`endif", "mode": "line" },
+        { "id": "sv-ifndef-guard", "icon": "code-branch", "label": "`ifndef ... `define ... `endif 保护", "code": "`ifndef MY_HEADER_SVH\n`define MY_HEADER_SVH\n   \n`endif", "mode": "line" },
+        { "id": "sv-define-include-guard", "icon": "file-signature", "label": "文件头注释", "code": "//=============================================================\n// File   : file.sv\n// Author : \n// Brief  : \n//=============================================================", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-package",
+    "category": "SV Package and Import",
+    "icon": "folder",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-package", "icon": "folder", "label": "package ... endpackage", "code": "package my_pkg;\n   \nendpackage", "mode": "line" },
+        { "id": "sv-import", "icon": "file-import", "label": "import pkg::*", "code": "import my_pkg::*;", "mode": "line" },
+        { "id": "sv-import-specific", "icon": "file-import", "label": "import pkg::item", "code": "import my_pkg::my_type;", "mode": "line" },
+        { "id": "sv-export", "icon": "sign-out-alt", "label": "export pkg::*", "code": "export my_pkg::*;", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-decl",
+    "category": "SV Data Declaration",
+    "icon": "cube",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-logic", "icon": "equals", "label": "logic [7:0] data", "code": "logic [7:0] data;", "mode": "line" },
+        { "id": "sv-bit", "icon": "equals", "label": "bit [7:0] data", "code": "bit [7:0] data;", "mode": "line" },
+        { "id": "sv-int", "icon": "calculator", "label": "int count", "code": "int count;", "mode": "line" },
+        { "id": "sv-shortint", "icon": "calculator", "label": "shortint count", "code": "shortint count;", "mode": "line" },
+        { "id": "sv-real", "icon": "calculator", "label": "real value", "code": "real value;", "mode": "line" },
+        { "id": "sv-typedef-enum", "icon": "list", "label": "typedef enum ...", "code": "typedef enum logic [1:0] {\n   IDLE,\n   RUN,\n   DONE\n} state_t;", "mode": "line" },
+        { "id": "sv-typedef-struct", "icon": "cubes", "label": "typedef struct packed", "code": "typedef struct packed {\n   logic [7:0]  addr;\n   logic [31:0] data;\n} pkt_t;", "mode": "line" },
+        { "id": "sv-typedef-union", "icon": "cubes", "label": "typedef union packed", "code": "typedef union packed {\n   logic [31:0] word;\n   logic [3:0][7:0] byte_list;\n} word_u;", "mode": "line" },
+        { "id": "sv-typedef-simple", "icon": "equals", "label": "typedef 别名", "code": "typedef logic [31:0] addr_t;", "mode": "line" },
+        { "id": "sv-parameter", "icon": "hashtag", "label": "parameter int WIDTH", "code": "parameter int WIDTH = 8;", "mode": "line" },
+        { "id": "sv-localparam", "icon": "hashtag", "label": "localparam int DEPTH", "code": "localparam int DEPTH = 16;", "mode": "line" },
+        { "id": "sv-rand-member", "icon": "star", "label": "rand 成员声明", "code": "rand bit [7:0] data;", "mode": "line" },
+        { "id": "sv-randc-member", "icon": "star", "label": "randc 成员声明", "code": "randc bit [3:0] sel;", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-module",
+    "category": "SV Module and Interface",
+    "icon": "cubes",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-module", "icon": "cube", "label": "module ... endmodule", "code": "module top (\n   input  logic clk,\n   input  logic rst_n,\n   output logic out\n);\n   \nendmodule", "mode": "line" },
+        { "id": "sv-interface", "icon": "link", "label": "interface ... endinterface", "code": "interface bus_if;\n   logic       valid;\n   logic [7:0] data;\n   logic       ready;\nendinterface", "mode": "line" },
+        { "id": "sv-modport", "icon": "link", "label": "modport ...", "code": "modport master (input ready, output valid, data);", "mode": "line" },
+        { "id": "sv-program", "icon": "play", "label": "program ... endprogram", "code": "program test_prog;\n   \nendprogram", "mode": "line" },
+        { "id": "sv-bind", "icon": "link", "label": "bind 模块绑定", "code": "bind top checker u_checker (.clk(clk), .rst_n(rst_n));", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-port",
+    "category": "SV Port and Connection",
+    "icon": "link",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-port-input", "icon": "arrow-right", "label": "input logic [7:0]", "code": "input  logic [7:0] data;", "mode": "line" },
+        { "id": "sv-port-output", "icon": "arrow-left", "label": "output logic [7:0]", "code": "output logic [7:0] data;", "mode": "line" },
+        { "id": "sv-port-inout", "icon": "exchange-alt", "label": "inout logic", "code": "inout  logic       pad;", "mode": "line" },
+        { "id": "sv-ansi-port-list", "icon": "list", "label": "ANSI 端口列表", "code": "(\n   input  logic clk,\n   input  logic rst_n,\n   output logic out\n)", "mode": "line" },
+        { "id": "sv-port-implicit", "icon": "link", "label": ".* 隐式连接", "code": "u_sub u_sub (.*);", "mode": "line" },
+        { "id": "sv-port-named", "icon": "link", "label": ".port(sig) 命名连接", "code": "u_sub u_sub (.clk(clk), .rst_n(rst_n), .out(out));", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-proc",
+    "category": "SV Procedural Block",
+    "icon": "bolt",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-always-ff", "icon": "bolt", "label": "always_ff @(posedge clk) begin ... end", "code": "always_ff @(posedge clk) begin\n   \nend", "mode": "line" },
+        { "id": "sv-always-comb", "icon": "bolt", "label": "always_comb begin ... end", "code": "always_comb begin\n   \nend", "mode": "line" },
+        { "id": "sv-always-latch", "icon": "bolt", "label": "always_latch begin ... end", "code": "always_latch begin\n   \nend", "mode": "line" },
+        { "id": "sv-always-star", "icon": "bolt", "label": "always @(*) begin ... end", "code": "always @(*) begin\n   \nend", "mode": "line" },
+        { "id": "sv-initial", "icon": "play", "label": "initial begin ... end", "code": "initial begin\n   \nend", "mode": "line" },
+        { "id": "sv-final", "icon": "stop", "label": "final begin ... end", "code": "final begin\n   \nend", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-stmt",
+    "category": "SV Statement and Control Flow",
+    "icon": "code-branch",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-if", "icon": "code-branch", "label": "if begin ... end", "code": "if (cond) begin\n   \nend", "mode": "line" },
+        { "id": "sv-if-else", "icon": "code-branch", "label": "if ... else begin ... end", "code": "if (cond) begin\n   \nend else begin\n   \nend", "mode": "line" },
+        { "id": "sv-case", "icon": "code-branch", "label": "case ... endcase", "code": "case (sel)\n   2'b00: out = a;\n   2'b01: out = b;\n   default: out = 0;\nendcase", "mode": "line" },
+        { "id": "sv-casez", "icon": "code-branch", "label": "casez ... endcase", "code": "casez (sel)\n   2'b1?: out = a;\n   default: out = 0;\nendcase", "mode": "line" },
+        { "id": "sv-casex", "icon": "code-branch", "label": "casex ... endcase", "code": "casex (sel)\n   2'bx1: out = a;\n   default: out = 0;\nendcase", "mode": "line" },
+        { "id": "sv-for", "icon": "rotate-left", "label": "for 循环 begin ... end", "code": "for (int i = 0; i < N; i++) begin\n   \nend", "mode": "line" },
+        { "id": "sv-foreach", "icon": "list", "label": "foreach 循环", "code": "foreach (arr[i]) begin\n   \nend", "mode": "line" },
+        { "id": "sv-while", "icon": "rotate-left", "label": "while begin ... end", "code": "while (cond) begin\n   \nend", "mode": "line" },
+        { "id": "sv-repeat", "icon": "redo", "label": "repeat 循环", "code": "repeat (4) begin\n   \nend", "mode": "line" },
+        { "id": "sv-do-while", "icon": "rotate-left", "label": "do ... while", "code": "do begin\n   \nend while (cond);", "mode": "line" },
+        { "id": "sv-fork-join", "icon": "code-branch", "label": "fork ... join", "code": "fork\n   \njoin", "mode": "line" },
+        { "id": "sv-fork-join-any", "icon": "code-branch", "label": "fork ... join_any", "code": "fork\n   \njoin_any", "mode": "line" },
+        { "id": "sv-fork-join-none", "icon": "code-branch", "label": "fork ... join_none", "code": "fork\n   \njoin_none", "mode": "line" },
+        { "id": "sv-break", "icon": "sign-out-alt", "label": "break", "code": "break;", "mode": "line" },
+        { "id": "sv-continue", "icon": "forward", "label": "continue", "code": "continue;", "mode": "line" },
+        { "id": "sv-return", "icon": "sign-out-alt", "label": "return", "code": "return;", "mode": "line" },
+        { "id": "sv-disable", "icon": "stop", "label": "disable fork", "code": "disable fork;", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-task-func",
+    "category": "SV Task and Function",
+    "icon": "tools",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-function", "icon": "tools", "label": "function automatic ... endfunction", "code": "function automatic logic [7:0] add8(input logic [7:0] a, input logic [7:0] b);\n   return a + b;\nendfunction", "mode": "line" },
+        { "id": "sv-function-void", "icon": "tools", "label": "function void ... endfunction", "code": "function void print_val(input int v);\n   $display(\"v = %0d\", v);\nendfunction", "mode": "line" },
+        { "id": "sv-task", "icon": "tools", "label": "task automatic ... endtask", "code": "task automatic drive(input logic [7:0] d);\n   data = d;\nendtask", "mode": "line" },
+        { "id": "sv-function-ref", "icon": "exchange-alt", "label": "function ref 参数", "code": "function void incr(ref int v);\n   v++;\nendfunction", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-class",
+    "category": "SV Class and OOP",
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-class", "icon": "database", "label": "class ... endclass", "code": "class base;\n   \nendclass", "mode": "line" },
+        { "id": "sv-class-extends", "icon": "code-branch", "label": "class ... extends ...", "code": "class child extends base;\n   \nendclass", "mode": "line" },
+        { "id": "sv-virtual-class", "icon": "database", "label": "virtual class ... endclass", "code": "virtual class base;\n   \nendclass", "mode": "line" },
+        { "id": "sv-pure-virtual", "icon": "quote-left", "label": "pure virtual function", "code": "pure virtual function void run();", "mode": "line" },
+        { "id": "sv-virtual-func", "icon": "tools", "label": "virtual function ... endfunction", "code": "virtual function void run();\n   \nendfunction", "mode": "line" },
+        { "id": "sv-local-member", "icon": "balance-scale", "label": "local 成员", "code": "local int count;", "mode": "line" },
+        { "id": "sv-protected-member", "icon": "balance-scale", "label": "protected 成员", "code": "protected int count;", "mode": "line" },
+        { "id": "sv-constructor", "icon": "play", "label": "function new() 构造函数", "code": "function new(string name = \"base\");\n   this.name = name;\nendfunction", "mode": "line" },
+        { "id": "sv-static-member", "icon": "hashtag", "label": "static 成员", "code": "static int count = 0;", "mode": "line" },
+        { "id": "sv-constraint", "icon": "balance-scale", "label": "constraint ... endconstraint", "code": "constraint c_data {\n   data inside {[0:255]};\n   data != 0;\n}", "mode": "line" },
+        { "id": "sv-randomize-with", "icon": "star", "label": "randomize() with {...}", "code": "if (!obj.randomize() with { data < 8'h80; }) begin\n   `uvm_error(\"RAND\", \"randomize failed\")\nend", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-assert",
+    "category": "SV Assertion and Coverage",
+    "icon": "exclamation-triangle",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-assert-property", "icon": "exclamation-triangle", "label": "assert property ...", "code": "assert property (@(posedge clk) disable iff (!rst_n) a |-> b);", "mode": "line" },
+        { "id": "sv-assume-property", "icon": "exclamation-triangle", "label": "assume property ...", "code": "assume property (@(posedge clk) disable iff (!rst_n) a |-> b);", "mode": "line" },
+        { "id": "sv-cover-property", "icon": "chart-line", "label": "cover property ...", "code": "cover property (@(posedge clk) a ##1 b);", "mode": "line" },
+        { "id": "sv-property", "icon": "file-signature", "label": "property ... endproperty", "code": "property p_handshake;\n   @(posedge clk) disable iff (!rst_n) req |-> ##[1:4] ack;\nendproperty", "mode": "line" },
+        { "id": "sv-sequence", "icon": "file-signature", "label": "sequence ... endsequence", "code": "sequence s_req_ack;\n   @(posedge clk) req ##[1:4] ack;\nendsequence", "mode": "line" },
+        { "id": "sv-covergroup", "icon": "chart-line", "label": "covergroup ... endgroup", "code": "covergroup cg_data @(posedge clk);\n   cp_data: coverpoint data;\nendgroup", "mode": "line" },
+        { "id": "sv-coverpoint", "icon": "chart-line", "label": "coverpoint", "code": "cp_data: coverpoint data;", "mode": "line" },
+        { "id": "sv-bins", "icon": "chart-line", "label": "bins", "code": "bins low = {[0:63]};", "mode": "line" },
+        { "id": "sv-cross", "icon": "exchange-alt", "label": "cross 交叉覆盖", "code": "cross cp_data, cp_sel;", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-generate",
+    "category": "SV Generate and Parameterization",
+    "icon": "rotate-left",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-generate", "icon": "rotate-left", "label": "generate ... endgenerate", "code": "generate\n   \nendgenerate", "mode": "line" },
+        { "id": "sv-genvar", "icon": "hashtag", "label": "genvar 声明", "code": "genvar i;", "mode": "line" },
+        { "id": "sv-for-generate", "icon": "rotate-left", "label": "for-generate", "code": "for (genvar i = 0; i < N; i++) begin : gen_blk\n   \nend", "mode": "line" },
+        { "id": "sv-if-generate", "icon": "code-branch", "label": "if-generate", "code": "if (WIDTH > 8) begin : gen_wide\n   \nend else begin : gen_narrow\n   \nend", "mode": "line" },
+        { "id": "sv-case-generate", "icon": "code-branch", "label": "case-generate", "code": "case (MODE)\n   0: begin : gen_m0\n      \n   end\n   default: begin : gen_md\n      \n   end\nendcase", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-expr",
+    "category": "SV Expression and Operator",
+    "icon": "calculator",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-exp-add", "icon": "equals", "label": "a + b", "code": "a + b", "mode": "exp" },
+        { "id": "sv-exp-sub", "icon": "equals", "label": "a - b", "code": "a - b", "mode": "exp" },
+        { "id": "sv-exp-mul", "icon": "equals", "label": "a * b", "code": "a * b", "mode": "exp" },
+        { "id": "sv-exp-div", "icon": "equals", "label": "a / b", "code": "a / b", "mode": "exp" },
+        { "id": "sv-exp-mod", "icon": "equals", "label": "a % b", "code": "a % b", "mode": "exp" },
+        { "id": "sv-exp-logic-and", "icon": "equals", "label": "a && b", "code": "a && b", "mode": "exp" },
+        { "id": "sv-exp-logic-or", "icon": "equals", "label": "a || b", "code": "a || b", "mode": "exp" },
+        { "id": "sv-exp-logic-not", "icon": "equals", "label": "!a", "code": "!a", "mode": "exp" },
+        { "id": "sv-exp-bit-and", "icon": "equals", "label": "a & b", "code": "a & b", "mode": "exp" },
+        { "id": "sv-exp-bit-or", "icon": "equals", "label": "a | b", "code": "a | b", "mode": "exp" },
+        { "id": "sv-exp-bit-xor", "icon": "equals", "label": "a ^ b", "code": "a ^ b", "mode": "exp" },
+        { "id": "sv-exp-bit-not", "icon": "exchange-alt", "label": "~a", "code": "~a", "mode": "exp" },
+        { "id": "sv-exp-shift-left", "icon": "arrow-left", "label": "a << b", "code": "a << b", "mode": "exp" },
+        { "id": "sv-exp-shift-right", "icon": "arrow-right", "label": "a >> b", "code": "a >> b", "mode": "exp" },
+        { "id": "sv-exp-eq", "icon": "equals", "label": "a == b", "code": "a == b", "mode": "exp" },
+        { "id": "sv-exp-neq", "icon": "equals", "label": "a != b", "code": "a != b", "mode": "exp" },
+        { "id": "sv-exp-lt", "icon": "equals", "label": "a < b", "code": "a < b", "mode": "exp" },
+        { "id": "sv-exp-ge", "icon": "equals", "label": "a >= b", "code": "a >= b", "mode": "exp" },
+        { "id": "sv-exp-ternary", "icon": "code-branch", "label": "cond ? a : b", "code": "cond ? a : b", "mode": "exp" },
+        { "id": "sv-exp-concat", "icon": "list", "label": "{a, b}", "code": "{a, b}", "mode": "exp" },
+        { "id": "sv-exp-replication", "icon": "list", "label": "{N{a}}", "code": "{N{a}}", "mode": "exp" },
+        { "id": "sv-exp-slice", "icon": "cut", "label": "data[7:0]", "code": "data[7:0]", "mode": "exp" },
+        { "id": "sv-exp-bit-select", "icon": "cut", "label": "data[i]", "code": "data[i]", "mode": "exp" },
+        { "id": "sv-exp-cast", "icon": "superscript", "label": "T'(expr)", "code": "WIDTH'(expr)", "mode": "exp" },
+        { "id": "sv-exp-signed", "icon": "balance-scale", "label": "$signed(a)", "code": "$signed(a)", "mode": "exp" },
+        { "id": "sv-exp-unsigned", "icon": "balance-scale", "label": "$unsigned(a)", "code": "$unsigned(a)", "mode": "exp" },
+        { "id": "sv-exp-clog2", "icon": "calculator", "label": "$clog2(N)", "code": "$clog2(N)", "mode": "exp" },
+        { "id": "sv-exp-bits", "icon": "calculator", "label": "$bits(expr)", "code": "$bits(expr)", "mode": "exp" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-sysfn",
+    "category": "SV System Function",
+    "icon": "terminal",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "sv-display", "icon": "print", "label": "$display(...)", "code": "$display(\"value = %0d\", value);", "mode": "line" },
+        { "id": "sv-write", "icon": "print", "label": "$write(...)", "code": "$write(\"value = %0d\\n\", value);", "mode": "line" },
+        { "id": "sv-monitor", "icon": "print", "label": "$monitor(...)", "code": "$monitor(\"clk=%b data=%h\", clk, data);", "mode": "line" },
+        { "id": "sv-random", "icon": "star", "label": "$random", "code": "$random();", "mode": "exp" },
+        { "id": "sv-urandom", "icon": "star", "label": "$urandom", "code": "$urandom();", "mode": "exp" },
+        { "id": "sv-urandom-range", "icon": "star", "label": "$urandom_range(max, min)", "code": "$urandom_range(255, 0)", "mode": "exp" },
+        { "id": "sv-finish", "icon": "stop", "label": "$finish", "code": "$finish;", "mode": "line" },
+        { "id": "sv-stop", "icon": "stop", "label": "$stop", "code": "$stop;", "mode": "line" },
+        { "id": "sv-time", "icon": "ruler-horizontal", "label": "$time", "code": "$time", "mode": "exp" },
+        { "id": "sv-realtime", "icon": "ruler-horizontal", "label": "$realtime", "code": "$realtime", "mode": "exp" },
+        { "id": "sv-fopen", "icon": "file-import", "label": "$fopen", "code": "$fopen(\"out.txt\", \"w\");", "mode": "exp" },
+        { "id": "sv-fclose", "icon": "file-signature", "label": "$fclose", "code": "$fclose(fd);", "mode": "line" },
+        { "id": "sv-fdisplay", "icon": "print", "label": "$fdisplay", "code": "$fdisplay(fd, \"value = %0d\", value);", "mode": "line" },
+        { "id": "sv-cast", "icon": "exchange-alt", "label": "$cast", "code": "if (!$cast(dst, src)) begin\n   $error(\"cast failed\");\nend", "mode": "line" }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-sv-dpi",
+    "category": "SV DPI and External",
+    "icon": "globe",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sv-dpi-import-func", "icon": "globe", "label": "import \"DPI-C\" function", "code": "import \"DPI-C\" function int c_add(input int a, input int b);", "mode": "line" },
+        { "id": "sv-dpi-import-task", "icon": "globe", "label": "import \"DPI-C\" task", "code": "import \"DPI-C\" task c_print(input int v);", "mode": "line" },
+        { "id": "sv-dpi-import-context", "icon": "globe", "label": "import \"DPI-C\" context function", "code": "import \"DPI-C\" context function void c_monitor(input int v);", "mode": "line" },
+        { "id": "sv-dpi-export", "icon": "globe", "label": "export \"DPI-C\" function", "code": "export \"DPI-C\" function sv_callback;", "mode": "line" }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-uvm-base",
+    "category": "SV UVM Base",
+    "icon": "star",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "uvm-component-utils", "icon": "star", "label": "`uvm_component_utils(T)", "code": "`uvm_component_utils(my_component)", "mode": "line" },
+        { "id": "uvm-object-utils", "icon": "star", "label": "`uvm_object_utils(T)", "code": "`uvm_object_utils(my_object)", "mode": "line" },
+        { "id": "uvm-field-int", "icon": "list", "label": "`uvm_field_int", "code": "`uvm_field_int(data, UVM_ALL_ON)", "mode": "line" },
+        { "id": "uvm-field-string", "icon": "list", "label": "`uvm_field_string", "code": "`uvm_field_string(name, UVM_ALL_ON)", "mode": "line" },
+        { "id": "uvm-field-object", "icon": "list", "label": "`uvm_field_object", "code": "`uvm_field_object(obj, UVM_ALL_ON)", "mode": "line" },
+        { "id": "uvm-field-enum", "icon": "list", "label": "`uvm_field_enum", "code": "`uvm_field_enum(state_t, state, UVM_ALL_ON)", "mode": "line" },
+        { "id": "uvm-info", "icon": "comment", "label": "`uvm_info(ID, MSG, UVM_LOW)", "code": "`uvm_info(\"ID\", \"message\", UVM_LOW)", "mode": "line" },
+        { "id": "uvm-warning", "icon": "exclamation-triangle", "label": "`uvm_warning(ID, MSG)", "code": "`uvm_warning(\"ID\", \"message\")", "mode": "line" },
+        { "id": "uvm-error", "icon": "exclamation-triangle", "label": "`uvm_error(ID, MSG)", "code": "`uvm_error(\"ID\", \"message\")", "mode": "line" },
+        { "id": "uvm-fatal", "icon": "exclamation-triangle", "label": "`uvm_fatal(ID, MSG)", "code": "`uvm_fatal(\"ID\", \"message\")", "mode": "line" },
+        { "id": "uvm-report-info", "icon": "comment", "label": "uvm_report_info(...)", "code": "uvm_report_info(\"ID\", \"message\", UVM_LOW);", "mode": "line" }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-uvm-comp",
+    "category": "SV UVM Component",
+    "icon": "cubes",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "uvm-test", "icon": "play", "label": "uvm_test 骨架", "code": "class my_test extends uvm_test;\n   `uvm_component_utils(my_test)\n   function new(string name = \"my_test\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   function void build_phase(uvm_phase phase);\n      super.build_phase(phase);\n   endfunction\n   task run_phase(uvm_phase phase);\n      phase.raise_objection(this);\n      \n      phase.drop_objection(this);\n   endtask\nendclass", "mode": "line" },
+        { "id": "uvm-env", "icon": "cubes", "label": "uvm_env 骨架", "code": "class my_env extends uvm_env;\n   `uvm_component_utils(my_env)\n   function new(string name = \"my_env\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   function void build_phase(uvm_phase phase);\n      super.build_phase(phase);\n   endfunction\n   function void connect_phase(uvm_phase phase);\n      super.connect_phase(phase);\n   endfunction\nendclass", "mode": "line" },
+        { "id": "uvm-agent", "icon": "cubes", "label": "uvm_agent 骨架", "code": "class my_agent extends uvm_agent;\n   `uvm_component_utils(my_agent)\n   function new(string name = \"my_agent\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   function void build_phase(uvm_phase phase);\n      super.build_phase(phase);\n   endfunction\n   function void connect_phase(uvm_phase phase);\n      super.connect_phase(phase);\n   endfunction\nendclass", "mode": "line" },
+        { "id": "uvm-driver", "icon": "forward", "label": "uvm_driver 骨架", "code": "class my_driver extends uvm_driver #(my_item);\n   `uvm_component_utils(my_driver)\n   function new(string name = \"my_driver\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   task run_phase(uvm_phase phase);\n      forever begin\n         seq_item_port.get_next_item(req);\n         \n         seq_item_port.item_done();\n      end\n   endtask\nendclass", "mode": "line" },
+        { "id": "uvm-monitor", "icon": "search", "label": "uvm_monitor 骨架", "code": "class my_monitor extends uvm_monitor;\n   `uvm_component_utils(my_monitor)\n   uvm_analysis_port #(my_item) ap;\n   function new(string name = \"my_monitor\", uvm_component parent = null);\n      super.new(name, parent);\n      ap = new(\"ap\", this);\n   endfunction\n   task run_phase(uvm_phase phase);\n      forever begin\n         \n      end\n   endtask\nendclass", "mode": "line" },
+        { "id": "uvm-sequencer", "icon": "list", "label": "uvm_sequencer 骨架", "code": "class my_sequencer extends uvm_sequencer #(my_item);\n   `uvm_component_utils(my_sequencer)\n   function new(string name = \"my_sequencer\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\nendclass", "mode": "line" },
+        { "id": "uvm-scoreboard", "icon": "balance-scale", "label": "uvm_scoreboard 骨架", "code": "class my_scoreboard extends uvm_scoreboard;\n   `uvm_component_utils(my_scoreboard)\n   function new(string name = \"my_scoreboard\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   function void check_phase(uvm_phase phase);\n      super.check_phase(phase);\n   endfunction\nendclass", "mode": "line" },
+        { "id": "uvm-subscriber", "icon": "search", "label": "uvm_subscriber 骨架", "code": "class my_subscriber extends uvm_subscriber #(my_item);\n   `uvm_component_utils(my_subscriber)\n   function new(string name = \"my_subscriber\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   function void write(my_item t);\n      \n   endfunction\nendclass", "mode": "line" },
+        { "id": "uvm-component-generic", "icon": "cube", "label": "uvm_component 通用骨架", "code": "class my_component extends uvm_component;\n   `uvm_component_utils(my_component)\n   function new(string name = \"my_component\", uvm_component parent = null);\n      super.new(name, parent);\n   endfunction\n   function void build_phase(uvm_phase phase);\n      super.build_phase(phase);\n   endfunction\nendclass", "mode": "line" }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-uvm-seq",
+    "category": "SV UVM Sequence",
+    "icon": "list",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "uvm-seq-item", "icon": "list", "label": "uvm_sequence_item 骨架", "code": "class my_item extends uvm_sequence_item;\n   rand bit [7:0] data;\n   `uvm_object_utils_begin(my_item)\n      `uvm_field_int(data, UVM_ALL_ON)\n   `uvm_object_utils_end\n   function new(string name = \"my_item\");\n      super.new(name);\n   endfunction\nendclass", "mode": "line" },
+        { "id": "uvm-sequence", "icon": "list", "label": "uvm_sequence 骨架", "code": "class my_seq extends uvm_sequence #(my_item);\n   `uvm_object_utils(my_seq)\n   function new(string name = \"my_seq\");\n      super.new(name);\n   endfunction\n   task body();\n      `uvm_do(req)\n   endtask\nendclass", "mode": "line" },
+        { "id": "uvm-do", "icon": "forward", "label": "`uvm_do(req)", "code": "`uvm_do(req)", "mode": "line" },
+        { "id": "uvm-do-with", "icon": "forward", "label": "`uvm_do_with(req, {...})", "code": "`uvm_do_with(req, { req.data == 8'h55; })", "mode": "line" },
+        { "id": "uvm-create", "icon": "star", "label": "`uvm_create(req)", "code": "`uvm_create(req)", "mode": "line" },
+        { "id": "uvm-send", "icon": "forward", "label": "`uvm_send(req)", "code": "`uvm_send(req)", "mode": "line" },
+        { "id": "uvm-rand-send", "icon": "forward", "label": "`uvm_rand_send(req)", "code": "`uvm_rand_send(req)", "mode": "line" },
+        { "id": "uvm-seq-start", "icon": "play", "label": "seq.start(p_sequencer)", "code": "my_seq seq = my_seq::type_id::create(\"seq\");\nseq.start(p_sequencer);", "mode": "line" },
+        { "id": "uvm-p-sequencer", "icon": "link", "label": "p_sequencer 声明", "code": "`uvm_declare_p_sequencer(my_sequencer)", "mode": "line" }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-uvm-cfg",
+    "category": "SV UVM Config and Factory",
+    "icon": "tools",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "uvm-config-set", "icon": "tools", "label": "uvm_config_db::set", "code": "uvm_config_db #(int)::set(this, \"*\", \"num\", 8);", "mode": "line" },
+        { "id": "uvm-config-get", "icon": "tools", "label": "uvm_config_db::get", "code": "if (!uvm_config_db #(int)::get(this, \"\", \"num\", num)) begin\n   `uvm_fatal(\"CFG\", \"num not set\")\nend", "mode": "line" },
+        { "id": "uvm-type-create", "icon": "star", "label": "type_id::create(...)", "code": "my_item req = my_item::type_id::create(\"req\");", "mode": "line" },
+        { "id": "uvm-type-create-parent", "icon": "star", "label": "type_id::create(name, this)", "code": "my_driver drv = my_driver::type_id::create(\"drv\", this);", "mode": "line" },
+        { "id": "uvm-factory-get", "icon": "tools", "label": "uvm_factory::get()", "code": "uvm_factory f = uvm_factory::get();", "mode": "line" },
+        { "id": "uvm-set-type-override", "icon": "exchange-alt", "label": "set_type_override_by_type", "code": "my_base::type_id::set_type_override(my_ext::get_type());", "mode": "line" },
+        { "id": "uvm-set-inst-override", "icon": "exchange-alt", "label": "set_inst_override_by_type", "code": "my_base::type_id::set_inst_override(my_ext::get_type(), \"env.agent.drv\");", "mode": "line" }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-uvm-tlm",
+    "category": "SV UVM TLM",
+    "icon": "link",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "uvm-analysis-port", "icon": "sign-out-alt", "label": "uvm_analysis_port 声明", "code": "uvm_analysis_port #(my_item) ap;\nap = new(\"ap\", this);", "mode": "line" },
+        { "id": "uvm-analysis-imp", "icon": "sign-out-alt", "label": "uvm_analysis_imp 声明", "code": "uvm_analysis_imp #(my_item, my_scoreboard) imp;\nimp = new(\"imp\", this);", "mode": "line" },
+        { "id": "uvm-write-impl", "icon": "print", "label": "write() 实现", "code": "function void write(my_item t);\n   \nendfunction", "mode": "line" },
+        { "id": "uvm-connect", "icon": "link", "label": "connect() 连接", "code": "mon.ap.connect(scb.imp);", "mode": "line" },
+        { "id": "uvm-tlm-fifo", "icon": "database", "label": "uvm_tlm_fifo 声明", "code": "uvm_tlm_fifo #(my_item) fifo;\nfifo = new(\"fifo\", this);", "mode": "line" },
+        { "id": "uvm-get-next-item", "icon": "arrow-right", "label": "get_next_item(req)", "code": "seq_item_port.get_next_item(req);", "mode": "line" },
+        { "id": "uvm-item-done", "icon": "arrow-left", "label": "item_done()", "code": "seq_item_port.item_done();", "mode": "line" }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-uvm-phase",
+    "category": "SV UVM Phase",
+    "icon": "rotate-left",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "v": [
+        { "id": "uvm-build-phase", "icon": "rotate-left", "label": "build_phase", "code": "function void build_phase(uvm_phase phase);\n   super.build_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-connect-phase", "icon": "link", "label": "connect_phase", "code": "function void connect_phase(uvm_phase phase);\n   super.connect_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-end-of-elab-phase", "icon": "rotate-left", "label": "end_of_elaboration_phase", "code": "function void end_of_elaboration_phase(uvm_phase phase);\n   super.end_of_elaboration_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-start-of-sim-phase", "icon": "play", "label": "start_of_simulation_phase", "code": "function void start_of_simulation_phase(uvm_phase phase);\n   super.start_of_simulation_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-run-phase", "icon": "play", "label": "run_phase", "code": "task run_phase(uvm_phase phase);\n   phase.raise_objection(this);\n   \n   phase.drop_objection(this);\nendtask", "mode": "line" },
+        { "id": "uvm-extract-phase", "icon": "rotate-left", "label": "extract_phase", "code": "function void extract_phase(uvm_phase phase);\n   super.extract_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-check-phase", "icon": "balance-scale", "label": "check_phase", "code": "function void check_phase(uvm_phase phase);\n   super.check_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-report-phase", "icon": "print", "label": "report_phase", "code": "function void report_phase(uvm_phase phase);\n   super.report_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-final-phase", "icon": "stop", "label": "final_phase", "code": "function void final_phase(uvm_phase phase);\n   super.final_phase(phase);\nendfunction", "mode": "line" },
+        { "id": "uvm-raise-objection", "icon": "arrow-up", "label": "raise_objection", "code": "phase.raise_objection(this);", "mode": "line" },
+        { "id": "uvm-drop-objection", "icon": "arrow-down", "label": "drop_objection", "code": "phase.drop_objection(this);", "mode": "line" }
+      ],
+      "va": []
+    }
+  }
+]

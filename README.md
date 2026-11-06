@@ -78,6 +78,7 @@ https://github.com/kite8800/ScratchCpp/tree/main/blocks
 
 You can use AI to generate customized blocks easily. The reference propmpt is here:
 https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchcpp_block_json_ai_prompt.txt
+https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchverilog_block_json_ai_prompt.txt
 
 ## Block Configuration
 
@@ -127,6 +128,7 @@ https://github.com/kite8800/ScratchCpp/tree/main/blocks
 
 扩展可以用AI自动生成，参考的prompt在
 https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchcpp_block_json_ai_prompt.txt
+https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchverilog_block_json_ai_prompt.txt
 
 ## 积木配置格式
 
