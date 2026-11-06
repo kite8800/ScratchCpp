@@ -311,7 +311,7 @@
     "id": "cat-var",
     "category": "Variables",
     "icon": "database",
-    "collapsed": false,
+    "collapsed": true,
     "subgroups": {
       "none": [
         {
@@ -652,36 +652,36 @@
         {
           "id": "cpp-cout-str",
           "icon": "terminal",
-          "label": "{{STD}}cout << \"Hello\";",
-          "code": "{{STD}}cout << \"Hello, World!\" << {{STD}}endl;",
+          "label": "std::cout << \"Hello\";",
+          "code": "std::cout << \"Hello, World!\" << std::endl;",
           "mode": "line"
         },
         {
           "id": "cpp-cout-var",
           "icon": "terminal",
-          "label": "{{STD}}cout << x;",
-          "code": "{{STD}}cout << x << {{STD}}endl;",
+          "label": "std::cout << x;",
+          "code": "std::cout << x << std::endl;",
           "mode": "line"
         },
         {
           "id": "cpp-cin",
           "icon": "keyboard",
-          "label": "{{STD}}cin >> x;",
-          "code": "{{STD}}cin >> x;",
+          "label": "std::cin >> x;",
+          "code": "std::cin >> x;",
           "mode": "line"
         },
         {
           "id": "cpp-getline",
           "icon": "keyboard",
-          "label": "{{STD}}getline({{STD}}cin, s);",
-          "code": "{{STD}}getline({{STD}}cin, s);",
+          "label": "std::getline(std::cin, s);",
+          "code": "std::getline(std::cin, s);",
           "mode": "line"
         },
         {
           "id": "cpp-cerr",
           "icon": "exclamation-triangle",
-          "label": "{{STD}}cerr << \"Error\";",
-          "code": "{{STD}}cerr << \"Error\" << {{STD}}endl;",
+          "label": "std::cerr << \"Error\";",
+          "code": "std::cerr << \"Error\" << std::endl;",
           "mode": "line"
         }
       ]
@@ -798,92 +798,92 @@
         {
           "id": "cpp-abs",
           "icon": "absolute",
-          "label": "{{STD}}abs(-5);",
-          "code": "{{STD}}abs(-5);",
+          "label": "std::abs(-5);",
+          "code": "std::abs(-5);",
           "mode": "exp"
         },
         {
           "id": "cpp-pow",
           "icon": "superscript",
-          "label": "{{STD}}pow(2, 3);",
-          "code": "{{STD}}pow(2, 3);",
+          "label": "std::pow(2, 3);",
+          "code": "std::pow(2, 3);",
           "mode": "exp"
         },
         {
           "id": "cpp-sqrt",
           "icon": "square-root-alt",
-          "label": "{{STD}}sqrt(16);",
-          "code": "{{STD}}sqrt(16);",
+          "label": "std::sqrt(16);",
+          "code": "std::sqrt(16);",
           "mode": "exp"
         },
         {
           "id": "cpp-floor",
           "icon": "arrow-down",
-          "label": "{{STD}}floor(3.7);",
-          "code": "{{STD}}floor(3.7);",
+          "label": "std::floor(3.7);",
+          "code": "std::floor(3.7);",
           "mode": "exp"
         },
         {
           "id": "cpp-ceil",
           "icon": "arrow-up",
-          "label": "{{STD}}ceil(3.2);",
-          "code": "{{STD}}ceil(3.2);",
+          "label": "std::ceil(3.2);",
+          "code": "std::ceil(3.2);",
           "mode": "exp"
         },
         {
           "id": "cpp-round",
           "icon": "circle",
-          "label": "{{STD}}round(3.5);",
-          "code": "{{STD}}round(3.5);",
+          "label": "std::round(3.5);",
+          "code": "std::round(3.5);",
           "mode": "exp"
         },
         {
           "id": "cpp-sin",
           "icon": "wave-square",
-          "label": "{{STD}}sin(0.5);",
-          "code": "{{STD}}sin(0.5);",
+          "label": "std::sin(0.5);",
+          "code": "std::sin(0.5);",
           "mode": "exp"
         },
         {
           "id": "cpp-cos",
           "icon": "wave-square",
-          "label": "{{STD}}cos(0.5);",
-          "code": "{{STD}}cos(0.5);",
+          "label": "std::cos(0.5);",
+          "code": "std::cos(0.5);",
           "mode": "exp"
         },
         {
           "id": "cpp-tan",
           "icon": "wave-square",
-          "label": "{{STD}}tan(0.5);",
-          "code": "{{STD}}tan(0.5);",
+          "label": "std::tan(0.5);",
+          "code": "std::tan(0.5);",
           "mode": "exp"
         },
         {
           "id": "cpp-max",
           "icon": "arrow-up",
-          "label": "{{STD}}max(3, 7);",
-          "code": "{{STD}}max(3, 7);",
+          "label": "std::max(3, 7);",
+          "code": "std::max(3, 7);",
           "mode": "exp"
         },
         {
           "id": "cpp-min",
           "icon": "arrow-down",
-          "label": "{{STD}}min(3, 7);",
-          "code": "{{STD}}min(3, 7);",
+          "label": "std::min(3, 7);",
+          "code": "std::min(3, 7);",
           "mode": "exp"
         },
         {
           "id": "cpp-exp",
           "icon": "chart-line",
-          "label": "{{STD}}exp(1);",
-          "code": "{{STD}}exp(1);",
+          "label": "std::exp(1);",
+          "code": "std::exp(1);",
           "mode": "exp"
         },
         {
           "id": "cpp-log",
           "icon": "chart-line",
-          "label": "{{STD}}log(10);",
-          "code": "{{STD}}log(10);",
+          "label": "std::log(10);",
+          "code": "std::log(10);",
           "mode": "exp"
         }
       ]
@@ -972,8 +972,8 @@
         {
           "id": "cpp-str-decl",
           "icon": "quote-left",
-          "label": "{{STD}}string s = \"hello\";",
-          "code": "{{STD}}string s = \"hello\";",
+          "label": "std::string s = \"hello\";",
+          "code": "std::string s = \"hello\";",
           "mode": "line"
         },
         {
@@ -1014,15 +1014,15 @@
         {
           "id": "cpp-to-string",
           "icon": "exchange-alt",
-          "label": "{{STD}}to_string(42);",
-          "code": "{{STD}}to_string(42);",
+          "label": "std::to_string(42);",
+          "code": "std::to_string(42);",
           "mode": "exp"
         },
         {
           "id": "cpp-stoi",
           "icon": "exchange-alt",
-          "label": "{{STD}}stoi(\"42\");",
-          "code": "{{STD}}stoi(\"42\");",
+          "label": "std::stoi(\"42\");",
+          "code": "std::stoi(\"42\");",
           "mode": "exp"
         }
       ]

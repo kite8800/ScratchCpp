@@ -1,0 +1,172 @@
+## 积木配置 JSON 格式要求
+
+### 背景
+
+C/C++ 积木式代码编辑器的积木配置数据。JSON 导入后渲染为左侧积木面板，每个积木点击/拖拽插入代码片段到编辑器。数据存 localStorage（key `blocks-config-v2`），支持覆盖导入和增量导入。
+
+### 顶层结构
+
+JSON 必须是**非空数组**，每个元素是一个分类对象：
+
+```json
+[
+  { "id": "...", "category": "...", "icon": "...", "collapsed": false, "subgroups": { ... } },
+  ...
+]
+```
+
+### 分类对象字段
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `id` | string | 是 | 分类唯一标识，如 `cat-var`，全局不重复 |
+| `category` | string | 是 | 分类显示名，如 `"变量"`。增量导入时按此匹配分类 |
+| `icon` | string | 是 | 图标名，不带 `fa-` 前缀，见下方图标清单 |
+| `collapsed` | boolean | 是 | 是否默认折叠 |
+| `subgroups` | object | 是 | 键为子类别名，值为积木数组。**必须含 `none`、`c`、`cpp` 三个键**（可为空数组 `[]`） |
+
+### subgroups 子类别
+
+```json
+"subgroups": {
+  "none": [ 积木... ],
+  "c":    [ 积木... ],
+  "cpp":  [ 积木... ],
+  "自定义子类别名": [ 积木... ]
+}
+```
+
+- **`none`、`c`、`cpp` 必须存在**，可为空数组
+- 可追加任意自定义子类别键，键名允许中文、字母、数字、下划线等任意字符
+- 渲染时 `none` 不显示标签，其他子类别显示标签：`c` → `C`，`cpp` → `C++`，自定义 → 原键名
+- 渲染顺序：`none` 先（无标签），其余按对象键的插入顺序
+- 空数组的子类别不渲染标签
+
+### 积木对象字段
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `id` | string | 是 | 积木唯一标识，全局不重复 |
+| `icon` | string | 是 | 图标名，不带 `fa-` 前缀，见下方图标清单 |
+| `label` | string | 是 | 积木显示文字，通常为代码第一行。增量导入时**按此匹配积木** |
+| `code` | string | 是 | 插入编辑器的代码，可含 `\n` 换行 |
+| `mode` | string | 是 | 插入模式：`"line"`（行插入）或 `"lc"`（表达式插入） |
+
+### mode 语义
+
+- **`"line"`（Line，行插入）**：插入到当前行行首，保留缩进。多行模板第一行不加缩进（已在行首缩进后），后续行加当前缩进（空行不加），末尾加 `\n + indent`。非空行替换原缩进保留原内容下移，空行替换整行。
+- **`"lc"`（Exp，表达式插入）**：插入到光标/鼠标的确切字符位置。单行且全局「表达式去分号」开启时自动去掉末尾 `;`；多行不去分号，但第二行及后续行加当前行缩进。
+
+### C++ `std::` 前缀
+
+C++ 积木的 `code` 和 `label` 中用 `{{STD}}` 表示 `std::`。渲染/插入时根据「省略 std:: 前缀」开关替换为空串或 `std::`。
+
+```json
+{ "code": "{{STD}}cout << \"Hello\" << {{STD}}endl;", "label": "{{STD}}cout << \"Hello\";" }
+```
+
+- 不需要 `std::` 的积木（如 `int x = 10;`）不写占位符
+- 内置 `c` 子类别积木通常不用 `{{STD}}`，`cpp` 子类别的 cout/cin/string/数学函数等用
+
+### 转义规则
+
+标准 JSON 字符串转义：
+
+- 双引号 `"` → `\"`
+- 反斜杠 `\` → `\\`（如 `printf("Hello\n")` 的 `\n` 写作 `\\n`）
+- 换行符写作 `\n`（两字符，非真实换行）
+- 制表符 `\t`
+
+### 可用图标名（不带 `fa-` 前缀）
+
+**分类图标**：`cube` `folder` `database` `code` `code-branch` `terminal` `calculator` `font` `file-import` `star` `bolt` `tools`
+
+**积木图标**：`hashtag` `list` `equals` `plus` `minus` `times` `divide` `percent` `play` `file-signature` `bolt` `sign-out-alt` `stop` `forward` `arrow-up` `arrow-down` `arrow-right` `location-arrow` `cubes` `link` `square-root-alt` `circle` `wave-square` `chart-line` `absolute` `superscript` `globe` `exclamation-triangle` `quote-left` `ruler-horizontal` `balance-scale` `search` `cut` `exchange-alt` `print` `keyboard` `code` `code-branch` `database` `terminal` `calculator` `font` `file-import` `folder` `star` `tools` `cube`
+
+### 完整示例
+
+```json
+[
+  {
+    "id": "cat-var",
+    "category": "变量",
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-int",
+          "icon": "hashtag",
+          "label": "int x = 10;",
+          "code": "int x = 10;",
+          "mode": "line"
+        },
+        {
+          "id": "v-inc",
+          "icon": "plus",
+          "label": "i++;",
+          "code": "i++;",
+          "mode": "lc"
+        }
+      ],
+      "c": [],
+      "cpp": []
+    }
+  },
+  {
+    "id": "cat-io",
+    "category": "常用函数",
+    "icon": "terminal",
+    "collapsed": false,
+    "subgroups": {
+      "none": [],
+      "c": [
+        {
+          "id": "c-printf",
+          "icon": "print",
+          "label": "printf(\"Hello\\n\");",
+          "code": "printf(\"Hello, World!\\n\");",
+          "mode": "line"
+        }
+      ],
+      "cpp": [
+        {
+          "id": "cpp-cout",
+          "icon": "terminal",
+          "label": "{{STD}}cout << \"Hello\";",
+          "code": "{{STD}}cout << \"Hello, World!\" << {{STD}}endl;",
+          "mode": "line"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "cpp-hello-adv",
+          "icon": "bolt",
+          "label": "高级 Hello",
+          "code": "{{STD}}cout << \"Advanced Hello\" << {{STD}}endl;",
+          "mode": "line"
+        }
+      ]
+    }
+  }
+]
+```
+
+上面 `advanced` 是自定义子类别，渲染为 `advanced` 标签，积木显示在其下。
+
+### 硬性约束
+
+1. 顶层必须是**非空数组**。
+2. 每个分类必须含 `id`、`category`、`icon`、`collapsed`、`subgroups` 五个字段。
+3. `subgroups` 必须是对象，**必须含 `none`、`c`、`cpp` 三个键**（可为空数组），可追加自定义键。
+4. 每个积木必须含 `id`、`icon`、`label`、`code`、`mode` 五个字段。
+5. 所有 `id`（分类和积木）**全局唯一**。
+6. `mode` 只能是 `"line"` 或 `"lc"`。
+7. `icon` 只能用上方清单中的名字，**不带 `fa-` 前缀**。
+8. `collapsed` 必须是布尔值 `true` / `false`。
+9. 严格合法 JSON：无注释、无尾逗号、字符串用双引号、转义正确。
+10. `label` 建议与 `code` 第一行一致（增量导入按 `label` 匹配，不同积木应避免 `label` 重复）。
+11. 多行 `code` 用 `\n` 分隔，缩进用空格（4 空格一级），不用制表符。
+12. C++ 积木需要 `std::` 前缀时用 `{{STD}}` 占位符，`label` 和 `code` 保持同步。
+
+

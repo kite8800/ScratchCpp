@@ -26,7 +26,7 @@
     "collapsed": false,
     "subgroups": {
       "none": [
-        { "id": "cpp-ns-using", "icon": "file-import", "label": "using namespace {{STD}};", "code": "using namespace {{STD}};", "mode": "line" },
+        { "id": "cpp-ns-using", "icon": "file-import", "label": "using namespace std::;", "code": "using namespace std::;", "mode": "line" },
         { "id": "cpp-ns-def", "icon": "folder", "label": "namespace foo { }", "code": "namespace foo {\n    \n}", "mode": "line" }
       ],
       "c": [],
@@ -199,8 +199,8 @@
         { "id": "cpp-ptr-delete", "icon": "times", "label": "delete p;", "code": "delete p;", "mode": "line" },
         { "id": "cpp-ptr-delete-arr", "icon": "times", "label": "delete[] arr;", "code": "delete[] arr;", "mode": "line" },
         { "id": "cpp-ref-decl", "icon": "link", "label": "int& r = x;", "code": "int& r = x;", "mode": "line" },
-        { "id": "cpp-smart-unique", "icon": "bolt", "label": "{{STD}}unique_ptr<int> p = {{STD}}make_unique<int>(10);", "code": "{{STD}}unique_ptr<int> p = {{STD}}make_unique<int>(10);", "mode": "line" },
-        { "id": "cpp-smart-shared", "icon": "bolt", "label": "{{STD}}shared_ptr<int> p = {{STD}}make_shared<int>(10);", "code": "{{STD}}shared_ptr<int> p = {{STD}}make_shared<int>(10);", "mode": "line" }
+        { "id": "cpp-smart-unique", "icon": "bolt", "label": "std::unique_ptr<int> p = std::make_unique<int>(10);", "code": "std::unique_ptr<int> p = std::make_unique<int>(10);", "mode": "line" },
+        { "id": "cpp-smart-shared", "icon": "bolt", "label": "std::shared_ptr<int> p = std::make_shared<int>(10);", "code": "std::shared_ptr<int> p = std::make_shared<int>(10);", "mode": "line" }
       ],
       "c": [],
       "cpp": []
@@ -213,14 +213,14 @@
     "collapsed": false,
     "subgroups": {
       "none": [
-        { "id": "cpp-io-cin", "icon": "keyboard", "label": "{{STD}}cin >> x;", "code": "{{STD}}cin >> x;", "mode": "line" },
-        { "id": "cpp-io-getline", "icon": "keyboard", "label": "{{STD}}getline({{STD}}cin, s);", "code": "{{STD}}getline({{STD}}cin, s);", "mode": "line" },
-        { "id": "cpp-io-cout", "icon": "print", "label": "{{STD}}cout << \"Hello\";", "code": "{{STD}}cout << \"Hello\";", "mode": "line" },
-        { "id": "cpp-io-cout-var", "icon": "print", "label": "{{STD}}cout << x << {{STD}}endl;", "code": "{{STD}}cout << x << {{STD}}endl;", "mode": "line" },
-        { "id": "cpp-io-cerr", "icon": "exclamation-triangle", "label": "{{STD}}cerr << \"Error\";", "code": "{{STD}}cerr << \"Error\";", "mode": "line" },
-        { "id": "cpp-io-fixed", "icon": "calculator", "label": "{{STD}}cout << {{STD}}fixed << {{STD}}setprecision(2) << x;", "code": "{{STD}}cout << {{STD}}fixed << {{STD}}setprecision(2) << x;", "mode": "line" },
-        { "id": "cpp-io-ifstream", "icon": "file-import", "label": "{{STD}}ifstream fin(\"in.txt\");", "code": "{{STD}}ifstream fin(\"in.txt\");", "mode": "line" },
-        { "id": "cpp-io-ofstream", "icon": "file-import", "label": "{{STD}}ofstream fout(\"out.txt\");", "code": "{{STD}}ofstream fout(\"out.txt\");", "mode": "line" }
+        { "id": "cpp-io-cin", "icon": "keyboard", "label": "std::cin >> x;", "code": "std::cin >> x;", "mode": "line" },
+        { "id": "cpp-io-getline", "icon": "keyboard", "label": "std::getline(std::cin, s);", "code": "std::getline(std::cin, s);", "mode": "line" },
+        { "id": "cpp-io-cout", "icon": "print", "label": "std::cout << \"Hello\";", "code": "std::cout << \"Hello\";", "mode": "line" },
+        { "id": "cpp-io-cout-var", "icon": "print", "label": "std::cout << x << std::endl;", "code": "std::cout << x << std::endl;", "mode": "line" },
+        { "id": "cpp-io-cerr", "icon": "exclamation-triangle", "label": "std::cerr << \"Error\";", "code": "std::cerr << \"Error\";", "mode": "line" },
+        { "id": "cpp-io-fixed", "icon": "calculator", "label": "std::cout << std::fixed << std::setprecision(2) << x;", "code": "std::cout << std::fixed << std::setprecision(2) << x;", "mode": "line" },
+        { "id": "cpp-io-ifstream", "icon": "file-import", "label": "std::ifstream fin(\"in.txt\");", "code": "std::ifstream fin(\"in.txt\");", "mode": "line" },
+        { "id": "cpp-io-ofstream", "icon": "file-import", "label": "std::ofstream fout(\"out.txt\");", "code": "std::ofstream fout(\"out.txt\");", "mode": "line" }
       ],
       "c": [],
       "cpp": []
@@ -233,8 +233,8 @@
     "collapsed": false,
     "subgroups": {
       "none": [
-        { "id": "cpp-exc-throw", "icon": "exclamation-triangle", "label": "throw {{STD}}runtime_error(\"error\");", "code": "throw {{STD}}runtime_error(\"error\");", "mode": "line" },
-        { "id": "cpp-exc-try-catch", "icon": "exclamation-triangle", "label": "try { } catch ({{STD}}exception& e) { }", "code": "try {\n    \n} catch ({{STD}}exception& e) {\n    \n}", "mode": "line" },
+        { "id": "cpp-exc-throw", "icon": "exclamation-triangle", "label": "throw std::runtime_error(\"error\");", "code": "throw std::runtime_error(\"error\");", "mode": "line" },
+        { "id": "cpp-exc-try-catch", "icon": "exclamation-triangle", "label": "try { } catch (std::exception& e) { }", "code": "try {\n    \n} catch (std::exception& e) {\n    \n}", "mode": "line" },
         { "id": "cpp-exc-what", "icon": "search", "label": "e.what()", "code": "e.what()", "mode": "exp" }
       ],
       "c": [],

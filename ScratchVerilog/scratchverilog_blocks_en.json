@@ -1,0 +1,1030 @@
+[
+  {
+    "id": "cat-directive",
+    "category": "Directives / Preprocessor",
+    "icon": "file-import",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-comment-line",
+          "icon": "comment",
+          "label": "// comment",
+          "code": "// ",
+          "mode": "line"
+        },
+        {
+          "id": "v-comment-block",
+          "icon": "comment",
+          "label": "/* comment */",
+          "code": "/*  */",
+          "mode": "line"
+        },
+        {
+          "id": "v-timescale",
+          "icon": "hashtag",
+          "label": "`timescale 1ns/1ps",
+          "code": "`timescale 1ns/1ps",
+          "mode": "line"
+        },
+        {
+          "id": "v-timescale-ps-ps",
+          "icon": "hashtag",
+          "label": "`timescale 1ps/1ps",
+          "code": "`timescale 1ps/1ps",
+          "mode": "line"
+        },
+        {
+          "id": "v-timescale-ps-fs",
+          "icon": "hashtag",
+          "label": "`timescale 1ps/1fs",
+          "code": "`timescale 1ps/1fs",
+          "mode": "line"
+        },
+        {
+          "id": "v-define",
+          "icon": "hashtag",
+          "label": "`define MAX 100",
+          "code": "`define MAX 100",
+          "mode": "line"
+        },
+        {
+          "id": "v-include",
+          "icon": "hashtag",
+          "label": "`include \"disciplines.vams\"",
+          "code": "`include \"disciplines.vams\"",
+          "mode": "line"
+        },
+        {
+          "id": "v-ifdef",
+          "icon": "code-branch",
+          "label": "`ifdef DEBUG",
+          "code": "`ifdef DEBUG\n   \n`endif",
+          "mode": "line"
+        },
+        {
+          "id": "v-ifndef",
+          "icon": "code-branch",
+          "label": "`ifndef HEADER_VH",
+          "code": "`ifndef HEADER_VH\n`define HEADER_VH\n\n`endif",
+          "mode": "line"
+        },
+        {
+          "id": "v-default-discipline",
+          "icon": "bolt",
+          "label": "`default_discipline electrical",
+          "code": "`default_discipline electrical",
+          "mode": "line"
+        }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-module",
+    "category": "Module / Port",
+    "icon": "cubes",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-module-empty",
+          "icon": "cube",
+          "label": "module foo; ... endmodule",
+          "code": "module foo;\n   \nendmodule",
+          "mode": "line"
+        },
+        {
+          "id": "v-module-ports",
+          "icon": "cube",
+          "label": "module foo (ANSI)",
+          "code": "module foo (\n   input  wire a,\n   input  wire b,\n   output wire y\n);\n   \nendmodule",
+          "mode": "line"
+        },
+        {
+          "id": "v-module-95",
+          "icon": "cube",
+          "label": "module foo (Verilog-95)",
+          "code": "module foo (a, b, y);\n   input  a;\n   input  b;\n   output y;\n   \nendmodule",
+          "mode": "line"
+        }
+      ],
+      "v": [
+        {
+          "id": "v-port-input",
+          "icon": "arrow-right",
+          "label": "input  wire a;",
+          "code": "input  wire a;",
+          "mode": "line"
+        },
+        {
+          "id": "v-port-output",
+          "icon": "sign-out-alt",
+          "label": "output wire y;",
+          "code": "output wire y;",
+          "mode": "line"
+        },
+        {
+          "id": "v-port-inout",
+          "icon": "location-arrow",
+          "label": "inout  wire io;",
+          "code": "inout  wire io;",
+          "mode": "line"
+        },
+        {
+          "id": "v-decl-reg",
+          "icon": "database",
+          "label": "reg [7:0] r;",
+          "code": "reg [7:0] r;",
+          "mode": "line"
+        },
+        {
+          "id": "v-decl-wire",
+          "icon": "link",
+          "label": "wire [7:0] w;",
+          "code": "wire [7:0] w;",
+          "mode": "line"
+        },
+        {
+          "id": "v-parameter",
+          "icon": "equals",
+          "label": "parameter WIDTH = 8;",
+          "code": "parameter WIDTH = 8;",
+          "mode": "line"
+        },
+        {
+          "id": "v-localparam",
+          "icon": "equals",
+          "label": "localparam N = 4;",
+          "code": "localparam N = 4;",
+          "mode": "line"
+        }
+      ],
+      "va": [
+        {
+          "id": "va-electrical",
+          "icon": "bolt",
+          "label": "electrical n1;",
+          "code": "electrical n1;",
+          "mode": "line"
+        },
+        {
+          "id": "va-wreal",
+          "icon": "wave-square",
+          "label": "wreal v1;",
+          "code": "wreal v1;",
+          "mode": "line"
+        },
+        {
+          "id": "va-ground",
+          "icon": "arrow-down",
+          "label": "ground gnd;",
+          "code": "ground gnd;",
+          "mode": "line"
+        },
+        {
+          "id": "va-branch",
+          "icon": "code-branch",
+          "label": "branch (p, n) br;",
+          "code": "branch (p, n) br;",
+          "mode": "line"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-always",
+    "category": "Always / Initial",
+    "icon": "bolt",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "v": [
+        {
+          "id": "v-always-posedge",
+          "icon": "bolt",
+          "label": "always @(posedge clk) begin ... end",
+          "code": "always @(posedge clk) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-always-negedge",
+          "icon": "bolt",
+          "label": "always @(negedge clk) begin ... end",
+          "code": "always @(negedge clk) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-always-star",
+          "icon": "bolt",
+          "label": "always @(*) begin ... end",
+          "code": "always @(*) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-always-sens",
+          "icon": "bolt",
+          "label": "always @(a or b) begin ... end",
+          "code": "always @(a or b) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-initial",
+          "icon": "play",
+          "label": "initial begin ... end",
+          "code": "initial begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-forever",
+          "icon": "rotate-left",
+          "label": "forever begin ... end",
+          "code": "forever begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-repeat",
+          "icon": "rotate-left",
+          "label": "repeat (10) begin ... end",
+          "code": "repeat (10) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-delay",
+          "icon": "circle",
+          "label": "#10;",
+          "code": "#10;",
+          "mode": "line"
+        },
+        {
+          "id": "v-nonblocking",
+          "icon": "equals",
+          "label": "q <= d;",
+          "code": "q <= d;",
+          "mode": "line"
+        },
+        {
+          "id": "v-blocking",
+          "icon": "equals",
+          "label": "q = d;",
+          "code": "q = d;",
+          "mode": "line"
+        }
+      ],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-analog",
+    "category": "Analog Block",
+    "icon": "wave-square",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "v": [],
+      "va": [
+        {
+          "id": "va-analog-begin",
+          "icon": "wave-square",
+          "label": "analog begin ... end",
+          "code": "analog begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "va-analog-single",
+          "icon": "wave-square",
+          "label": "analog V(out) <+ V(in);",
+          "code": "analog V(out) <+ V(in);",
+          "mode": "line"
+        },
+        {
+          "id": "va-initial-step",
+          "icon": "play",
+          "label": "@(initial_step) begin ... end",
+          "code": "@(initial_step) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "va-cross",
+          "icon": "arrow-right",
+          "label": "@(cross(...)) begin ... end",
+          "code": "@(cross(V(in) - 0.5, +1)) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "va-timer",
+          "icon": "circle",
+          "label": "@(timer(0, 1n)) begin ... end",
+          "code": "@(timer(0, 1n)) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "va-final-step",
+          "icon": "stop",
+          "label": "@(final_step) begin ... end",
+          "code": "@(final_step) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "va-analysis",
+          "icon": "chart-line",
+          "label": "@(analysis(\"dc\")) begin ... end",
+          "code": "@(analysis(\"dc\")) begin\n   \nend",
+          "mode": "line"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-control",
+    "category": "Control",
+    "icon": "code-branch",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-if",
+          "icon": "code-branch",
+          "label": "if (cond) begin ... end",
+          "code": "if (cond) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-if-else",
+          "icon": "code-branch",
+          "label": "if (cond) begin ... end else begin ... end",
+          "code": "if (cond) begin\n   \nend else begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-if-else-if",
+          "icon": "code-branch",
+          "label": "if (c1) ... else if (c2) ... else ...",
+          "code": "if (c1) begin\n   \nend else if (c2) begin\n   \nend else begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-case",
+          "icon": "code-branch",
+          "label": "case (sel) ... endcase",
+          "code": "case (sel)\n   2'b00: ;\n   default: ;\nendcase",
+          "mode": "line"
+        },
+        {
+          "id": "v-casez",
+          "icon": "code-branch",
+          "label": "casez (sel) ... endcase",
+          "code": "casez (sel)\n   2'b?0: ;\n   default: ;\nendcase",
+          "mode": "line"
+        },
+        {
+          "id": "v-casex",
+          "icon": "code-branch",
+          "label": "casex (sel) ... endcase",
+          "code": "casex (sel)\n   2'bx0: ;\n   default: ;\nendcase",
+          "mode": "line"
+        },
+        {
+          "id": "v-for",
+          "icon": "rotate-left",
+          "label": "for (i = 0; i < n; i = i + 1) begin ... end",
+          "code": "for (i = 0; i < n; i = i + 1) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-while",
+          "icon": "rotate-left",
+          "label": "while (cond) begin ... end",
+          "code": "while (cond) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-repeat-n",
+          "icon": "rotate-left",
+          "label": "repeat (n) begin ... end",
+          "code": "repeat (n) begin\n   \nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-fork-join",
+          "icon": "code-branch",
+          "label": "fork ... join",
+          "code": "fork\n   \njoin",
+          "mode": "line"
+        },
+        {
+          "id": "v-fork-join-any",
+          "icon": "code-branch",
+          "label": "fork ... join_any",
+          "code": "fork\n   \njoin_any",
+          "mode": "line"
+        },
+        {
+          "id": "v-fork-join-none",
+          "icon": "code-branch",
+          "label": "fork ... join_none",
+          "code": "fork\n   \njoin_none",
+          "mode": "line"
+        },
+        {
+          "id": "v-disable",
+          "icon": "stop",
+          "label": "disable block_name;",
+          "code": "disable block_name;",
+          "mode": "line"
+        }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-assign",
+    "category": "Assign",
+    "icon": "equals",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "v": [
+        {
+          "id": "v-assign",
+          "icon": "equals",
+          "label": "assign y = a & b;",
+          "code": "assign y = a & b;",
+          "mode": "line"
+        }
+      ],
+      "va": [
+        {
+          "id": "va-cont-v",
+          "icon": "arrow-right",
+          "label": "V(out) <+ V(in);",
+          "code": "V(out) <+ V(in);",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-i",
+          "icon": "arrow-right",
+          "label": "I(out) <+ I(in);",
+          "code": "I(out) <+ I(in);",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-ddt",
+          "icon": "wave-square",
+          "label": "V(out) <+ ddt(V(in));",
+          "code": "V(out) <+ ddt(V(in));",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-idt",
+          "icon": "chart-line",
+          "label": "V(out) <+ idt(V(in));",
+          "code": "V(out) <+ idt(V(in));",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-transition",
+          "icon": "exchange-alt",
+          "label": "V(out) <+ transition(...);",
+          "code": "V(out) <+ transition(V(in), 0, 1n, 1n);",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-slew",
+          "icon": "arrow-up",
+          "label": "V(out) <+ slew(...);",
+          "code": "V(out) <+ slew(V(in), 1e9);",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-laplace",
+          "icon": "chart-line",
+          "label": "V(out) <+ laplace_nd(...);",
+          "code": "V(out) <+ laplace_nd(V(in), {1}, {1, 1e-6});",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-absdelay",
+          "icon": "circle",
+          "label": "V(out) <+ absdelay(...);",
+          "code": "V(out) <+ absdelay(V(in), 1n);",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-wnoise",
+          "icon": "wave-square",
+          "label": "V(out) <+ white_noise(...);",
+          "code": "V(out) <+ white_noise(1e-6);",
+          "mode": "line"
+        },
+        {
+          "id": "va-cont-fnoise",
+          "icon": "wave-square",
+          "label": "V(out) <+ flicker_noise(...);",
+          "code": "V(out) <+ flicker_noise(1e-6, 1);",
+          "mode": "line"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-operator",
+    "category": "Operators / Expressions",
+    "icon": "calculator",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-op-add",
+          "icon": "plus",
+          "label": "a + b",
+          "code": "a + b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-sub",
+          "icon": "minus",
+          "label": "a - b",
+          "code": "a - b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-mul",
+          "icon": "times",
+          "label": "a * b",
+          "code": "a * b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-div",
+          "icon": "divide",
+          "label": "a / b",
+          "code": "a / b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-mod",
+          "icon": "percent",
+          "label": "a % b",
+          "code": "a % b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-and",
+          "icon": "equals",
+          "label": "a & b",
+          "code": "a & b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-or",
+          "icon": "equals",
+          "label": "a | b",
+          "code": "a | b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-xor",
+          "icon": "equals",
+          "label": "a ^ b",
+          "code": "a ^ b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-not",
+          "icon": "minus",
+          "label": "~a",
+          "code": "~a",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-land",
+          "icon": "code-branch",
+          "label": "a && b",
+          "code": "a && b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-lor",
+          "icon": "code-branch",
+          "label": "a || b",
+          "code": "a || b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-lnot",
+          "icon": "exclamation-triangle",
+          "label": "!a",
+          "code": "!a",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-eq",
+          "icon": "equals",
+          "label": "a == b",
+          "code": "a == b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-neq",
+          "icon": "equals",
+          "label": "a != b",
+          "code": "a != b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-lt",
+          "icon": "arrow-down",
+          "label": "a < b",
+          "code": "a < b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-gt",
+          "icon": "arrow-up",
+          "label": "a > b",
+          "code": "a > b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-le",
+          "icon": "arrow-down",
+          "label": "a <= b",
+          "code": "a <= b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-ge",
+          "icon": "arrow-up",
+          "label": "a >= b",
+          "code": "a >= b",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-shl",
+          "icon": "indent",
+          "label": "a << n",
+          "code": "a << n",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-shr",
+          "icon": "outdent",
+          "label": "a >> n",
+          "code": "a >> n",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-concat",
+          "icon": "cubes",
+          "label": "{a, b}",
+          "code": "{a, b}",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-repl",
+          "icon": "cubes",
+          "label": "{n{a}}",
+          "code": "{n{a}}",
+          "mode": "exp"
+        },
+        {
+          "id": "v-op-ternary",
+          "icon": "code-branch",
+          "label": "cond ? a : b",
+          "code": "cond ? a : b",
+          "mode": "exp"
+        }
+      ],
+      "v": [],
+      "va": [
+        {
+          "id": "va-op-cont",
+          "icon": "arrow-right",
+          "label": "V(x) <+ expr",
+          "code": "V(x) <+ expr",
+          "mode": "exp"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-math",
+    "category": "Math / Analog Functions",
+    "icon": "square-root-alt",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-fn-abs",
+          "icon": "absolute",
+          "label": "abs(x)",
+          "code": "abs(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-min",
+          "icon": "arrow-down",
+          "label": "min(a, b)",
+          "code": "min(a, b)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-max",
+          "icon": "arrow-up",
+          "label": "max(a, b)",
+          "code": "max(a, b)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-pow",
+          "icon": "superscript",
+          "label": "pow(x, y)",
+          "code": "pow(x, y)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-sqrt",
+          "icon": "square-root-alt",
+          "label": "sqrt(x)",
+          "code": "sqrt(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-exp",
+          "icon": "chart-line",
+          "label": "exp(x)",
+          "code": "exp(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-ln",
+          "icon": "chart-line",
+          "label": "ln(x)",
+          "code": "ln(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-log",
+          "icon": "chart-line",
+          "label": "log(x)",
+          "code": "log(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-floor",
+          "icon": "arrow-down",
+          "label": "floor(x)",
+          "code": "floor(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "v-fn-ceil",
+          "icon": "arrow-up",
+          "label": "ceil(x)",
+          "code": "ceil(x)",
+          "mode": "exp"
+        }
+      ],
+      "v": [],
+      "va": [
+        {
+          "id": "va-fn-sin",
+          "icon": "wave-square",
+          "label": "sin(x)",
+          "code": "sin(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-cos",
+          "icon": "wave-square",
+          "label": "cos(x)",
+          "code": "cos(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-tan",
+          "icon": "wave-square",
+          "label": "tan(x)",
+          "code": "tan(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-atan2",
+          "icon": "wave-square",
+          "label": "atan2(y, x)",
+          "code": "atan2(y, x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-ddt",
+          "icon": "wave-square",
+          "label": "ddt(x)",
+          "code": "ddt(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-idt",
+          "icon": "chart-line",
+          "label": "idt(x)",
+          "code": "idt(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-ddx",
+          "icon": "chart-line",
+          "label": "ddx(x)",
+          "code": "ddx(x)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-laplace-nd",
+          "icon": "chart-line",
+          "label": "laplace_nd(x, num, den)",
+          "code": "laplace_nd(x, num, den)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-laplace-np",
+          "icon": "chart-line",
+          "label": "laplace_np(x, num, den)",
+          "code": "laplace_np(x, num, den)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-transition",
+          "icon": "exchange-alt",
+          "label": "transition(x, td, tr, tf)",
+          "code": "transition(x, td, tr, tf)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-slew",
+          "icon": "arrow-up",
+          "label": "slew(x, max_pos, max_neg)",
+          "code": "slew(x, max_pos, max_neg)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-absdelay",
+          "icon": "circle",
+          "label": "absdelay(x, td)",
+          "code": "absdelay(x, td)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-wnoise",
+          "icon": "wave-square",
+          "label": "white_noise(pwr)",
+          "code": "white_noise(pwr)",
+          "mode": "exp"
+        },
+        {
+          "id": "va-fn-fnoise",
+          "icon": "wave-square",
+          "label": "flicker_noise(pwr, exp)",
+          "code": "flicker_noise(pwr, exp)",
+          "mode": "exp"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cat-system",
+    "category": "System Tasks",
+    "icon": "terminal",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        {
+          "id": "v-sys-display",
+          "icon": "print",
+          "label": "$display(\"x = %d\", x);",
+          "code": "$display(\"x = %d\", x);",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-write",
+          "icon": "print",
+          "label": "$write(\"...\");",
+          "code": "$write(\"...\");",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-monitor",
+          "icon": "terminal",
+          "label": "$monitor(\"x = %d\", x);",
+          "code": "$monitor(\"x = %d\", x);",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-finish",
+          "icon": "stop",
+          "label": "$finish;",
+          "code": "$finish;",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-stop",
+          "icon": "stop",
+          "label": "$stop;",
+          "code": "$stop;",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-time",
+          "icon": "circle",
+          "label": "$time",
+          "code": "$time",
+          "mode": "exp"
+        },
+        {
+          "id": "v-sys-stime",
+          "icon": "circle",
+          "label": "$stime",
+          "code": "$stime",
+          "mode": "exp"
+        },
+        {
+          "id": "v-sys-random",
+          "icon": "star",
+          "label": "$random",
+          "code": "$random",
+          "mode": "exp"
+        },
+        {
+          "id": "v-sys-fopen",
+          "icon": "file-import",
+          "label": "$fopen(\"file.txt\", \"w\");",
+          "code": "$fopen(\"file.txt\", \"w\");",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-fclose",
+          "icon": "x",
+          "label": "$fclose(fd);",
+          "code": "$fclose(fd);",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-fwrite",
+          "icon": "print",
+          "label": "$fwrite(fd, \"x = %d\", x);",
+          "code": "$fwrite(fd, \"x = %d\", x);",
+          "mode": "line"
+        },
+        {
+          "id": "v-sys-readmemh",
+          "icon": "list",
+          "label": "$readmemh(\"mem.hex\", mem);",
+          "code": "$readmemh(\"mem.hex\", mem);",
+          "mode": "line"
+        }
+      ],
+      "v": [],
+      "va": []
+    }
+  },
+  {
+    "id": "cat-testbench",
+    "category": "Testbench",
+    "icon": "play",
+    "collapsed": true,
+    "subgroups": {
+      "none": [],
+      "v": [
+        {
+          "id": "v-tb-clock",
+          "icon": "circle",
+          "label": "always #5 clk = ~clk;",
+          "code": "always #5 clk = ~clk;",
+          "mode": "line"
+        },
+        {
+          "id": "v-tb-reset",
+          "icon": "rotate-left",
+          "label": "initial begin ... rst ... end",
+          "code": "initial begin\n   rst = 1;\n   #10 rst = 0;\nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-tb-stimulus",
+          "icon": "play",
+          "label": "initial begin ... stimulus ... end",
+          "code": "initial begin\n   a = 0; b = 0;\n   #10 a = 1;\n   #10 b = 1;\nend",
+          "mode": "line"
+        },
+        {
+          "id": "v-tb-dump",
+          "icon": "list",
+          "label": "$dumpfile / $dumpvars",
+          "code": "$dumpfile(\"wave.vcd\");\n$dumpvars(0, tb);",
+          "mode": "line"
+        }
+      ],
+      "va": []
+    }
+  }
+]
