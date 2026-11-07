@@ -4664,24 +4664,39 @@ int main() {
         }
 
         /**
-         * 结构归一化：补 id / icon / collapsed，按当前语言补齐子类别数组；
-         * Verilog 下额外把 C/C++ 版遗留的 c/cpp 子类别迁移到 v/va。
+         * 结构归一化：补 id / icon / collapsed；**保留 JSON 里出现的所有子类别键**
+         * （string / pin / math / interrupt 这类自定义子组也是合法数据，只认标准键就会把它们整组丢掉），
+         * 只在标准键缺失时补空数组，保证渲染与新增积木有东西可遍历。
+         * Verilog 下额外把 C/C++ 版遗留的 c/cpp 并进 v/va，并删掉 c/cpp，避免同一批积木显示两遍。
          * 返回 null 表示数据里一个积木都没有（视为无效）。
          */
         function normalizeBlockStructure(data) {
             if (!Array.isArray(data) || data.length === 0) return null;
-            const subs = blockSubs();
+            const stdSubs = blockSubs();
             const out = [];
             for (const c of data) {
                 if (!c || typeof c !== 'object' || !c.category) return null;
                 const src = (c.subgroups && typeof c.subgroups === 'object') ? c.subgroups : {};
+
                 const groups = {};
-                subs.forEach(k => { groups[k] = Array.isArray(src[k]) ? src[k] : []; });
-                // 历史键迁移：只对 Verilog 生效（C++ 下 c/cpp 就是本来的键）
+                // 1. 原样保留所有子类别键（拷贝数组，别把调用方的对象改掉）
+                Object.keys(src).forEach(k => {
+                    if (Array.isArray(src[k])) groups[k] = src[k].slice();
+                });
+                // 2. 标准键兜底：缺了就补空数组
+                stdSubs.forEach(k => {
+                    if (!Array.isArray(groups[k])) groups[k] = [];
+                });
+                // 3. 历史键迁移：只对 Verilog 生效（C++ 下 c/cpp 就是本来的键）
                 if (currentEditorLang !== 'cpp') {
-                    if (Array.isArray(src.c) && groups.v.length === 0) groups.v = src.c;
-                    if (Array.isArray(src.cpp) && groups.va.length === 0) groups.va = src.cpp;
+                    [['c', 'v'], ['cpp', 'va']].forEach(pair => {
+                        const from = pair[0], to = pair[1];
+                        // 有内容才并（目标是标准键，前面已保证存在）；并完删键，否则 v 和 c 各显示一遍
+                        if (Array.isArray(src[from]) && src[from].length) groups[to] = groups[to].concat(src[from]);
+                        delete groups[from];
+                    });
                 }
+
                 out.push(Object.assign({}, c, {
                     id: c.id || genId('cat'),
                     icon: c.icon || 'folder',
@@ -4689,7 +4704,9 @@ int main() {
                     subgroups: groups
                 }));
             }
-            const total = out.reduce((n, c) => n + subs.reduce((m, k) => m + c.subgroups[k].length, 0), 0);
+            // 总数按所有子类别键统计（只看标准键的话，全是自定义子组的数据会被误判成 0 个积木）
+            const total = out.reduce((n, c) =>
+                n + Object.keys(c.subgroups).reduce((m, k) => m + c.subgroups[k].length, 0), 0);
             return total > 0 ? out : null;
         }
 
