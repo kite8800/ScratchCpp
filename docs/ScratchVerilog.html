@@ -2527,6 +2527,23 @@
             updateEditorLangUi();  // 编辑语言下拉框的选中项与占位符
             if (Array.isArray(BLOCKS) && BLOCKS.length) renderBlocksPanel();
             if (blockPickerState.visible) renderBlockPickerList();
+            // 快速生成弹窗开着时切界面语言，下拉里的类别名也要跟着换（保住用户已选中的分类）
+            const qaModal = document.getElementById('quickAddBlockModal');
+            if (qaModal && qaModal.classList.contains('show')) {
+                const qaSel = document.getElementById('quickAddCategorySelect');
+                const keepCatId = qaSel ? qaSel.value : null;
+                const checkedSub = document.querySelector('#quickAddSubRadioGroup input:checked');
+                const keepSub = checkedSub ? checkedSub.value : null;
+                renderQuickAddCategorySelect();
+                if (keepCatId && qaSel && BLOCKS.some(c => c.id === keepCatId)) qaSel.value = keepCatId;
+                renderAddBlockSubRadios('quickAddSubRadioGroup', qaSel ? qaSel.value : null);
+                // 用遍历而不是拼属性选择器：自定义子组键可能带引号
+                if (keepSub) {
+                    const subRadio = Array.from(document.querySelectorAll('#quickAddSubRadioGroup input'))
+                        .find(i => i.value === keepSub);
+                    if (subRadio) subRadio.checked = true;
+                }
+            }
             // 缩进弹窗的 hint 是动态文案，跟着语言刷新
             const hintEl = document.getElementById('indentWidthHint');
             if (hintEl) hintEl.textContent = indentHintText();
@@ -2585,6 +2602,7 @@
             {
                 id: 'cat-directive',
                 category: 'Directives / Preprocessor',
+                'category-i18n': { zh: '指令 / 预处理' },
                 icon: 'file-import',
                 collapsed: true,
                 subgroups: {
@@ -2607,6 +2625,7 @@
             {
                 id: 'cat-module',
                 category: 'Module / Port',
+                'category-i18n': { zh: '模块 / 端口' },
                 icon: 'cubes',
                 collapsed: false,
                 subgroups: {
@@ -2635,6 +2654,7 @@
             {
                 id: 'cat-always',
                 category: 'Always / Initial',
+                'category-i18n': { zh: 'Always / Initial' },
                 icon: 'bolt',
                 collapsed: false,
                 subgroups: {
@@ -2657,6 +2677,7 @@
             {
                 id: 'cat-analog',
                 category: 'Analog Block',
+                'category-i18n': { zh: '模拟块' },
                 icon: 'wave-square',
                 collapsed: false,
                 subgroups: {
@@ -2676,6 +2697,7 @@
             {
                 id: 'cat-control',
                 category: 'Control',
+                'category-i18n': { zh: '控制' },
                 icon: 'code-branch',
                 collapsed: true,
                 subgroups: {
@@ -2701,6 +2723,7 @@
             {
                 id: 'cat-assign',
                 category: 'Assign',
+                'category-i18n': { zh: '赋值' },
                 icon: 'equals',
                 collapsed: true,
                 subgroups: {
@@ -2725,6 +2748,7 @@
             {
                 id: 'cat-operator',
                 category: 'Operators / Expressions',
+                'category-i18n': { zh: '运算符 / 表达式' },
                 icon: 'calculator',
                 collapsed: true,
                 subgroups: {
@@ -2762,6 +2786,7 @@
             {
                 id: 'cat-math',
                 category: 'Math / Analog Functions',
+                'category-i18n': { zh: '数学 / 模拟函数' },
                 icon: 'square-root-alt',
                 collapsed: true,
                 subgroups: {
@@ -2799,6 +2824,7 @@
             {
                 id: 'cat-system',
                 category: 'System Tasks',
+                'category-i18n': { zh: '系统任务' },
                 icon: 'terminal',
                 collapsed: true,
                 subgroups: {
@@ -2823,6 +2849,7 @@
             {
                 id: 'cat-testbench',
                 category: 'Testbench',
+                'category-i18n': { zh: '测试平台' },
                 icon: 'play',
                 collapsed: true,
                 subgroups: {
@@ -2844,6 +2871,7 @@
             {
                 id: 'cat-include',
                 category: 'Includes / Preprocessor',
+                'category-i18n': { zh: '头文件 / 预处理' },
                 icon: 'file-import',
                 collapsed: false,
                 subgroups: {
@@ -2883,6 +2911,7 @@
             {
                 id: 'cat-function',
                 category: 'Functions',
+                'category-i18n': { zh: '函数' },
                 icon: 'code',
                 collapsed: true,
                 subgroups: {
@@ -2912,6 +2941,7 @@
             {
                 id: 'cat-var',
                 category: 'Variables',
+                'category-i18n': { zh: '变量' },
                 icon: 'database',
                 collapsed: false,
                 subgroups: {
@@ -2949,6 +2979,7 @@
             {
                 id: 'cat-control',
                 category: 'Control Flow',
+                'category-i18n': { zh: '控制流' },
                 icon: 'code-branch',
                 collapsed: false,
                 subgroups: {
@@ -2975,6 +3006,7 @@
             {
                 id: 'cat-io',
                 category: 'Common Functions',
+                'category-i18n': { zh: '常用函数' },
                 icon: 'terminal',
                 collapsed: false,
                 subgroups: {
@@ -2998,6 +3030,7 @@
             {
                 id: 'cat-math',
                 category: 'Math',
+                'category-i18n': { zh: '数学' },
                 icon: 'calculator',
                 collapsed: false,
                 subgroups: {
@@ -3038,6 +3071,7 @@
             {
                 id: 'cat-string',
                 category: 'Strings',
+                'category-i18n': { zh: '字符串' },
                 icon: 'font',
                 collapsed: false,
                 subgroups: {
@@ -4778,6 +4812,22 @@ int main() {
             return (cat.subgroups[sub] || []).find(b => b.id === blockId) || null;
         }
 
+        /**
+         * 类别显示名。category 永远是字符串主名（合并/校验/编辑/导出都只认它）；
+         * category-i18n 是可选的翻译表，只在当前界面语言有非空翻译时才用，否则回退主名，
+         * 且不跨语言回退。注意：字段名带连字符，只能用方括号访问，
+         * 写成 cat.category-i18n 会被解析成减法。
+         */
+        function getCategoryDisplayName(cat) {
+            if (!cat) return '';
+            const i18n = cat['category-i18n'];
+            if (i18n && typeof i18n === 'object') {
+                const v = i18n[currentLang];
+                if (typeof v === 'string' && v) return v;
+            }
+            return typeof cat.category === 'string' ? cat.category : '';
+        }
+
         function iconSvg(name, extraCls = '') {
             const cls = extraCls ? `icon ${extraCls}` : 'icon';
             return `<svg class="${cls}"><use href="#icon-${name || 'cube'}"/></svg>`;
@@ -4867,13 +4917,14 @@ int main() {
                 let targetCat = BLOCKS.find(c => c.category === inCat.category);
 
                 if (!targetCat) {
-                    targetCat = {
+                    // 以导入的分类为底稿，保留 category-i18n 等附加字段（已存在类别不更新这些字段）
+                    targetCat = Object.assign({}, inCat, {
                         id: ensureUniqueId(inCat.id, usedIds, 'cat'),
                         category: inCat.category,
                         icon: inCat.icon || 'cube',
                         collapsed: !!inCat.collapsed,
                         subgroups: { none: [], v: [], va: [] }
-                    };
+                    });
                     BLOCKS.push(targetCat);
                 }
 
@@ -5136,7 +5187,7 @@ int main() {
 
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'cat-name';
-                nameSpan.textContent = cat.category;
+                nameSpan.textContent = getCategoryDisplayName(cat);
                 header.appendChild(nameSpan);
 
                 if (isReorderMode) {
@@ -5503,7 +5554,7 @@ int main() {
             BLOCKS.forEach(cat => {
                 const opt = document.createElement('option');
                 opt.value = cat.id;
-                opt.textContent = cat.category;
+                opt.textContent = getCategoryDisplayName(cat);
                 quickAddCategorySelect.appendChild(opt);
             });
             const last = lastUsedCategoryId && BLOCKS.find(c => c.id === lastUsedCategoryId);
@@ -5609,6 +5660,11 @@ int main() {
                 if (cat) {
                     cat.category = name;
                     cat.icon = icon;
+                    // 只要点过「保存」就丢弃翻译，显示回退到 category 主名。
+                    // 字段名带连字符，只能用方括号访问 / 删除。
+                    if (Object.prototype.hasOwnProperty.call(cat, 'category-i18n')) {
+                        delete cat['category-i18n'];
+                    }
                 }
             } else {
                 const newCat = {
