@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scratch Cpp</title>
+    <title>Scratch C++</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpath d='M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'/%3E%3C/svg%3E">
 <!-- 在线版：Prism 由 CDN 异步加载，不阻塞 HTML 解析。
          cdnjs 不可用时自动切 jsdelivr / unpkg；全部失败则退化为纯文本编辑（编辑、积木、保存照常）。
@@ -1523,7 +1523,7 @@
     </svg>
 
     <div class="toolbar">
-        <span class="logo"><a href="#" title="Version: v0.9; Author: Hayden KWOK"><svg class="icon"><use href="#icon-cube"/></svg></a> <span data-i18n="appTitle">Scratch Cpp</span></span>
+        <span class="logo"><a href="#" title="Version: v0.9; Author: Hayden KWOK"><svg class="icon"><use href="#icon-cube"/></svg></a> <span data-i18n="appTitle">Scratch C++</span></span>
         <button id="openBtn" data-i18n="btnOpen" data-i18n-title="btnOpenTitle" title="打开文件"><svg class="icon"><use href="#icon-folder-open"/></svg> 打开</button>
         <button id="saveBtn" data-i18n="btnSave" data-i18n-title="btnSaveTitle" title="保存 (Ctrl+S)"><svg class="icon"><use href="#icon-save"/></svg> 保存</button>
         <button id="saveAsBtn" data-i18n="btnSaveAs" data-i18n-title="btnSaveAsTitle" title="另存为 (Ctrl+Shift+S)"><svg class="icon"><use href="#icon-file-signature"/></svg> 另存为</button>
@@ -1758,7 +1758,7 @@
             <div class="field">
                 <label data-i18n="fieldSubcategory">子类别归属</label>
                 <div class="radio-group" id="addBlockSubRadioGroup" style="flex-wrap:wrap;">
-                    <!-- 选项由 renderAddBlockSubRadios() 按编辑语言生成：v/va 或 c/cpp -->
+                    <!-- 选项由 renderAddBlockSubRadios() 生成：标准键 + 分类里已有的自定义子组 -->
                 </div>
                 <input type="text" id="addBlockCustomSub" data-i18n-placeholder="subCustomPlaceholder" placeholder="自定义子类别名，如 advanced / 示例" style="margin-top:6px;">
             </div>
@@ -1976,9 +1976,9 @@
         })();
 
         // ==================== 应用标识 ====================
-        // 本文件是 Verilog 版。index_cpp.html（Scratch Cpp）由它生成，
+        // 本文件是 Verilog 版。index_cpp.html（Scratch C++）由它生成，
         // 差异只有这三处：<title>、APP_TITLE、DEFAULT_EDITOR_LANG（外加默认文件名 main.cpp / untitled.cpp）
-        const APP_TITLE = 'Scratch Cpp';
+        const APP_TITLE = 'Scratch C++';
         const DEFAULT_EDITOR_LANG = 'cpp';
 
         // ==================== 国际化 (i18n) ====================
@@ -4687,8 +4687,20 @@ int main() {
         document.getElementById('clipboardExportBtn').addEventListener('click', clipboardExport);
 
         // ==================== 数据保存/加载 ====================
+        /** 落盘/导出用：空子类别不写出去（有积木才导出这个子组，避免导出一堆空数组） */
+        function serializeBlocks() {
+            return BLOCKS.map(c => {
+                const subgroups = {};
+                Object.keys(c.subgroups || {}).forEach(k => {
+                    const arr = c.subgroups[k];
+                    if (Array.isArray(arr) && arr.length) subgroups[k] = arr;
+                });
+                return Object.assign({}, c, { subgroups });
+            });
+        }
+
         function saveToStorage() {
-            const ok = SafeStore.set(storageKey(KEY_BASE.blocks), JSON.stringify(BLOCKS));
+            const ok = SafeStore.set(storageKey(KEY_BASE.blocks), JSON.stringify(serializeBlocks()));
             if (!ok) console.warn('[blocks] 配置未能写入 localStorage（存储不可用或已满），本次改动仅保留在内存中');
         }
 
@@ -4710,39 +4722,22 @@ int main() {
         }
 
         /**
-         * 结构归一化：补 id / icon / collapsed；**保留 JSON 里出现的所有子类别键**
-         * （string / pin / math / interrupt 这类自定义子组也是合法数据，只认标准键就会把它们整组丢掉），
-         * 只在标准键缺失时补空数组，保证渲染与新增积木有东西可遍历。
-         * Verilog 下额外把 C/C++ 版遗留的 c/cpp 并进 v/va，并删掉 c/cpp，避免同一批积木显示两遍。
+         * 结构归一化：只补 id / icon / collapsed，**子类别键全部原样保留**。
+         * none / v / va / c / cpp 与自定义子组（string / pin / math ...）可以同时存在，
+         * 不做合并、迁移，也不凭空补空键——没有就是没有。
          * 返回 null 表示数据里一个积木都没有（视为无效）。
          */
         function normalizeBlockStructure(data) {
             if (!Array.isArray(data) || data.length === 0) return null;
-            const stdSubs = blockSubs();
             const out = [];
             for (const c of data) {
                 if (!c || typeof c !== 'object' || !c.category) return null;
                 const src = (c.subgroups && typeof c.subgroups === 'object') ? c.subgroups : {};
-
                 const groups = {};
-                // 1. 原样保留所有子类别键（拷贝数组，别把调用方的对象改掉）
+                // 拷贝数组，别把调用方传进来的对象改掉
                 Object.keys(src).forEach(k => {
                     if (Array.isArray(src[k])) groups[k] = src[k].slice();
                 });
-                // 2. 标准键兜底：缺了就补空数组
-                stdSubs.forEach(k => {
-                    if (!Array.isArray(groups[k])) groups[k] = [];
-                });
-                // 3. 历史键迁移：只对 Verilog 生效（C++ 下 c/cpp 就是本来的键）
-                if (currentEditorLang !== 'cpp') {
-                    [['c', 'v'], ['cpp', 'va']].forEach(pair => {
-                        const from = pair[0], to = pair[1];
-                        // 有内容才并（目标是标准键，前面已保证存在）；并完删键，否则 v 和 c 各显示一遍
-                        if (Array.isArray(src[from]) && src[from].length) groups[to] = groups[to].concat(src[from]);
-                        delete groups[from];
-                    });
-                }
-
                 out.push(Object.assign({}, c, {
                     id: c.id || genId('cat'),
                     icon: c.icon || 'folder',
@@ -4750,7 +4745,6 @@ int main() {
                     subgroups: groups
                 }));
             }
-            // 总数按所有子类别键统计（只看标准键的话，全是自定义子组的数据会被误判成 0 个积木）
             const total = out.reduce((n, c) =>
                 n + Object.keys(c.subgroups).reduce((m, k) => m + c.subgroups[k].length, 0), 0);
             return total > 0 ? out : null;
@@ -5107,28 +5101,14 @@ int main() {
             return div;
         }
 
+        // none 不显示标签；v/va/c/cpp 用专属样式，其余（自定义子组）原样显示键名 + custom 样式。
+        // 不按编辑语言分支：导入的数据里 v/va 与 c/cpp 可能同时存在，按语言分支会让另一半显示错色。
         function getSubLabel(subKey) {
-            if (subKey === 'none') return '';
-            if (currentEditorLang === 'cpp') {
-                if (subKey === 'c') return 'c';
-                if (subKey === 'cpp') return 'cpp';
-            } else {
-                if (subKey === 'v') return 'v';
-                if (subKey === 'va') return 'va';
-            }
-            return subKey;
+            return subKey === 'none' ? '' : subKey;
         }
 
         function getSubLabelClass(subKey) {
-            if (subKey === 'none') return 'custom';
-            if (currentEditorLang === 'cpp') {
-                if (subKey === 'c') return 'c';
-                if (subKey === 'cpp') return 'cpp';
-            } else {
-                if (subKey === 'v') return 'v';
-                if (subKey === 'va') return 'va';
-            }
-            return 'custom';
+            return (subKey === 'v' || subKey === 'va' || subKey === 'c' || subKey === 'cpp') ? subKey : 'custom';
         }
 
         function renderBlocksPanel() {
@@ -5390,18 +5370,54 @@ int main() {
          * 文案不走 i18n（v / va / c / cpp 是语言记号，不翻译），「通用」「自定义」照常翻译。
          * @param {string} containerId 容器 id（两个弹窗共用这段渲染逻辑）
          */
-        function renderAddBlockSubRadios(containerId) {
+        /** 分类里出现过的子类别键：标准键（none/v/va 或 none/c/cpp）在前，其余按出现顺序；
+         *  不传 catId 就取全部分类的并集。这样导入数据里的 c/cpp、string/pin 等也能被选中 */
+        function subKeysForCat(catId) {
+            const std = blockSubs();
+            const cats = catId ? [findCategory(catId)] : BLOCKS;
+            const extra = [];
+            cats.forEach(cat => {
+                if (!cat || !cat.subgroups) return;
+                Object.keys(cat.subgroups).forEach(k => {
+                    if (k !== 'none' && std.indexOf(k) < 0 && extra.indexOf(k) < 0) extra.push(k);
+                });
+            });
+            return std.concat(extra);
+        }
+
+        function subRadioLabel(key) {
+            if (key === 'none') return t('subGeneral');
+            if (key === 'v') return t('subV');
+            if (key === 'va') return t('subVa');
+            if (key === 'c') return t('subC');
+            if (key === 'cpp') return t('subCpp');
+            return key;    // 自定义子组原样显示键名
+        }
+
+        function renderAddBlockSubRadios(containerId, catId) {
             const wrap = document.getElementById(containerId || 'addBlockSubRadioGroup');
             if (!wrap) return;
-            const subs = currentEditorLang === 'cpp'
-                ? [{ value: 'none', label: t('subGeneral') }, { value: 'c', label: t('subC') }, { value: 'cpp', label: t('subCpp') }]
-                : [{ value: 'none', label: t('subGeneral') }, { value: 'v', label: t('subV') }, { value: 'va', label: t('subVa') }];
             const name = containerId === 'quickAddSubRadioGroup' ? 'quickAddSubRadio' : 'addBlockSubRadio';
-            wrap.innerHTML = subs.map(function (s, i) {
-                return '<label><input type="radio" name="' + name + '" value="' + s.value + '"' +
-                    (i === 0 ? ' checked' : '') + '> <span>' + s.label + '</span></label>';
-            }).join('') +
-                '<label><input type="radio" name="' + name + '" value="custom"> <span>' + t('subCustom') + '</span></label>';
+            wrap.innerHTML = '';
+            const make = function (value, label) {
+                const labelEl = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = name;
+                radio.value = value;
+                const span = document.createElement('span');
+                span.textContent = label;
+                labelEl.appendChild(radio);
+                labelEl.appendChild(document.createTextNode(' '));
+                labelEl.appendChild(span);
+                wrap.appendChild(labelEl);
+                return radio;
+            };
+            const keys = subKeysForCat(catId);
+            keys.forEach(k => make(k, subRadioLabel(k)));
+            make('custom', t('subCustom'));
+            const first = wrap.querySelector('input[type="radio"]');
+            if (first) first.checked = true;
         }
 
         /**
@@ -5422,7 +5438,7 @@ int main() {
             addBlockIconSelect.value = 'cube';
             addBlockIconInput.value = '';
             addBlockCustomSub.value = '';
-            renderAddBlockSubRadios('addBlockSubRadioGroup');
+            renderAddBlockSubRadios('addBlockSubRadioGroup', cat.id);
             document.querySelector('input[name="addBlockMode"][value="line"]').checked = true;
             addBlockModal.classList.add('show');
             addBlockCode.focus();
@@ -5508,7 +5524,7 @@ int main() {
             if (quickAddIconSelect) quickAddIconSelect.value = 'cube';
             if (quickAddIconInput) quickAddIconInput.value = '';
             renderQuickAddCategorySelect();
-            renderAddBlockSubRadios('quickAddSubRadioGroup');
+            renderAddBlockSubRadios('quickAddSubRadioGroup', quickAddCategorySelect ? quickAddCategorySelect.value : null);
             document.querySelector('input[name="quickAddMode"][value="line"]').checked = true;
 
             quickAddBlockModal.classList.add('show');
@@ -5546,6 +5562,13 @@ int main() {
         });
 
         quickAddCancelBtn.addEventListener('click', closeQuickAddBlockModal);
+
+        // 换分类 → 子类别单选跟着换成该分类已有的子组
+        if (quickAddCategorySelect) {
+            quickAddCategorySelect.addEventListener('change', function () {
+                renderAddBlockSubRadios('quickAddSubRadioGroup', quickAddCategorySelect.value);
+            });
+        }
 
         quickAddBlockModal.addEventListener('click', (e) => {
             if (e.target === quickAddBlockModal) closeQuickAddBlockModal();
@@ -5644,7 +5667,8 @@ int main() {
         });
 
         document.getElementById('exportBtn').addEventListener('click', () => {
-            const data = JSON.stringify(BLOCKS, null, 2);
+            // 和落盘同一套序列化：空子类别不导出
+            const data = JSON.stringify(serializeBlocks(), null, 2);
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -6971,9 +6995,9 @@ int main() {
             updateCursorPosition();
 
             // 6. 弹窗开着时重建子类别 radio（两个弹窗的子类别键不同：v/va ↔ c/cpp）
-            if (addBlockModal.classList.contains('show')) renderAddBlockSubRadios('addBlockSubRadioGroup');
+            if (addBlockModal.classList.contains('show')) renderAddBlockSubRadios('addBlockSubRadioGroup', addingBlockTo ? addingBlockTo.catId : null);
             if (quickAddBlockModal.classList.contains('show')) {
-                renderAddBlockSubRadios('quickAddSubRadioGroup');
+                renderAddBlockSubRadios('quickAddSubRadioGroup', quickAddCategorySelect ? quickAddCategorySelect.value : null);
                 renderQuickAddCategorySelect();
             }
         }
@@ -7037,7 +7061,7 @@ int main() {
             loadIndentConfig();
             applyIndentToEditor();
             updateFileAccept();
-            renderAddBlockSubRadios('addBlockSubRadioGroup');
+            renderAddBlockSubRadios('addBlockSubRadioGroup', BLOCKS[0] ? BLOCKS[0].id : null);
             applyLineNumberVisibility(true);
             autoFillEnabled = getAutoFillPref();
             updateAutoFillBtn();
