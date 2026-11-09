@@ -260,9 +260,9 @@
         }
 
         html[data-theme="light"] {
-            /* ==================== Emacs 默认配色 ====================
-               关键字紫粗 / 字符串深紫红 / 注释砖红斜体 / 函数蓝 /
-               类型森林绿 / 数字深青 / 白底黑字。
+            /* ==================== 浅色：白底高对比 ====================
+               关键字紫 / 字符串纯红 / 注释灰斜体 / 函数蓝 /
+               类型森林绿 / 数字深青 / 运算符深灰蓝 / 白底黑字。
                代码区纯白，层次靠边框和行号列，不靠底色压暗。 */
             --bg-root: #ffffff;
             --bg-editor: #ffffff;
@@ -324,17 +324,19 @@
             --gutter-text: #999999;
             --gutter-current: #000000;
 
-            /* 语法高亮：Emacs 经典 face */
-            --tok-keyword: #a020f0;     /* 紫，font-lock-keyword-face（粗体由 CSS 控制） */
-            --tok-macro: #483d8b;       /* 暗蓝紫，预处理 */
-            --tok-string: #8b2252;      /* 深紫红，font-lock-string-face */
-            --tok-char: #8b2252;
-            --tok-number: #008b8b;      /* 深青，font-lock-constant-face */
-            --tok-boolean: #008b8b;
-            --tok-comment: #b22222;     /* 砖红，font-lock-comment-face（斜体由 CSS 控制） */
-            --tok-func: #0000ff;        /* 蓝，font-lock-function-name-face */
-            --tok-type: #228b22;        /* 森林绿，font-lock-type-face */
-            --tok-op: #000000;          /* 运算符黑色 */
+            /* 语法高亮：白底高对比（色相家族对齐深色主题）。
+               关键字紫 / 字符串纯红 / 注释灰 / 函数蓝 / 数字深青 /
+               类型森林绿 / 运算符深灰蓝。 */
+            --tok-keyword: #7a00a8;     /* 紫，关键字 */
+            --tok-macro: #7a4f00;       /* 棕黄，宏 / 预处理，与关键字紫区分 */
+            --tok-string: #e00000;      /* 纯红，字符串 */
+            --tok-char: #a31515;        /* 深红，字符，与字符串同族略深 */
+            --tok-number: #007a8a;      /* 深青，数字 */
+            --tok-boolean: #6a3fd6;     /* 深紫，布尔 */
+            --tok-comment: #6e7781;     /* 灰，注释（斜体由 CSS 控制） */
+            --tok-func: #0052d9;        /* 纯蓝，函数名 */
+            --tok-type: #228b22;        /* 森林绿，类型 / class-name */
+            --tok-op: #3d4450;          /* 深灰蓝，运算符 / 标点 */
 
             --sub-c-bg: #e8e8ff;
             --sub-c-fg: #0000cc;
@@ -3169,8 +3171,10 @@
             }
         ];
 
-        // Python 积木：按「写代码顺序」编排 —— 从文件头到文件尾，从上到下、由外到内。
-        // 字段名用 category_i18n（下划线），可直接点号访问，避免 category-i18n 连字符必须加引号的麻烦。
+        // Python 积木：先定义结构、再写基础语句、最后控制流与 I/O —— 从上到下、由外到内。
+        // 读一遍面板 = 读一遍 Python 程序结构：Import → Functions → Classes → Basic →
+        // Variables → Containers → Strings → Control Flow → I/O。
+        // 字段名用 category_i18n（下划线），可直接点号访问。
         const DEFAULT_BLOCKS_PYTHON = [
             {
                 id: 'cat-py-import',
@@ -3189,6 +3193,50 @@
                 }
             },
             {
+                id: 'cat-py-func',
+                category: 'Functions',
+                category_i18n: { zh: '函数' },
+                icon: 'code',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-def', icon: 'code', label: 'def func():', code: 'def func():\n    ', mode: 'line' },
+                        { id: 'py-def-args', icon: 'code', label: 'def func(a, b):', code: 'def func(a, b):\n    ', mode: 'line' },
+                        { id: 'py-def-default', icon: 'equals', label: 'def func(a=0):', code: 'def func(a=0):\n    ', mode: 'line' },
+                        { id: 'py-def-args-kwargs', icon: 'cubes', label: 'def func(*args, **kwargs):', code: 'def func(*args, **kwargs):\n    ', mode: 'line' },
+                        { id: 'py-def-docstring', icon: 'quote-left', label: 'def func(): """..."""', code: 'def func():\n    """docstring"""\n    ', mode: 'line' },
+                        { id: 'py-return', icon: 'sign-out-alt', label: 'return x', code: 'return x', mode: 'line' },
+                        { id: 'py-return-none', icon: 'sign-out-alt', label: 'return', code: 'return', mode: 'line' },
+                        { id: 'py-lambda', icon: 'bolt', label: 'lambda x: x + 1', code: 'lambda x: x + 1', mode: 'exp' },
+                        { id: 'py-abs', icon: 'absolute', label: 'abs(x)', code: 'abs(x)', mode: 'exp' },
+                        { id: 'py-min', icon: 'arrow-down', label: 'min(xs)', code: 'min(xs)', mode: 'exp' },
+                        { id: 'py-max', icon: 'arrow-up', label: 'max(xs)', code: 'max(xs)', mode: 'exp' },
+                        { id: 'py-sum', icon: 'plus', label: 'sum(xs)', code: 'sum(xs)', mode: 'exp' },
+                        { id: 'py-round', icon: 'circle', label: 'round(x, 2)', code: 'round(x, 2)', mode: 'exp' },
+                        { id: 'py-global', icon: 'globe', label: 'global x', code: 'global x', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-class',
+                category: 'Classes',
+                category_i18n: { zh: '类' },
+                icon: 'cubes',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-class', icon: 'cubes', label: 'class Foo:', code: 'class Foo:\n    ', mode: 'line' },
+                        { id: 'py-class-init', icon: 'cubes', label: 'class Foo: def __init__', code: 'class Foo:\n    def __init__(self):\n        ', mode: 'line' },
+                        { id: 'py-class-method', icon: 'code', label: 'class Foo: def method', code: 'class Foo:\n    def method(self):\n        ', mode: 'line' },
+                        { id: 'py-class-inherit', icon: 'cubes', label: 'class Foo(Bar):', code: 'class Foo(Bar):\n    def __init__(self):\n        super().__init__()\n        ', mode: 'line' },
+                        { id: 'py-self', icon: 'location-arrow', label: 'self.x = x', code: 'self.x = x', mode: 'line' },
+                        { id: 'py-super', icon: 'arrow-up', label: 'super().__init__()', code: 'super().__init__()', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
                 id: 'cat-py-basic',
                 category: 'Basic / Comments',
                 category_i18n: { zh: '基础 / 注释' },
@@ -3197,10 +3245,12 @@
                 subgroups: {
                     none: [
                         { id: 'py-comment-line', icon: 'comment', label: '# comment', code: '# ', mode: 'line' },
+                        { id: 'py-docstring', icon: 'quote-left', label: '"""docstring"""', code: '"""\n\n"""', mode: 'line' },
                         { id: 'py-print', icon: 'print', label: 'print("Hello")', code: 'print("Hello")', mode: 'line' },
                         { id: 'py-print-f', icon: 'print', label: 'print(f"{x}")', code: 'print(f"{x}")', mode: 'line' },
+                        { id: 'py-input', icon: 'keyboard', label: 'input("prompt: ")', code: 'input("prompt: ")', mode: 'exp' },
                         { id: 'py-pass', icon: 'stop', label: 'pass', code: 'pass', mode: 'line' },
-                        { id: 'py-docstring', icon: 'quote-left', label: '"""docstring"""', code: '"""\n\n"""', mode: 'line' }
+                        { id: 'py-main-guard', icon: 'play', label: 'if __name__ == "__main__":', code: 'if __name__ == "__main__":\n    ', mode: 'line' }
                     ],
                     py: []
                 }
@@ -3221,9 +3271,43 @@
                         { id: 'py-mul-assign', icon: 'times', label: 'x *= 2', code: 'x *= 2', mode: 'line' },
                         { id: 'py-div-assign', icon: 'divide', label: 'x /= 2', code: 'x /= 2', mode: 'line' },
                         { id: 'py-none', icon: 'circle', label: 'x = None', code: 'x = None', mode: 'line' },
+                        { id: 'py-is-none', icon: 'equals', label: 'x is None', code: 'x is None', mode: 'exp' },
                         { id: 'py-type-cast', icon: 'exchange-alt', label: 'int("42")', code: 'int("42")', mode: 'exp' }
                     ],
                     py: []
+                }
+            },
+            {
+                id: 'cat-py-container',
+                category: 'Containers',
+                category_i18n: { zh: '容器' },
+                icon: 'list',
+                collapsed: false,
+                subgroups: {
+                    none: [],
+                    list: [
+                        { id: 'py-list', icon: 'list', label: 'xs = [1, 2, 3]', code: 'xs = [1, 2, 3]', mode: 'line' },
+                        { id: 'py-comp-list', icon: 'bolt', label: 'ys = [x for x in xs]', code: 'ys = [x for x in xs]', mode: 'line' },
+                        { id: 'py-append', icon: 'plus', label: 'xs.append(x)', code: 'xs.append(x)', mode: 'line' },
+                        { id: 'py-len', icon: 'ruler-horizontal', label: 'n = len(xs)', code: 'n = len(xs)', mode: 'line' },
+                        { id: 'py-sorted', icon: 'sort', label: 'ys = sorted(xs)', code: 'ys = sorted(xs)', mode: 'line' }
+                    ],
+                    dict: [
+                        { id: 'py-dict', icon: 'database', label: 'd = {"k": v}', code: 'd = {"k": v}', mode: 'line' },
+                        { id: 'py-comp-dict', icon: 'bolt', label: 'd = {k: v for k, v in items}', code: 'd = {k: v for k, v in items}', mode: 'line' },
+                        { id: 'py-get', icon: 'search', label: 'v = d.get("k")', code: 'v = d.get("k")', mode: 'line' },
+                        { id: 'py-items', icon: 'list', label: 'for k, v in d.items():', code: 'for k, v in d.items():\n    ', mode: 'line' },
+                        { id: 'py-keys', icon: 'list', label: 'for k in d.keys():', code: 'for k in d.keys():\n    ', mode: 'line' }
+                    ],
+                    settuple: [
+                        { id: 'py-set', icon: 'circle', label: 's = {1, 2, 3}', code: 's = {1, 2, 3}', mode: 'line' },
+                        { id: 'py-tuple-lit', icon: 'list', label: 't = (1, 2, 3)', code: 't = (1, 2, 3)', mode: 'line' }
+                    ],
+                    util: [
+                        { id: 'py-range', icon: 'calculator', label: 'for i in range(n):', code: 'for i in range(n):\n    ', mode: 'line' },
+                        { id: 'py-enumerate', icon: 'calculator', label: 'for i, x in enumerate(xs):', code: 'for i, x in enumerate(xs):\n    ', mode: 'line' },
+                        { id: 'py-zip', icon: 'exchange-alt', label: 'for x, y in zip(a, b):', code: 'for x, y in zip(a, b):\n    ', mode: 'line' }
+                    ]
                 }
             },
             {
@@ -3236,6 +3320,7 @@
                     none: [
                         { id: 'py-str-decl', icon: 'quote-left', label: 's = "hello"', code: 's = "hello"', mode: 'line' },
                         { id: 'py-fstring', icon: 'quote-left', label: 'f"{x}"', code: 'f"{x}"', mode: 'exp' },
+                        { id: 'py-str-format', icon: 'magic', label: '"{}".format(x)', code: '"{}".format(x)', mode: 'exp' },
                         { id: 'py-str-upper', icon: 'font', label: 's.upper()', code: 's.upper()', mode: 'exp' },
                         { id: 'py-str-lower', icon: 'font', label: 's.lower()', code: 's.lower()', mode: 'exp' },
                         { id: 'py-str-strip', icon: 'cut', label: 's.strip()', code: 's.strip()', mode: 'exp' },
@@ -3243,29 +3328,8 @@
                         { id: 'py-str-join', icon: 'link', label: '"sep".join(xs)', code: '"sep".join(xs)', mode: 'exp' },
                         { id: 'py-str-replace', icon: 'exchange-alt', label: 's.replace(a, b)', code: 's.replace(a, b)', mode: 'exp' },
                         { id: 'py-str-find', icon: 'search', label: 's.find("sub")', code: 's.find("sub")', mode: 'exp' },
-                        { id: 'py-str-format', icon: 'magic', label: '"{}".format(x)', code: '"{}".format(x)', mode: 'exp' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-list',
-                category: 'Lists / Dicts / Sets',
-                category_i18n: { zh: '列表 / 字典 / 集合' },
-                icon: 'list',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-list', icon: 'list', label: '[1, 2, 3]', code: '[1, 2, 3]', mode: 'exp' },
-                        { id: 'py-dict', icon: 'database', label: '{"k": v}', code: '{"k": v}', mode: 'exp' },
-                        { id: 'py-set', icon: 'circle', label: '{1, 2, 3}', code: '{1, 2, 3}', mode: 'exp' },
-                        { id: 'py-tuple-lit', icon: 'list', label: '(1, 2, 3)', code: '(1, 2, 3)', mode: 'exp' },
-                        { id: 'py-comp-list', icon: 'bolt', label: '[x for x in xs]', code: '[x for x in xs]', mode: 'exp' },
-                        { id: 'py-comp-dict', icon: 'bolt', label: '{k: v for k, v in items}', code: '{k: v for k, v in items}', mode: 'exp' },
-                        { id: 'py-append', icon: 'plus', label: 'xs.append(x)', code: 'xs.append(x)', mode: 'line' },
-                        { id: 'py-get', icon: 'search', label: 'd.get("k")', code: 'd.get("k")', mode: 'exp' },
-                        { id: 'py-items', icon: 'list', label: 'd.items()', code: 'd.items()', mode: 'exp' },
-                        { id: 'py-sorted', icon: 'sort', label: 'sorted(xs)', code: 'sorted(xs)', mode: 'exp' }
+                        { id: 'py-str-startswith', icon: 'search', label: 's.startswith("pre")', code: 's.startswith("pre")', mode: 'exp' },
+                        { id: 'py-str-in', icon: 'search', label: '"sub" in s', code: '"sub" in s', mode: 'exp' }
                     ],
                     py: []
                 }
@@ -3289,44 +3353,9 @@
                         { id: 'py-continue', icon: 'forward', label: 'continue', code: 'continue', mode: 'line' },
                         { id: 'py-try', icon: 'exclamation-triangle', label: 'try / except', code: 'try:\n    \nexcept Exception as e:\n    ', mode: 'line' },
                         { id: 'py-try-finally', icon: 'exclamation-triangle', label: 'try / except / finally', code: 'try:\n    \nexcept Exception as e:\n    \nfinally:\n    ', mode: 'line' },
-                        { id: 'py-with', icon: 'code-branch', label: 'with open(...) as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-func',
-                category: 'Functions',
-                category_i18n: { zh: '函数' },
-                icon: 'code',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-def', icon: 'code', label: 'def func():', code: 'def func():\n    ', mode: 'line' },
-                        { id: 'py-def-args', icon: 'code', label: 'def func(a, b):', code: 'def func(a, b):\n    ', mode: 'line' },
-                        { id: 'py-def-default', icon: 'equals', label: 'def func(a=0):', code: 'def func(a=0):\n    ', mode: 'line' },
-                        { id: 'py-def-docstring', icon: 'quote-left', label: 'def func(): """..."""', code: 'def func():\n    """docstring"""\n    ', mode: 'line' },
-                        { id: 'py-return', icon: 'sign-out-alt', label: 'return x', code: 'return x', mode: 'line' },
-                        { id: 'py-return-none', icon: 'sign-out-alt', label: 'return', code: 'return', mode: 'line' },
-                        { id: 'py-lambda', icon: 'bolt', label: 'lambda x: x + 1', code: 'lambda x: x + 1', mode: 'exp' },
-                        { id: 'py-main-guard', icon: 'play', label: 'if __name__ == "__main__":', code: 'if __name__ == "__main__":\n    ', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-class',
-                category: 'Classes',
-                category_i18n: { zh: '类' },
-                icon: 'cubes',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-class', icon: 'cubes', label: 'class Foo:', code: 'class Foo:\n    ', mode: 'line' },
-                        { id: 'py-class-init', icon: 'cubes', label: 'class Foo: def __init__', code: 'class Foo:\n    def __init__(self):\n        ', mode: 'line' },
-                        { id: 'py-class-method', icon: 'code', label: 'class Foo: def method', code: 'class Foo:\n    def method(self):\n        ', mode: 'line' },
-                        { id: 'py-self', icon: 'location-arrow', label: 'self.x = x', code: 'self.x = x', mode: 'line' },
-                        { id: 'py-super', icon: 'arrow-up', label: 'super().__init__()', code: 'super().__init__()', mode: 'line' }
+                        { id: 'py-assert', icon: 'check', label: 'assert cond, "msg"', code: 'assert cond, "msg"', mode: 'line' },
+                        { id: 'py-raise', icon: 'exclamation-triangle', label: 'raise ValueError("msg")', code: 'raise ValueError("msg")', mode: 'line' },
+                        { id: 'py-with', icon: 'code-branch', label: 'with expr as x:', code: 'with expr as x:\n    ', mode: 'line' }
                     ],
                     py: []
                 }
@@ -3334,42 +3363,17 @@
             {
                 id: 'cat-py-io',
                 category: 'I/O / Files',
-                category_i18n: { zh: '输入输出 / 文件' },
-                icon: 'terminal',
+                category_i18n: { zh: '文件' },
+                icon: 'folder-open',
                 collapsed: false,
                 subgroups: {
                     none: [
-                        { id: 'py-input', icon: 'keyboard', label: 'input("prompt: ")', code: 'input("prompt: ")', mode: 'exp' },
                         { id: 'py-open-read', icon: 'folder-open', label: 'open("file.txt", "r")', code: 'open("file.txt", "r")', mode: 'exp' },
                         { id: 'py-open-write', icon: 'save', label: 'open("file.txt", "w")', code: 'open("file.txt", "w")', mode: 'exp' },
                         { id: 'py-with-open', icon: 'folder-open', label: 'with open("file.txt") as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' },
                         { id: 'py-read', icon: 'file-import', label: 'f.read()', code: 'f.read()', mode: 'exp' },
                         { id: 'py-readlines', icon: 'list', label: 'f.readlines()', code: 'f.readlines()', mode: 'exp' },
                         { id: 'py-write', icon: 'print', label: 'f.write("...")', code: 'f.write("...")', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-math',
-                category: 'Math / Builtins',
-                category_i18n: { zh: '数学 / 内置函数' },
-                icon: 'calculator',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-len', icon: 'ruler-horizontal', label: 'len(xs)', code: 'len(xs)', mode: 'exp' },
-                        { id: 'py-range', icon: 'calculator', label: 'range(n)', code: 'range(n)', mode: 'exp' },
-                        { id: 'py-enumerate', icon: 'calculator', label: 'enumerate(xs)', code: 'enumerate(xs)', mode: 'exp' },
-                        { id: 'py-zip', icon: 'exchange-alt', label: 'zip(a, b)', code: 'zip(a, b)', mode: 'exp' },
-                        { id: 'py-abs', icon: 'absolute', label: 'abs(x)', code: 'abs(x)', mode: 'exp' },
-                        { id: 'py-min', icon: 'arrow-down', label: 'min(xs)', code: 'min(xs)', mode: 'exp' },
-                        { id: 'py-max', icon: 'arrow-up', label: 'max(xs)', code: 'max(xs)', mode: 'exp' },
-                        { id: 'py-sum', icon: 'plus', label: 'sum(xs)', code: 'sum(xs)', mode: 'exp' },
-                        { id: 'py-round', icon: 'circle', label: 'round(x, 2)', code: 'round(x, 2)', mode: 'exp' },
-                        { id: 'py-int', icon: 'hashtag', label: 'int(x)', code: 'int(x)', mode: 'exp' },
-                        { id: 'py-float', icon: 'hashtag', label: 'float(x)', code: 'float(x)', mode: 'exp' },
-                        { id: 'py-str', icon: 'font', label: 'str(x)', code: 'str(x)', mode: 'exp' }
                     ],
                     py: []
                 }
