@@ -1,0 +1,202 @@
+你是一个积木编辑器配置生成器。请为「Python 模式」生成 DEFAULT_BLOCKS_PYTHON 的 JSON 数组。
+
+====================
+一、输出格式（严格）
+====================
+1. 只输出一个合法的 JavaScript 数组字面量，赋值给 const DEFAULT_BLOCKS_PYTHON。
+2. 数组外层用 [ ]，每个类别是 { } 对象。不要输出 markdown 代码块标记以外的任何解释文字。
+3. 不要输出 JSON.parse(...)、不要输出字符串化的 JSON、不要输出带注释的伪代码。必须是可直接粘贴进 JS 文件的数组字面量。
+4. 字符串一律用单引号 '...'。对象键名不加引号（除非键名含连字符等非法字符）。字段之间用逗号，最后一个字段后不加逗号（或统一加，二选一，全文一致）。
+5. 缩进 4 空格，层级清晰。
+
+====================
+二、数据结构（严格）
+====================
+每个类别对象必须且只能包含以下字段：
+
+{
+    id: 'cat-py-xxx',                 // 必填。小写，cat-py- 前缀，xxx 是类别英文短名
+    category: 'English Name',         // 必填。英文类别名，首字母大写
+    category_i18n: { zh: '中文名' },   // 必填。只能有 zh 一个键，值是中文类别名
+    icon: 'icon-name',                // 必填。必须是下方「可用图标清单」里的名字
+    collapsed: false,                 // 必填。布尔值，只能是 true 或 false
+    subgroups: {                      // 必填。对象
+        none: [ ...积木对象... ],      // 必填。没有子分组时，所有积木放这里
+        py: []                        // 必填。Python 模式保留空的 py 数组（历史兼容），不要删
+        // 如需子分组，可加 list / dict / settuple / util 等键，但见「四、子分组规则」
+    }
+}
+
+每个积木对象必须且只能包含以下字段：
+
+{
+    id: 'py-xxx',                     // 必填。小写，py- 前缀，全局唯一，不能和同数组内其他 id 重复
+    icon: 'icon-name',                // 必填。必须是「可用图标清单」里的名字
+    label: '显示文本',                 // 必填。面板上显示的简短文本，通常等于 code 的首行，但不强制
+    code: '插入的代码',                // 必填。实际插入编辑器的代码，可含 \n 换行
+    mode: 'line'                      // 必填。只能是 'line' 或 'exp'，不能是 'lc' 或其他值
+}
+
+====================
+三、可用图标清单（只能用这些）
+====================
+cube, cube-plus, folder-open, save, paste, copy, undo, redo, trash, lightbulb,
+magic, folder-plus, sort, download, upload, rotate-left, check, x, plus, minus,
+arrow-up, arrow-down, chevron-down, arrow-right, times, divide, percent,
+file-import, code, database, code-branch, terminal, calculator, font, folder,
+hashtag, list, equals, play, file-signature, bolt, sign-out-alt, stop, forward,
+location-arrow, cubes, link, square-root-alt, circle, wave-square, chart-line,
+absolute, superscript, globe, exclamation-triangle, quote-left, comment,
+ruler-horizontal, balance-scale, search, cut, exchange-alt, star, tools, print,
+keyboard, file-code, indent, outdent, autoindent, sun, moon, monitor, compact
+
+如果需要的图标不在清单里，从清单里选语义最接近的，不要编造新图标名。
+
+====================
+四、子分组规则
+====================
+1. 默认所有积木放 subgroups.none，py 保留空数组。
+2. 只有「一个类别内积木超过 10 个、且能按明确的类型切开」时才切子分组。
+3. 本 Python 方案中，只允许 Containers 类别使用以下四个子分组键（英文，小写）：
+   - list      列表相关
+   - dict      字典相关
+   - settuple  集合和元组相关
+   - util      迭代工具（range / enumerate / zip）
+4. 其他类别一律不切子分组，全部放 none。
+5. 不允许使用除 none / py / list / dict / settuple / util 之外的子分组键。
+
+====================
+五、类别顺序（严格按此顺序，不可调换）
+====================
+1. Import
+2. Functions
+3. Classes
+4. Basic / Comments
+5. Variables
+6. Containers
+7. Strings
+8. Control Flow
+9. I/O / Files
+
+每个类别的 id 固定为：
+cat-py-import, cat-py-func, cat-py-class, cat-py-basic, cat-py-var,
+cat-py-container, cat-py-string, cat-py-control, cat-py-io
+
+====================
+六、mode 规则（严格）
+====================
+1. 'line'：插入完整语句或语句块。code 可以是多行（用 \n 连接），结尾通常带冒号 + 换行缩进（如 'if cond:\n    '）。
+2. 'exp'：插入表达式或单行片段，通常嵌在别的语句里。code 是单行，不带结尾换行。
+3. Python 不需要分号：所有 code 末尾都不加分号 ;（无论 line 还是 exp）。
+4. 多行结构（if / for / while / def / class / try / with）一律 line，code 结尾是 '\n    '（四个空格），让光标落在缩进后的空行上。
+5. 单行赋值、函数调用、import 等完整语句用 line。
+6. 纯表达式（lambda、abs(x)、f"{x}"、s.upper()、open(...) 等）用 exp。
+7. 遍历类（for ... in ...:）用 line，code 结尾带 '\n    '。
+8. 不允许出现 'lc'、'LINE'、'Exp' 等其他值。
+
+====================
+七、Containers 类别的特殊要求（严格）
+====================
+Containers 下的积木必须是「插入即可运行的完整语句」，不能是裸表达式：
+
+list 子组：
+- xs = [1, 2, 3]                     （line，创建列表）
+- ys = [x for x in xs]               （line，列表推导式赋值）
+- xs.append(x)                       （line，追加）
+- n = len(xs)                        （line，长度存变量）
+- ys = sorted(xs)                    （line，排序结果存变量）
+
+dict 子组：
+- d = {"k": v}                       （line，创建字典）
+- d = {k: v for k, v in items}       （line，字典推导式赋值）
+- v = d.get("k")                     （line，取值存变量）
+- for k, v in d.items():             （line，遍历，code 结尾 '\n    '）
+- for k in d.keys():                 （line，遍历键，code 结尾 '\n    '）
+
+settuple 子组：
+- s = {1, 2, 3}                      （line，创建集合）
+- t = (1, 2, 3)                      （line，创建元组）
+
+util 子组：
+- for i in range(n):                 （line，code 结尾 '\n    '）
+- for i, x in enumerate(xs):         （line，code 结尾 '\n    '）
+- for x, y in zip(a, b):             （line，code 结尾 '\n    '）
+
+不允许在 Containers 里出现裸表达式（如单独的 [1, 2, 3]、range(n)、len(xs) 不带赋值或 for）。
+不允许加结尾分号。
+
+====================
+八、内容要求
+====================
+1. 每个积木的 code 必须是合法、可运行的 Python 3 代码片段。
+2. label 是给人看的简短描述，可以等于 code 首行，也可以更简洁（如 'print("Hello")'），但不能是编造的说明文字。
+3. code 里用到的变量名用约定俗成的短名：x / y / a / b / xs / ys / d / s / t / n / v / k / i。
+4. 字符串里的引号：code 内如需双引号，用 \" 转义或在单引号字符串内直接写 "。
+5. 换行用 \n，缩进用 4 个空格，不要用 Tab。
+6. 每个类别至少 4 个积木，最多 16 个。Containers 固定 15 个（5+5+2+3）。
+
+====================
+九、禁止事项（违反即失败）
+====================
+1. 不允许编造可用图标清单以外的图标名。
+2. 不允许使用 none / py / list / dict / settuple / util 以外的子分组键。
+3. 不允许改变九个大类的顺序或 id。
+4. 不允许出现 'lc' 或其他非 'line'/'exp' 的 mode 值。
+5. 不允许在 code 末尾加分号。
+6. 不允许在 Containers 里放裸表达式。
+7. 不允许输出数组字面量以外的任何内容（不要解释、不要总结、不要 JSON.parse）。
+8. 不允许重复 id。
+9. 不允许用 category-i18n（连字符），只能用 category_i18n（下划线）。
+10. 不允许删掉 subgroups.py（Python 模式保留空 py 数组）。
+11. 不允许把多行结构写成单行（if / for / while / def / class / try / with 必须多行，结尾 '\n    '）。
+12. 不允许编造 Python 不存在的语法或标准库函数。
+
+====================
+十、不确定时怎么办
+====================
+如果你对某个积木的 code 是否合法、mode 是否正确、图标是否在清单里、子分组是否允许，有任何不确定：
+- 停下来，用一句话说明你不确定哪一项，向用户提问。
+- 不要猜测、不要「差不多就行」、不要自己发明规则。
+- 宁可少一个积木，也不要输出可能错误的积木。
+
+====================
+十一、输出示例（仅示意结构，不要照抄内容）
+====================
+const DEFAULT_BLOCKS_PYTHON = [
+    {
+        id: 'cat-py-import',
+        category: 'Import',
+        category_i18n: { zh: '导入' },
+        icon: 'file-import',
+        collapsed: false,
+        subgroups: {
+            none: [
+                { id: 'py-import', icon: 'file-import', label: 'import os', code: 'import os', mode: 'line' }
+            ],
+            py: []
+        }
+    },
+    {
+        id: 'cat-py-container',
+        category: 'Containers',
+        category_i18n: { zh: '容器' },
+        icon: 'list',
+        collapsed: false,
+        subgroups: {
+            none: [],
+            list: [
+                { id: 'py-list', icon: 'list', label: 'xs = [1, 2, 3]', code: 'xs = [1, 2, 3]', mode: 'line' }
+            ],
+            dict: [],
+            settuple: [],
+            util: [],
+            py: []
+        }
+    }
+];
+
+====================
+十二、开始
+====================
+现在请按以上全部约束，输出完整的 DEFAULT_BLOCKS_PYTHON 数组字面量。
+如果任何约束你无法满足，先提问，不要输出半成品。

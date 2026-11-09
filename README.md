@@ -22,6 +22,11 @@ English: https://kite8800.github.io/ScratchCpp/index_verilog.html?lang=en
 
 Chinese: https://kite8800.github.io/ScratchCpp/index_verilog.html?lang=zh
 
+## Python
+
+English: https://kite8800.github.io/ScratchCpp/index_python.html?lang=en
+
+Chinese: https://kite8800.github.io/ScratchCpp/index_python.html?lang=zh
 
 ## Why this exists
 
@@ -79,6 +84,7 @@ https://github.com/kite8800/ScratchCpp/tree/main/blocks
 You can use AI to generate customized blocks easily. The reference propmpt is here:
 https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchcpp_block_json_ai_prompt.txt
 https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchverilog_block_json_ai_prompt.txt
+https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchpython_block_json_ai_prompt.txt
 
 ## Block Configuration
 
@@ -129,6 +135,7 @@ https://github.com/kite8800/ScratchCpp/tree/main/blocks
 扩展可以用AI自动生成，参考的prompt在
 https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchcpp_block_json_ai_prompt.txt
 https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchverilog_block_json_ai_prompt.txt
+https://github.com/kite8800/ScratchCpp/blob/main/blocks/scratchpython_block_json_ai_prompt.txt
 
 ## 积木配置格式
 
