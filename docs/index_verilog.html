@@ -7200,7 +7200,13 @@ except ZeroDivisionError:
             updateCursorPosition();
             if (searchState.visible) performSearch();
             codeInput.focus();
-            codeInput.setSelectionRange(content.length, content.length);
+            // 打开新文件后光标落在第 1 行行首，视口滚到顶部。
+            // （剪贴板导入 applyImportedText 仍保持末尾，语义不同。）
+            codeInput.setSelectionRange(0, 0);
+            codeInput.scrollTop = 0;
+            codeInput.scrollLeft = 0;
+            updateCursorPosition();
+            syncScroll();
         }
 
         /** 拖入文件夹：webkitGetAsEntry 是唯一可靠判断方式（0 字节文件也是 size===0） */
