@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpath d='M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'/%3E%3C/svg%3E">
 <!-- 在线版：Prism 由 CDN 异步加载，不阻塞 HTML 解析。
          cdnjs 不可用时自动切 jsdelivr / unpkg；全部失败则退化为纯文本编辑（编辑、积木、保存照常）。
-         组件按依赖链顺序加载：verilog 独立一条，cpp 依赖 c（clike 已包含在 prism 主包里）。 -->
+         组件按依赖链顺序加载：verilog 独立一条，cpp 依赖 c（clike 已包含在 prism 主包里），python 独立一条。 -->
     <script>
         (function () {
             var ROOT = [
@@ -19,7 +19,8 @@
             // 每条链内部按顺序加载，链之间并行
             var CHAINS = [
                 ['components/prism-verilog.min.js'],
-                ['components/prism-c.min.js', 'components/prism-cpp.min.js']
+                ['components/prism-c.min.js', 'components/prism-cpp.min.js'],
+                ['components/prism-python.min.js']
             ];
             var i = 0;
             window.__prismState = 'loading';
@@ -58,51 +59,139 @@
         })();
     </script>
     <script>
-        // Verilog-AMS 语法补充（Prism 官方 verilog 语法只覆盖数字 Verilog）
-        // 幂等：本地版同步脚本已就绪时立即生效；在线版 Prism 异步到达后会再次调用。
-        function applyVerilogAmsPatch() {
-            var P = window.Prism;
-            if (!P || !P.languages || !P.languages.verilog) return false;
-            // 幂等标记必须放在 window 上：Prism 会把 grammar 的每个键当 token 规则遍历，
-            // 混进非正则值（true/false）会让 highlight 抛 "exec is not a function"。
-            if (window.__verilogAmsPatched) return true;
-            var g = P.languages.verilog;
+        // ==================== 语言增强补丁（数据驱动）====================
+        // 每个语言一条：keywords 追加到 keyword 规则，functions 替换 function 规则为白名单，
+        // tokenOrder 可选，声明 token 优先级（不写就按「user-function 插到 punctuation 之前」自动排）。
+        // 加语言只改这里，不改函数体。
+        const LANG_PATCHES = {
+            verilog: {
+                keywords: [
+                    'analog', 'discipline', 'nature', 'potential', 'flow', 'electrical',
+                    'wreal', 'branch', 'ground', 'from', 'exclude', 'infinity', 'string',
+                    'absdelay', 'transition', 'slew', 'laplace_nd', 'laplace_np',
+                    'laplace_zd', 'laplace_zp', 'zi_nd', 'zi_np', 'last_crossing', 'cross'
+                ],
+                functions: [
+                    'ddt', 'idt', 'ddx', 'abs', 'min', 'max', 'pow', 'sqrt', 'exp', 'ln',
+                    'log', 'floor', 'ceil', 'sin', 'cos', 'tan', 'atan2', 'atan', 'asin',
+                    'acos', 'hypot', 'white_noise', 'flicker_noise', 'limexp',
+                    'laplace_nd', 'laplace_np', 'transition', 'slew', 'absdelay',
+                    'last_crossing', 'cross'
+                ],
+                // 顺序即语义（见 rebuildTokenOrder 注释）：
+                // preprocessor 必须在 keyword 之前 —— `include 里的 include 本身也是关键字，
+                //   否则反引号被当普通字符、include 被吃成 keyword；
+                // user-function 必须在 punctuation 之前 —— '(' 一旦先被 punctuation 吃掉，
+                //   靠 (?=\() 前瞻的规则就再也匹配不到了。
+                tokenOrder: ['preprocessor', 'comment', 'string', 'keyword',
+                    'user-function', 'number', 'operator', 'punctuation', 'function']
+            }
+        };
 
-            // 1) 关键词表追加 AMS 关键字
-            var amsKw = ['analog', 'discipline', 'nature', 'potential', 'flow', 'electrical',
-                'wreal', 'branch', 'ground', 'from', 'exclude', 'infinity', 'string',
-                'absdelay', 'transition', 'slew', 'laplace_nd', 'laplace_np',
-                'laplace_zd', 'laplace_zp', 'zi_nd', 'zi_np', 'last_crossing', 'cross'];
-            var kwSrc = g.keyword ? g.keyword.source : '';
-            if (kwSrc) g.keyword = new RegExp(kwSrc.replace(/\(\?:/, '(?:' + amsKw.join('|') + '|'));
+        /**
+         * 重排某语言的 token 优先级（对象键顺序 = Prism 的匹配优先级）。
+         * 声明了 tokenOrder 就按它排；没声明的语言把 user-function 插到
+         * punctuation（没有则 operator / number）之前：必须在「会吃掉 ( 的字符级 token」之前，
+         * 又必须在 keyword / function / builtin 等单词级 token 之后，否则 while( / print( 会被误判。
+         * 幂等；Prism 未就绪时返回 false。
+         */
+        function rebuildTokenOrder(langName) {
+            const P = window.Prism;
+            if (!P || !P.languages || !P.languages[langName]) return false;
+            const g = P.languages[langName];
 
-            // 2) 模拟/数学函数单独高亮（ddt / idt / noise 等）
-            g['function'] = /\b(?:ddt|idt|ddx|abs|min|max|pow|sqrt|exp|ln|log|floor|ceil|sin|cos|tan|atan2|atan|asin|acos|hypot|white_noise|flicker_noise|limexp|laplace_nd|laplace_np|transition|slew|absdelay|last_crossing|cross)\b/;
+            const declared = LANG_PATCHES[langName] && LANG_PATCHES[langName].tokenOrder;
+            let order;
+            if (declared && declared.length) {
+                order = declared.slice();
+            } else {
+                order = Object.keys(g).filter(k => k !== 'user-function');
+                const anchors = ['punctuation', 'operator', 'number']
+                    .map(k => order.indexOf(k)).filter(i => i >= 0);
+                const at = anchors.length ? Math.min.apply(null, anchors) : order.length;
+                order.splice(at, 0, 'user-function');
+            }
 
-            // 3) 用户自定义 task / function 调用：标识符紧贴 '(' （前瞻，不消费括号，'(' 仍归 punctuation）
-            //    "xxx (" / "xxx  (" / 跨行 "xxx\n(" 一律不算调用，不着色 —— 必须是紧贴的 xxx( 形式。
-            //    顺序很关键：放 keyword 之后 → if/for/while/case 已被 keyword 吃掉，不会误判；
-            //                放 string/comment 之后 → 字符串、注释里的 xxx( 不着色；
-            //                放 operator/punctuation 之前 → 否则 '(' 先被吃掉，这里永远匹配不到。
-            //    Prism 1.29 的 verilog grammar 本身没有 function token（$display 原本完全不着色），
-            //    所以这里连 $ 前缀一起收进来，$display( / $finish( 也统一成函数色。
+            const rebuilt = {};
+            order.forEach(k => { if (k in g) rebuilt[k] = g[k]; });
+            Object.keys(g).forEach(k => { if (!(k in rebuilt)) rebuilt[k] = g[k]; });
+            P.languages[langName] = rebuilt;
+            return true;
+        }
+
+        /**
+         * 按 LANG_PATCHES 给指定 grammar 打补丁：追加关键字、覆盖函数白名单、重排优先级。
+         * 数据驱动，函数体不含语言名。幂等。
+         */
+        function applyLangPatch(langName) {
+            const P = window.Prism;
+            if (!P || !P.languages || !P.languages[langName]) return false;
+
+            const patch = LANG_PATCHES[langName];
+            if (!patch) return false;
+
+            const flag = '__langPatchApplied_' + langName;
+            if (window[flag]) return true;
+            window[flag] = true;
+
+            const g = P.languages[langName];
+
+            // 1. 追加关键字：拼进 keyword 规则的 (?:...) 分支
+            if (patch.keywords && patch.keywords.length && g.keyword) {
+                const kwSrc = g.keyword.source;
+                g.keyword = new RegExp(kwSrc.replace(/\(\?:/, '(?:' + patch.keywords.join('|') + '|'));
+            }
+
+            // 2. 覆盖函数白名单：精确匹配，纯标识符也高亮
+            if (patch.functions && patch.functions.length) {
+                g['function'] = new RegExp('\\b(?:' + patch.functions.join('|') + ')\\b');
+            }
+
+            // 3. 按声明的顺序落位
+            rebuildTokenOrder(langName);
+
+            return true;
+        }
+
+        function applyAllLangPatches() {
+            Object.keys(LANG_PATCHES).forEach(applyLangPatch);
+        }
+
+        // ==================== 函数调用兜底高亮 ====================
+        // 名单内语言追加 user-function 规则（紧贴括号的标识符）。
+        // 纯补充：不覆盖、不删除任何原生规则，位置由 rebuildTokenOrder 决定。加语言只改名单。
+        const USER_FUNCTION_LANGS = ['verilog', 'cpp', 'c', 'python'];
+
+        /**
+         * 给指定 grammar 追加 user-function 兜底规则，并落位到 punctuation 之前。
+         * 幂等。
+         */
+        function applyUserFunctionRule(langName) {
+            const P = window.Prism;
+            if (!P || !P.languages || !P.languages[langName]) return false;
+
+            const flag = '__userFunctionPatched_' + langName;
+            if (window[flag]) return true;
+            window[flag] = true;
+
+            const g = P.languages[langName];
+
             g['user-function'] = {
                 pattern: /(?:\$|\b)[A-Za-z_]\w*(?=\()/,
                 alias: 'function'
             };
 
-            // 4) 重排 token 顺序：`include / `define 先于 keyword 匹配，反引号一起着色为指令色
-            //    user-function 必须落在 keyword 之后、number/operator 之前
-            var order = ['preprocessor', 'comment', 'string', 'keyword',
-                'user-function', 'number', 'operator', 'punctuation', 'function'];
-            var rebuilt = {};
-            order.forEach(function (k) { if (g[k]) rebuilt[k] = g[k]; });
-            Object.keys(g).forEach(function (k) { if (!(k in rebuilt)) rebuilt[k] = g[k]; });
-            P.languages.verilog = rebuilt;
-            window.__verilogAmsPatched = true;
+            rebuildTokenOrder(langName);
+
             return true;
         }
-        applyVerilogAmsPatch();
+
+        function applyUserFunctionRules() {
+            USER_FUNCTION_LANGS.forEach(applyUserFunctionRule);
+        }
+
+        applyAllLangPatches();
+        applyUserFunctionRules();
     </script>
     <style>
         /* ==================== 主题变量 ==================== */
@@ -329,10 +418,10 @@
 
         .toolbar {
             background: var(--bg-toolbar);
-            padding: 8px 16px;
+            padding: 8px 14px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
             box-shadow: var(--shadow-sm);
@@ -352,7 +441,7 @@
             background: linear-gradient(135deg, var(--logo-1), var(--logo-2));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-right: 8px;
+            margin-right: 4px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -363,13 +452,13 @@
             background: var(--btn-bg);
             border: none;
             color: var(--btn-text);
-            padding: 6px 14px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.85rem;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             transition: 0.2s;
             border: 1px solid var(--btn-border);
         }
@@ -386,9 +475,9 @@
             transform: none;
         }
 
-        .toolbar button.icon-only { padding: 6px 10px; }
+        .toolbar button.icon-only { padding: 6px 8px; }
         .toolbar .spacer { flex: 1; }
-        .toolbar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+        .toolbar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
 
         /* 开关型工具栏按钮（精简模式）的开启态 */
         .toolbar button.active {
@@ -405,7 +494,7 @@
             background: var(--btn-bg);
             border: 1px solid var(--btn-border);
             color: var(--btn-text);
-            padding: 6px 26px 6px 12px;
+            padding: 6px 24px 6px 11px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-family: inherit;
@@ -1158,6 +1247,10 @@
         .highlight-layer .token.macro.property { color: inherit; }
         .highlight-layer .token.expression { color: inherit; }
         .highlight-layer .token.namespace { color: var(--tok-func); }
+        /* Python：Prism python grammar 额外产出三种 token */
+        .highlight-layer .token.triple-quoted-string { color: var(--tok-string); }
+        .highlight-layer .token.decorator { color: var(--tok-func); }
+        .highlight-layer .token.builtin { color: var(--tok-func); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
@@ -1536,6 +1629,7 @@
         <select id="editorLangSelect" class="toolbar-select" data-i18n-title="editorLangTitle" title="编辑语言">
             <option value="verilog">Verilog</option>
             <option value="cpp">C++</option>
+            <option value="python">Python</option>
         </select>
         <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
@@ -2120,6 +2214,7 @@
                 subVa: 'va',
                 subC: 'c',
                 subCpp: 'cpp',
+                subPy: 'py',
                 subCustom: '自定义',
                 subCustomPlaceholder: '自定义子类别名，如 advanced / 示例',
                 fieldInsertMode: '插入方式',
@@ -2168,6 +2263,7 @@
                 // 编辑器占位与主题提示
                 editorPlaceholder: '// 点击左侧积木或直接编写 Verilog...',
                 editorPlaceholderCpp: '// 点击左侧积木或直接编写 C++...',
+                editorPlaceholderPython: '# 点击左侧积木或直接编写 Python...',
                 themeTitleDark: '当前：深色（点击切换为浅色）',
                 themeTitleLight: '当前：浅色（点击切换为跟随系统）',
                 themeTitleSystem: '当前：跟随系统（点击切换为深色）',
@@ -2312,6 +2408,7 @@
                 subVa: 'va',
                 subC: 'c',
                 subCpp: 'cpp',
+                subPy: 'py',
                 subCustom: 'Custom',
                 subCustomPlaceholder: 'Custom subcategory name, e.g. advanced / example',
                 fieldInsertMode: 'Insert mode',
@@ -2360,6 +2457,7 @@
                 // Editor placeholder & theme hints
                 editorPlaceholder: '// Click a block on the left, or just start typing Verilog...',
                 editorPlaceholderCpp: '// Click a block on the left, or just start typing C++...',
+                editorPlaceholderPython: '# Click a block on the left, or just start typing Python...',
                 themeTitleDark: 'Current: dark (click for light)',
                 themeTitleLight: 'Current: light (click to follow system)',
                 themeTitleSystem: 'Current: follow system (click for dark)',
@@ -2511,7 +2609,9 @@
             if (sel) sel.value = currentEditorLang;
             if (codeInput) {
                 codeInput.dataset.i18nPlaceholder =
-                    currentEditorLang === 'cpp' ? 'editorPlaceholderCpp' : 'editorPlaceholder';
+                    currentEditorLang === 'cpp' ? 'editorPlaceholderCpp'
+                        : currentEditorLang === 'python' ? 'editorPlaceholderPython'
+                            : 'editorPlaceholder';
                 codeInput.placeholder = t(codeInput.dataset.i18nPlaceholder);
             }
         }
@@ -3102,9 +3202,167 @@
             }
         ];
 
+        // Python 积木：同结构（none / py 两种子类别），每个类别带 category-i18n.zh
+        const DEFAULT_BLOCKS_PYTHON = [
+            {
+                id: 'cat-py-basic',
+                category: 'Basic / Comments',
+                'category-i18n': { zh: '基础 / 注释' },
+                icon: 'file-import',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-comment-line', icon: 'comment', label: '# comment', code: '# ', mode: 'line' },
+                        { id: 'py-print', icon: 'print', label: 'print("Hello")', code: 'print("Hello")', mode: 'line' },
+                        { id: 'py-print-f', icon: 'print', label: 'print(f"{x}")', code: 'print(f"{x}")', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-var',
+                category: 'Variables',
+                'category-i18n': { zh: '变量' },
+                icon: 'database',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-assign', icon: 'equals', label: 'x = 10', code: 'x = 10', mode: 'line' },
+                        { id: 'py-assign-multi', icon: 'equals', label: 'a = b = 0', code: 'a = b = 0', mode: 'line' },
+                        { id: 'py-tuple', icon: 'list', label: 'a, b = 1, 2', code: 'a, b = 1, 2', mode: 'line' },
+                        { id: 'py-add-assign', icon: 'plus', label: 'x += 1', code: 'x += 1', mode: 'line' },
+                        { id: 'py-sub-assign', icon: 'minus', label: 'x -= 1', code: 'x -= 1', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-control',
+                category: 'Control Flow',
+                'category-i18n': { zh: '控制流' },
+                icon: 'code-branch',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-if', icon: 'code-branch', label: 'if cond:', code: 'if cond:\n    ', mode: 'line' },
+                        { id: 'py-if-else', icon: 'code-branch', label: 'if cond: ... else: ...', code: 'if cond:\n    \nelse:\n    ', mode: 'line' },
+                        { id: 'py-if-elif-else', icon: 'code-branch', label: 'if / elif / else', code: 'if cond:\n    \nelif cond2:\n    \nelse:\n    ', mode: 'line' },
+                        { id: 'py-for', icon: 'redo', label: 'for x in xs:', code: 'for x in xs:\n    ', mode: 'line' },
+                        { id: 'py-for-range', icon: 'redo', label: 'for i in range(n):', code: 'for i in range(n):\n    ', mode: 'line' },
+                        { id: 'py-while', icon: 'redo', label: 'while cond:', code: 'while cond:\n    ', mode: 'line' },
+                        { id: 'py-break', icon: 'stop', label: 'break', code: 'break', mode: 'line' },
+                        { id: 'py-continue', icon: 'forward', label: 'continue', code: 'continue', mode: 'line' },
+                        { id: 'py-try', icon: 'exclamation-triangle', label: 'try / except', code: 'try:\n    \nexcept Exception as e:\n    ', mode: 'line' },
+                        { id: 'py-with', icon: 'code-branch', label: 'with open(...) as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-func',
+                category: 'Functions / Classes',
+                'category-i18n': { zh: '函数 / 类' },
+                icon: 'code',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-def', icon: 'code', label: 'def func():', code: 'def func():\n    ', mode: 'line' },
+                        { id: 'py-def-args', icon: 'code', label: 'def func(a, b):', code: 'def func(a, b):\n    ', mode: 'line' },
+                        { id: 'py-def-default', icon: 'equals', label: 'def func(a=0):', code: 'def func(a=0):\n    ', mode: 'line' },
+                        { id: 'py-lambda', icon: 'bolt', label: 'lambda x: x + 1', code: 'lambda x: x + 1', mode: 'exp' },
+                        { id: 'py-return', icon: 'sign-out-alt', label: 'return x', code: 'return x', mode: 'line' },
+                        { id: 'py-return-none', icon: 'sign-out-alt', label: 'return', code: 'return', mode: 'line' },
+                        { id: 'py-class', icon: 'cubes', label: 'class Foo:', code: 'class Foo:\n    ', mode: 'line' },
+                        { id: 'py-class-init', icon: 'cubes', label: 'class Foo: def __init__', code: 'class Foo:\n    def __init__(self):\n        ', mode: 'line' },
+                        { id: 'py-self', icon: 'location-arrow', label: 'self.x = x', code: 'self.x = x', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-io',
+                category: 'I/O / Files',
+                'category-i18n': { zh: '输入输出 / 文件' },
+                icon: 'terminal',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-input', icon: 'keyboard', label: 'input("prompt: ")', code: 'input("prompt: ")', mode: 'exp' },
+                        { id: 'py-open-read', icon: 'folder-open', label: 'open("file.txt", "r")', code: 'open("file.txt", "r")', mode: 'exp' },
+                        { id: 'py-open-write', icon: 'save', label: 'open("file.txt", "w")', code: 'open("file.txt", "w")', mode: 'exp' },
+                        { id: 'py-with-open', icon: 'folder-open', label: 'with open("file.txt") as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' },
+                        { id: 'py-read', icon: 'file-import', label: 'f.read()', code: 'f.read()', mode: 'exp' },
+                        { id: 'py-write', icon: 'print', label: 'f.write("...")', code: 'f.write("...")', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-list',
+                category: 'Lists / Dicts / Sets',
+                'category-i18n': { zh: '列表 / 字典 / 集合' },
+                icon: 'list',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-list', icon: 'list', label: '[1, 2, 3]', code: '[1, 2, 3]', mode: 'exp' },
+                        { id: 'py-dict', icon: 'database', label: '{"k": v}', code: '{"k": v}', mode: 'exp' },
+                        { id: 'py-set', icon: 'circle', label: '{1, 2, 3}', code: '{1, 2, 3}', mode: 'exp' },
+                        { id: 'py-tuple-lit', icon: 'list', label: '(1, 2, 3)', code: '(1, 2, 3)', mode: 'exp' },
+                        { id: 'py-comp-list', icon: 'bolt', label: '[x for x in xs]', code: '[x for x in xs]', mode: 'exp' },
+                        { id: 'py-comp-dict', icon: 'bolt', label: '{k: v for k, v in items}', code: '{k: v for k, v in items}', mode: 'exp' },
+                        { id: 'py-append', icon: 'plus', label: 'xs.append(x)', code: 'xs.append(x)', mode: 'line' },
+                        { id: 'py-len', icon: 'ruler-horizontal', label: 'len(xs)', code: 'len(xs)', mode: 'exp' },
+                        { id: 'py-range', icon: 'calculator', label: 'range(n)', code: 'range(n)', mode: 'exp' },
+                        { id: 'py-enumerate', icon: 'calculator', label: 'enumerate(xs)', code: 'enumerate(xs)', mode: 'exp' },
+                        { id: 'py-zip', icon: 'exchange-alt', label: 'zip(a, b)', code: 'zip(a, b)', mode: 'exp' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-string',
+                category: 'Strings',
+                'category-i18n': { zh: '字符串' },
+                icon: 'font',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-str-decl', icon: 'quote-left', label: 's = "hello"', code: 's = "hello"', mode: 'line' },
+                        { id: 'py-fstring', icon: 'quote-left', label: 'f"{x}"', code: 'f"{x}"', mode: 'exp' },
+                        { id: 'py-str-upper', icon: 'font', label: 's.upper()', code: 's.upper()', mode: 'exp' },
+                        { id: 'py-str-lower', icon: 'font', label: 's.lower()', code: 's.lower()', mode: 'exp' },
+                        { id: 'py-str-strip', icon: 'cut', label: 's.strip()', code: 's.strip()', mode: 'exp' },
+                        { id: 'py-str-split', icon: 'cut', label: 's.split(",")', code: 's.split(",")', mode: 'exp' },
+                        { id: 'py-str-join', icon: 'link', label: '"sep".join(xs)', code: '"sep".join(xs)', mode: 'exp' },
+                        { id: 'py-str-replace', icon: 'exchange-alt', label: 's.replace(a, b)', code: 's.replace(a, b)', mode: 'exp' },
+                        { id: 'py-str-find', icon: 'search', label: 's.find("sub")', code: 's.find("sub")', mode: 'exp' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-import',
+                category: 'Import',
+                'category-i18n': { zh: '导入' },
+                icon: 'file-import',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-import', icon: 'file-import', label: 'import os', code: 'import os', mode: 'line' },
+                        { id: 'py-import-as', icon: 'file-import', label: 'import numpy as np', code: 'import numpy as np', mode: 'line' },
+                        { id: 'py-from-import', icon: 'file-import', label: 'from os import path', code: 'from os import path', mode: 'line' },
+                        { id: 'py-from-import-star', icon: 'file-import', label: 'from math import *', code: 'from math import *', mode: 'line' }
+                    ],
+                    py: []
+                }
+            }
+        ];
+
         const DEFAULT_BLOCKS_BY_LANG = {
             verilog: DEFAULT_BLOCKS_VERILOG,
-            cpp: DEFAULT_BLOCKS_CPP
+            cpp: DEFAULT_BLOCKS_CPP,
+            python: DEFAULT_BLOCKS_PYTHON
         };
 
         // ==================== 示例代码（按语言）====================
@@ -3153,6 +3411,18 @@ int main() {
 
     return 0;
 }
+`,
+            python: `# Python example
+def greet(name):
+    print(f"Hello, {name}!")
+
+def main():
+    greet("World")
+    for i in range(3):
+        print(i)
+
+if __name__ == "__main__":
+    main()
 `
         };
 
@@ -3256,6 +3526,49 @@ int main() {
 
     return 0;
 }
+`,
+            python: `# ===== Basic =====
+print("Hello, World!")
+
+# ===== Variables =====
+x = 10
+pi = 3.14
+name = "Alice"
+
+# ===== List / Dict =====
+nums = [1, 2, 3, 4, 5]
+scores = {"alice": 90, "bob": 85}
+
+# ===== Control =====
+for n in nums:
+    if n % 2 == 0:
+        print(f"{n} is even")
+    else:
+        print(f"{n} is odd")
+
+# ===== Function =====
+def add(a, b):
+    return a + b
+
+print(add(3, 4))
+
+# ===== Class =====
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def dist(self):
+        return (self.x ** 2 + self.y ** 2) ** 0.5
+
+p = Point(3, 4)
+print(p.dist())
+
+# ===== Try / Except =====
+try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Cannot divide by zero")
 `
         };
 
@@ -3285,10 +3598,10 @@ int main() {
         const TOUCH_DRAG_ANGLE = 30;      // 横向 ±30° 内算拖拽，其余算纵向滚动
         const LONG_PRESS_MS = 500;        // 长按打开编辑弹窗
 
-        // ==================== 编辑语言（Verilog / C++）====================
+        // ==================== 编辑语言（Verilog / C++ / Python）====================
         // 与界面语言（app-lang-v1：zh/en）无关，这里只决定编辑器处理哪种代码。
         const EDITOR_LANG_KEY = 'editor-language-v1';
-        const EDITOR_LANGS = ['verilog', 'cpp'];
+        const EDITOR_LANGS = ['verilog', 'cpp', 'python'];
         let currentEditorLang = 'verilog';   // 由 init() 从存储恢复
 
         // 语言相关存储键统一用 `{base}.{lang}` 形式
@@ -3419,7 +3732,9 @@ int main() {
 
         /** 当前语言对应的 Prism grammar 名（切换语言时更新） */
         function prismLangName() {
-            return currentEditorLang === 'cpp' ? 'cpp' : 'verilog';
+            if (currentEditorLang === 'cpp') return 'cpp';
+            if (currentEditorLang === 'python') return 'python';
+            return 'verilog';
         }
 
         /** Prism 是否已加载指定 grammar */
@@ -3778,10 +4093,20 @@ int main() {
                     { match: /^\}/, delta: -1 },          // } 开头 → 退一级
                     { matchPrev: /\{\s*$/, delta: 1 }     // 上一行 { 结尾 → 进一级
                 ]
+            },
+            // Python 规则：靠「行尾冒号」开块，靠缩进层级闭合，没有闭合符号。
+            // else / elif / except / finally 与其对应的 if / try 同级，所以本行退一级。
+            python: {
+                indentUnit: '    ',
+                rules: [
+                    { match: /^(else|elif|except|finally)\b/, delta: -1 },
+                    // 行尾冒号（可跟注释）→ 下一行进一级；dict / 切片 / lambda 结尾不是冒号，不会误命中
+                    { matchPrev: /:[ \t]*(#.*)?$/, delta: 1 }
+                ]
             }
         };
         // 编辑语言 → LANG_RULES 里的键。C++ 复用 C 的缩进规则（大括号语义相同）
-        const LANG_RULE_KEY = { verilog: 'verilog', cpp: 'c' };
+        const LANG_RULE_KEY = { verilog: 'verilog', cpp: 'c', python: 'python' };
 
         function getLangRules() {
             const key = LANG_RULE_KEY[currentEditorLang] || 'verilog';
@@ -4585,7 +4910,8 @@ int main() {
         // 打开 / 保存的文件扩展名随编辑语言变化
         const FILE_EXTS_BY_LANG = {
             verilog: '.v,.va,.vams,.sv,.svh,.vh,.txt',
-            cpp: '.cpp,.cc,.cxx,.c,.h,.hpp,.hxx,.txt'
+            cpp: '.cpp,.cc,.cxx,.c,.h,.hpp,.hxx,.txt',
+            python: '.py,.pyw,.pyi,.txt'
         };
 
         function updateFileAccept() {
@@ -4738,10 +5064,11 @@ int main() {
             if (!ok) console.warn('[blocks] 配置未能写入 localStorage（存储不可用或已满），本次改动仅保留在内存中');
         }
 
-        // 子类别固定顺序：Verilog 用 none/v/va，C++ 用 none/c/cpp
+        // 子类别固定顺序：Verilog 用 none/v/va，C++ 用 none/c/cpp，Python 用 none/py
         const BLOCK_SUBS_BY_LANG = {
             verilog: ['none', 'v', 'va'],
-            cpp: ['none', 'c', 'cpp']
+            cpp: ['none', 'c', 'cpp'],
+            python: ['none', 'py']
         };
         function blockSubs() {
             return BLOCK_SUBS_BY_LANG[currentEditorLang] || BLOCK_SUBS_BY_LANG.verilog;
@@ -5023,6 +5350,7 @@ int main() {
                     item.mode = cb.checked ? MODE_EXP : MODE_LINE;
                     div.dataset.mode = item.mode;
                     saveToStorage();
+                    buildCompletionIndex();   // 同步积木浮层的 mode（复选框不重渲染面板，索引不会自动重建）
                     e.stopPropagation();
                 });
                 modeWrap.appendChild(cb);
@@ -5442,6 +5770,7 @@ int main() {
             if (key === 'va') return t('subVa');
             if (key === 'c') return t('subC');
             if (key === 'cpp') return t('subCpp');
+            if (key === 'py') return t('subPy');
             return key;    // 自定义子组原样显示键名
         }
 
@@ -6313,7 +6642,8 @@ int main() {
 
         const SAVE_EXTS_BY_LANG = {
             verilog: ['.v', '.va', '.vams', '.sv', '.svh', '.vh', '.txt'],
-            cpp: ['.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.hxx', '.txt']
+            cpp: ['.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.hxx', '.txt'],
+            python: ['.py', '.pyw', '.pyi', '.txt']
         };
         function getSaveExts() {
             return SAVE_EXTS_BY_LANG[currentEditorLang] || SAVE_EXTS_BY_LANG.verilog;
@@ -7034,6 +7364,8 @@ int main() {
                     tries++;
                     if (hasPrismGrammar(prismLangName())) {
                         clearInterval(timer);
+                        applyAllLangPatches();
+                        applyUserFunctionRules();
                         lastHighlightedText = null;
                         updateHighlight();
                     } else if (tries > 40) {
@@ -7137,7 +7469,8 @@ int main() {
                 // 只要「当前语言的 grammar」到位就开工；另一门语言的组件是并行加载的，
                 // 万一它加载失败，也不该让已有语言的高亮一起停摆（切换语言时会再补一次）。
                 if (!hasPrismGrammar(prismLangName())) return false;
-                applyVerilogAmsPatch();          // 只 patch verilog grammar，cpp 用原生
+                applyAllLangPatches();
+                applyUserFunctionRules();
                 lastHighlightedText = null;      // 清缓存，强制重新着色
                 updateHighlight();
                 return true;
