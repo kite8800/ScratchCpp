@@ -611,6 +611,52 @@
             overflow: hidden;
             box-shadow: var(--shadow-md);
             transition: background-color 0.18s ease, border-color 0.18s ease;
+            position: relative;   /* 三点菜单以此为定位上下文 */
+        }
+
+        /* 面板标题行 */
+        .panel-title-row { gap: 6px; }
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 400;
+            font-family: var(--font-mono);
+            color: var(--text-strong);
+        }
+
+        /* 三点菜单 */
+        .blocks-menu {
+            position: absolute;
+            right: 8px;
+            top: 36px;
+            min-width: 150px;
+            background: var(--bg-modal);
+            border: 1px solid var(--btn-border);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            padding: 4px;
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+        }
+        .blocks-menu.show { display: flex; }
+        .blocks-menu-item {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            text-align: left;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .blocks-menu-item:hover { background: var(--bg-block-hover); }
+        .blocks-menu-item.danger { color: var(--danger); }
+        .blocks-menu-item.danger:hover { background: var(--danger-hover-soft); }
+        .blocks-menu-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 6px;
         }
 
         .blocks-panel-header {
@@ -1633,6 +1679,9 @@
         <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
         <symbol id="icon-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
         <symbol id="icon-compact" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/></symbol>
+        <symbol id="icon-more-horizontal" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
+        <symbol id="icon-chevrons-up" viewBox="0 0 24 24"><path d="m17 11-5-5-5 5M17 18l-5-5-5 5"/></symbol>
+        <symbol id="icon-chevrons-down" viewBox="0 0 24 24"><path d="m7 6 5 5 5-5M7 13l5 5 5-5"/></symbol>
     </svg>
 
     <div class="toolbar">
@@ -1676,6 +1725,17 @@
     <div class="main-container">
         <div class="blocks-panel">
             <div class="blocks-panel-header">
+                <div class="row panel-title-row">
+                    <span class="panel-title" data-i18n="panelBlocksTitle">代码积木</span>
+                    <span style="flex:1"></span>
+                    <button class="panel-btn icon-only" id="blocksMenuBtn" data-i18n-title="blocksMenuTitle" title="更多操作"><svg class="icon"><use href="#icon-more-horizontal"/></svg></button>
+                    <div class="blocks-menu" id="blocksMenu">
+                        <button class="blocks-menu-item" id="menuExportBtn" data-i18n="btnExportBlocks">导出积木配置</button>
+                        <button class="blocks-menu-item" id="menuImportBtn" data-i18n="btnImportBlocks">导入积木配置</button>
+                        <span class="blocks-menu-sep"></span>
+                        <button class="blocks-menu-item danger" id="menuResetBtn" data-i18n="btnResetBlocks">恢复默认积木</button>
+                    </div>
+                </div>
                 <div class="row">
                     <label data-i18n="optExpStripSemicolon" data-i18n-title="optExpStripSemicolonTitle" title="勾选后，公式插入单行时自动去掉末尾分号">
                         <input type="checkbox" id="expStripSemicolonCheckbox" checked>
@@ -1692,9 +1752,8 @@
                     <button class="panel-btn" id="addCategoryBtn" data-i18n="btnAddCategory" data-i18n-title="btnAddCategoryTitle" title="新增类别"><svg class="icon"><use href="#icon-folder-plus"/></svg> 类别</button>
                     <button class="panel-btn" id="reorderBtn" data-i18n="btnReorder" data-i18n-title="btnReorderTitle" title="调整顺序"><svg class="icon"><use href="#icon-sort"/></svg> 排序</button>
                     <span style="flex:1"></span>
-                    <button class="panel-btn icon-only" id="exportBtn" data-i18n-title="btnExportBlocksTitle" title="导出积木配置"><svg class="icon"><use href="#icon-download"/></svg></button>
-                    <button class="panel-btn icon-only" id="importBtn" data-i18n-title="btnImportBlocksTitle" title="导入积木配置"><svg class="icon"><use href="#icon-upload"/></svg></button>
-                    <button class="panel-btn icon-only danger" id="resetBtn" data-i18n-title="btnResetBlocksTitle" title="恢复默认积木"><svg class="icon"><use href="#icon-rotate-left"/></svg></button>
+                    <button class="panel-btn icon-only" id="collapseAllBtn" data-i18n-title="btnCollapseAllTitle" title="折叠全部"><svg class="icon"><use href="#icon-chevrons-up"/></svg></button>
+                    <button class="panel-btn icon-only" id="expandAllBtn" data-i18n-title="btnExpandAllTitle" title="展开全部"><svg class="icon"><use href="#icon-chevrons-down"/></svg></button>
                 </div>
             </div>
             <div class="blocks-scroll" id="blocksScroll"></div>
@@ -2167,6 +2226,13 @@
                 btnExportBlocksTitle: '导出积木配置',
                 btnImportBlocksTitle: '导入积木配置',
                 btnResetBlocksTitle: '恢复默认积木',
+                panelBlocksTitle: '代码积木',
+                blocksMenuTitle: '更多操作',
+                btnExportBlocks: '导出积木配置',
+                btnImportBlocks: '导入积木配置',
+                btnResetBlocks: '恢复默认积木',
+                btnCollapseAllTitle: '折叠全部',
+                btnExpandAllTitle: '展开全部',
                 // 缩进设置
                 modalIndentTitle: '缩进设置',
                 fieldIndentStyle: '缩进字符',
@@ -2367,6 +2433,13 @@
                 btnExportBlocksTitle: 'Export block config',
                 btnImportBlocksTitle: 'Import block config',
                 btnResetBlocksTitle: 'Reset to default blocks',
+                panelBlocksTitle: 'Code Blocks',
+                blocksMenuTitle: 'More',
+                btnExportBlocks: 'Export block config',
+                btnImportBlocks: 'Import block config',
+                btnResetBlocks: 'Reset to default blocks',
+                btnCollapseAllTitle: 'Collapse all',
+                btnExpandAllTitle: 'Expand all',
                 // Indent settings
                 modalIndentTitle: 'Indent Settings',
                 fieldIndentStyle: 'Indent character',
@@ -6386,7 +6459,26 @@ except ZeroDivisionError:
             renderBlocksPanel();
         });
 
-        document.getElementById('exportBtn').addEventListener('click', () => {
+        // ==================== 积木面板三点菜单 ====================
+        const blocksMenuBtn = document.getElementById('blocksMenuBtn');
+        const blocksMenu = document.getElementById('blocksMenu');
+
+        blocksMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            blocksMenu.classList.toggle('show');
+        });
+        // 点菜单外部关闭
+        document.addEventListener('click', (e) => {
+            if (!blocksMenu.classList.contains('show')) return;
+            if (blocksMenu.contains(e.target) || blocksMenuBtn.contains(e.target)) return;
+            blocksMenu.classList.remove('show');
+        });
+        // 菜单项点击后关闭菜单
+        blocksMenu.querySelectorAll('.blocks-menu-item').forEach(item => {
+            item.addEventListener('click', () => blocksMenu.classList.remove('show'));
+        });
+
+        document.getElementById('menuExportBtn').addEventListener('click', () => {
             // 和落盘同一套序列化：空子类别不导出
             const data = JSON.stringify(serializeBlocks(), null, 2);
             const blob = new Blob([data], { type: 'application/json' });
@@ -6398,7 +6490,7 @@ except ZeroDivisionError:
             URL.revokeObjectURL(url);
         });
 
-        document.getElementById('importBtn').addEventListener('click', () => {
+        document.getElementById('menuImportBtn').addEventListener('click', () => {
             importFileInput.click();
         });
 
@@ -6458,9 +6550,21 @@ except ZeroDivisionError:
             }
         });
 
-        document.getElementById('resetBtn').addEventListener('click', () => {
+        document.getElementById('menuResetBtn').addEventListener('click', () => {
             if (!confirm(t('confirmResetBlocks'))) return;
             BLOCKS = JSON.parse(JSON.stringify(DEFAULT_BLOCKS_BY_LANG[currentEditorLang]));
+            saveToStorage();
+            renderBlocksPanel();
+        });
+
+        document.getElementById('collapseAllBtn').addEventListener('click', () => {
+            BLOCKS.forEach(cat => { cat.collapsed = true; });
+            saveToStorage();
+            renderBlocksPanel();
+        });
+
+        document.getElementById('expandAllBtn').addEventListener('click', () => {
+            BLOCKS.forEach(cat => { cat.collapsed = false; });
             saveToStorage();
             renderBlocksPanel();
         });
