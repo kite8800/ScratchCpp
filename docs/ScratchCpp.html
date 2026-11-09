@@ -196,6 +196,12 @@
     <style>
         /* ==================== 主题变量 ==================== */
         :root {
+            /* 等宽字体栈：各平台系统自带优质字体，Courier New 兜底。
+               SF Mono / Menlo（macOS）→ Consolas / Cascadia（Windows）→ DejaVu / Liberation（Linux）→ Courier New。
+               不装任何字体，每个系统自动用自带的最佳等宽。 */
+            --font-mono: 'SF Mono', Menlo, Consolas, 'Cascadia Mono', 'DejaVu Sans Mono',
+                         'Liberation Mono', 'Courier New', monospace;
+
             /* 背景层 */
             --bg-root: #1e1e2f;
             --bg-editor: #1e1e2f;   /* 代码区可与外围不同色；暗色保持同值 */
@@ -798,7 +804,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             color: var(--text-strong);
             font-size: 0.72rem;
         }
@@ -888,7 +894,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             outline: none;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             /* 宽度由 JS 按文件名字符数测量后写入，保证完整显示 */
             width: 96px;
             min-width: 92px;
@@ -1014,7 +1020,7 @@
             font-size: 0.8rem;
             outline: none;
             width: 140px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
         .search-bar input[type="text"]:focus { border-color: var(--accent); }
         .search-bar .opt-btn {
@@ -1068,7 +1074,7 @@
         .highlight-layer pre {
             margin: 0;
             padding: 16px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--font-mono);
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
@@ -1109,7 +1115,7 @@
         .search-layer pre {
             margin: 0;
             padding: 16px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--font-mono);
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
@@ -1155,7 +1161,7 @@
             width: 100%; height: 100%;
             margin: 0;
             padding: 16px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--font-mono);
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
@@ -1208,7 +1214,7 @@
 
         .ln-inner {
             padding: 16px 8px 16px 0;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--font-mono);
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
             letter-spacing: 0;
@@ -1359,7 +1365,7 @@
             border-radius: 8px;
             color: var(--text-primary);
             padding: 8px 10px;
-            font-family: 'Fira Code', monospace;
+            font-family: var(--font-mono);
             font-size: 0.85rem;
             outline: none;
         }
@@ -1448,7 +1454,7 @@
             padding: 6px 8px;
             font-size: 0.8rem;
             outline: none;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--font-mono);
             transition: border-color 0.12s;
         }
         .block-picker-header input:focus { border-color: var(--accent); }
@@ -1492,7 +1498,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--font-mono);
             color: var(--text-primary);
             font-size: 0.76rem;
         }
@@ -1711,6 +1717,7 @@
                     <button class="header-btn" id="replaceBtn" data-i18n="btnReplace" data-i18n-title="btnReplaceTitle" title="替换 (Ctrl+H)"><svg class="icon"><use href="#icon-exchange-alt"/></svg> 替换</button>
                     <button class="header-btn icon-only-btn active" id="autoFillBtn" data-i18n-title="autoFillOnTitle" title="选中文本自动填入查找框（已开启，点击关闭）"><svg class="icon"><use href="#icon-magic"/></svg></button>
                     <button class="header-btn active" id="lineNumBtn" data-i18n-title="optLineNumbersTitle" title="显示 / 隐藏行号"><svg class="icon"><use href="#icon-list"/></svg></button>
+                    <button class="header-btn icon-only-btn" id="gotoLineBtn" data-i18n-title="btnGotoLineTitle" title="跳转到行 (Ctrl+G)"><svg class="icon"><use href="#icon-location-arrow"/></svg></button>
                     <span id="cursorPos">行 1, 列 1</span>
                 </div>
             </div>
@@ -2013,6 +2020,22 @@
         </div>
     </div>
 
+    <!-- 跳转到行 -->
+    <div class="modal-overlay" id="gotoLineModal">
+        <div class="modal" style="width: 320px;">
+            <h3 data-i18n="modalGotoLineTitle"><svg class="icon"><use href="#icon-location-arrow"/></svg> 跳转到行</h3>
+            <div class="field">
+                <label data-i18n="fieldGotoLine">行号 或 行号:列号</label>
+                <input type="text" id="gotoLineInput" inputmode="numeric" autocomplete="off" spellcheck="false">
+                <span class="hint" id="gotoLineHint"></span>
+            </div>
+            <div class="modal-actions">
+                <button id="gotoLineCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="gotoLineGoBtn" class="primary" data-i18n="btnGoto">跳转</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 导入选项弹窗 -->
     <div class="modal-overlay" id="importModeModal">
         <div class="modal">
@@ -2084,8 +2107,8 @@
         })();
 
         // ==================== 应用标识 ====================
-        // 本文件是 Verilog 版。index_cpp.html（Scratch C++）由它生成，
-        // 差异只有这三处：<title>、APP_TITLE、DEFAULT_EDITOR_LANG（外加默认文件名 main.cpp / untitled.cpp）
+        // 本文件是 Verilog 版（唯一源）。index_cpp.html / index_python.html 由 build.py 生成，
+        // 差异只有这几处：<title>、APP_TITLE、DEFAULT_EDITOR_LANG，以及标题栏的默认文件名。
         const APP_TITLE = 'Scratch C++';
         const DEFAULT_EDITOR_LANG = 'cpp';
 
@@ -2165,6 +2188,12 @@
                 btnFindTitle: '查找 (Ctrl+F)',
                 btnReplace: '替换',
                 btnReplaceTitle: '替换 (Ctrl+H)',
+                btnGotoLineTitle: '跳转到行 (Ctrl+G)',
+                modalGotoLineTitle: '跳转到行',
+                fieldGotoLine: '行号 或 行号:列号',
+                btnGoto: '跳转',
+                gotoLineHint: '共 {n} 行，输入 行号 或 行号:列号（如 10 或 10:5）',
+                gotoLineInvalid: '请输入 1 ~ {n} 之间的行号，或 行号:列号',
                 optLineNumbers: '行号',
                 optLineNumbersTitle: '显示 / 隐藏行号',
                 autoFillOnTitle: '选中文本自动填入查找框（已开启，点击关闭）',
@@ -2359,6 +2388,12 @@
                 btnFindTitle: 'Find (Ctrl+F)',
                 btnReplace: 'Replace',
                 btnReplaceTitle: 'Replace (Ctrl+H)',
+                btnGotoLineTitle: 'Go to line (Ctrl+G)',
+                modalGotoLineTitle: 'Go to Line',
+                fieldGotoLine: 'Line or line:col',
+                btnGoto: 'Go',
+                gotoLineHint: '{n} lines total, enter line or line:col (e.g. 10 or 10:5)',
+                gotoLineInvalid: 'Enter a line number between 1 and {n}, or line:col',
                 optLineNumbers: 'LineNum',
                 optLineNumbersTitle: 'Show / hide line numbers',
                 autoFillOnTitle: 'Auto-fill find box from selection (on, click to disable)',
@@ -3979,9 +4014,33 @@ except ZeroDivisionError:
         function editorLineHeight() {
             return Math.round(editorFontSize * 1.6);
         }
-        /** 等宽字体单字符宽度（Courier New 前进宽度 0.6em；15px → 9px，与旧常量一致） */
+        /**
+         * 等宽字体单字符宽度（像素）。
+         * 用 canvas 实测当前字体，而不是写死 0.6 —— Consolas 是 0.55em，
+         * SF Mono / DejaVu / Courier New 是 0.6em，写死会导致点击定位、浮层定位、
+         * 拖拽落点在 Consolas 上偏左。测量结果按「字号 + 字体栈」缓存，避免每次调用都测。
+         */
+        const charWidthCtx = (() => {
+            try { return document.createElement('canvas').getContext('2d'); } catch (e) { return null; }
+        })();
+        let _charWidthRatio = null;
+        let _charWidthCacheKey = '';
         function editorCharWidth() {
-            return editorFontSize * 0.6;
+            const fontStack = getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim()
+                || "'SF Mono', Menlo, Consolas, monospace";
+            const key = editorFontSize + '|' + fontStack;
+            if (_charWidthRatio === null || _charWidthCacheKey !== key) {
+                if (charWidthCtx) {
+                    charWidthCtx.font = editorFontSize + 'px ' + fontStack;
+                    const w = charWidthCtx.measureText('M').width;
+                    // 量不出来（字体栈非法等）时退回 0.6，别把 0 传下去
+                    _charWidthRatio = (w > 0 ? w / editorFontSize : 0.6);
+                } else {
+                    _charWidthRatio = 0.6;   // canvas 不可用时的兜底
+                }
+                _charWidthCacheKey = key;
+            }
+            return editorFontSize * _charWidthRatio;
         }
 
         /** 三个按钮的可用状态：到边界置灰，「=」在默认字号时置灰 */
@@ -4713,7 +4772,8 @@ except ZeroDivisionError:
                 if (line.length === 0) return line;
                 return indent + line;
             });
-            let finalSnippet = indentedLines.join('\n') + '\n' + indent;
+            let finalSnippet = indentedLines.join('\n');
+            finalSnippet += '\n' + indent;
 
             let insertPos, replaceEnd;
             if (isLineEmpty) {
@@ -4996,6 +5056,121 @@ except ZeroDivisionError:
         closeSearchBtn.addEventListener('click', closeSearch);
         document.getElementById('findBtn').addEventListener('click', () => openSearch(false));
         document.getElementById('replaceBtn').addEventListener('click', () => openSearch(true));
+
+        // ==================== 跳转到行（Ctrl+G） ====================
+        const gotoLineModal = document.getElementById('gotoLineModal');
+        const gotoLineInput = document.getElementById('gotoLineInput');
+        const gotoLineHint = document.getElementById('gotoLineHint');
+        const gotoLineGoBtn = document.getElementById('gotoLineGoBtn');
+        const gotoLineCancelBtn = document.getElementById('gotoLineCancelBtn');
+        const gotoLineBtn = document.getElementById('gotoLineBtn');
+
+        /** 当前总行数（1 起） */
+        function totalLines() {
+            let n = 1;
+            const t = codeInput.value;
+            for (let i = 0; i < t.length; i++) if (t.charCodeAt(i) === 10) n++;
+            return n;
+        }
+
+        /** 主输入框亮红提示（三处非法输入共用） */
+        function gotoLineError(total) {
+            gotoLineHint.textContent = t('gotoLineInvalid', { n: total });
+            gotoLineHint.style.color = 'var(--danger)';
+            gotoLineInput.focus();
+            gotoLineInput.select();
+        }
+
+        /** 打开跳转行弹窗。预填当前光标所在行并全选。 */
+        function openGotoLine() {
+            if (blockPickerState.visible) hideBlockPicker(false);
+            const total = totalLines();
+            gotoLineInput.value = String(getCaretLine());
+            gotoLineHint.textContent = t('gotoLineHint', { n: total });
+            gotoLineHint.style.color = '';
+            gotoLineModal.classList.add('show');
+            gotoLineInput.focus();
+            gotoLineInput.select();
+        }
+
+        function closeGotoLine() {
+            gotoLineModal.classList.remove('show');
+            codeInput.focus();
+        }
+
+        /**
+         * 按输入跳转。支持三种格式：
+         *   "10"     → 第 10 行行首
+         *   "10:5"   → 第 10 行第 5 列
+         *   ":5"     → 当前行第 5 列
+         * 列号超出该行长度时钳到行尾；行号非法时提示不关闭。
+         */
+        function submitGotoLine() {
+            const text = codeInput.value;
+            const total = totalLines();
+            const raw = gotoLineInput.value.trim();
+
+            if (!raw) { gotoLineError(total); return; }
+
+            // 解析 "行:列" / "行" / ":列"
+            const m = raw.match(/^(\d*)\s*:\s*(\d*)$/);
+            let lineNo, colNo;
+            if (m) {
+                const linePart = m[1];
+                const colPart = m[2];
+                if (!linePart && !colPart) { gotoLineError(total); return; }   // 只输入 ":"，非法
+                lineNo = linePart ? parseInt(linePart, 10) : getCaretLine();
+                colNo = colPart ? parseInt(colPart, 10) : 1;
+            } else if (/^\d+$/.test(raw)) {
+                lineNo = parseInt(raw, 10);
+                colNo = 1;
+            } else {
+                gotoLineError(total);
+                return;
+            }
+
+            // 行号校验；列号只校验下限，超出钳到行尾
+            if (isNaN(lineNo) || lineNo < 1 || lineNo > total) { gotoLineError(total); return; }
+            if (isNaN(colNo) || colNo < 1) { gotoLineError(total); return; }
+
+            // 第 lineNo 行的起始 offset
+            let lineStart = 0;
+            let line = 1;
+            for (let i = 0; i < text.length && line < lineNo; i++) {
+                if (text.charCodeAt(i) === 10) { line++; lineStart = i + 1; }
+            }
+            // 该行长度（到 \n 或文本末尾）
+            let lineEnd = text.indexOf('\n', lineStart);
+            if (lineEnd === -1) lineEnd = text.length;
+            const lineLen = lineEnd - lineStart;
+
+            // 列号钳到 [1, lineLen + 1]（列 1 = 行首，列 lineLen+1 = 行尾光标位）
+            const safeCol = Math.min(colNo, lineLen + 1);
+            const offset = lineStart + (safeCol - 1);
+
+            gotoLineModal.classList.remove('show');
+            codeInput.focus();
+            codeInput.setSelectionRange(offset, offset);
+            // 滚到该行视口中央（纵向位置与行号列宽无关，padTop 与编辑器 padding 一致）
+            const lineHeight = editorLineHeight();
+            const padTop = 16;
+            const targetTop = padTop + (lineNo - 1) * lineHeight;
+            const viewH = codeInput.clientHeight;
+            codeInput.scrollTop = Math.max(0, targetTop - viewH / 2 + lineHeight / 2);
+            updateCursorPosition();
+            syncScroll();
+        }
+
+        gotoLineBtn.addEventListener('click', openGotoLine);
+        gotoLineGoBtn.addEventListener('click', submitGotoLine);
+        gotoLineCancelBtn.addEventListener('click', closeGotoLine);
+        gotoLineModal.addEventListener('click', (e) => {
+            if (e.target === gotoLineModal) closeGotoLine();
+        });
+        gotoLineInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); submitGotoLine(); }
+            else if (e.key === 'Escape') { e.preventDefault(); closeGotoLine(); }
+        });
 
         // ==================== 文件操作 ====================
         // 打开 / 保存的文件扩展名随编辑语言变化
@@ -5758,12 +5933,14 @@ except ZeroDivisionError:
             if (!editingBlock) return;
             const item = findBlock(editingBlock.catId, editingBlock.sub, editingBlock.blockId);
             if (!item) { blockConfigModal.classList.remove('show'); return; }
-            const newCode = configCode.value;
-            if (!newCode.trim()) {
+            const rawCode = configCode.value;
+            if (!rawCode.trim()) {
                 alert(t('alertNeedCode'));
                 return;
             }
-            let template = newCode;
+            // 与「新增积木」（commitNewBlock）对齐：只去首尾纯空行，保留行内缩进。
+            // 编辑路径原来完全不处理，保存 'if cond:\n    \n\n' 会把多余空行一起存进去。
+            const template = rawCode.replace(/^\n+|\n+$/g, '');
             item.code = template;
             // 标题：用户填了就用，没填回退到代码首行
             const labelInput = configLabel.value.trim();
@@ -5777,6 +5954,16 @@ except ZeroDivisionError:
             renderBlocksPanel();
             blockConfigModal.classList.remove('show');
             editingBlock = null;
+        });
+
+        // 「编辑积木」弹窗：Ctrl+Enter / Cmd+Enter 提交（和代码编辑器习惯一致）
+        blockConfigModal.addEventListener('keydown', (e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+            if (e.key !== 'Enter' || e.isComposing || e.repeat) return;
+            if (!blockConfigModal.classList.contains('show')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            blockSaveBtn.click();
         });
 
         blockCancelBtn.addEventListener('click', () => {
@@ -5811,8 +5998,12 @@ except ZeroDivisionError:
          * 返回 false 表示校验没过，调用方不要关弹窗（这样用户填的内容还在）。
          */
         function commitNewBlock(v) {
-            const code = String(v.code || '').trim();
-            if (!code) { alert(t('alertNeedCode')); return false; }
+            // 只去掉首尾的纯空行（\n），保留行内缩进。
+            // 多行结构积木（if/for/def/class）靠结尾的 '\n    ' 标出光标该落的位置，
+            // 用 trim() 会把这个换行 + 缩进一起吃掉；这里只去空行，和「编辑积木」路径对齐。
+            const raw = String(v.code || '');
+            if (!raw.trim()) { alert(t('alertNeedCode')); return false; }
+            const code = raw.replace(/^\n+|\n+$/g, '');
 
             const cat = findCategory(v.catId);
             if (!cat) { alert(t('alertNeedCategory')); return false; }
@@ -5956,6 +6147,16 @@ except ZeroDivisionError:
             closeAddBlockModal();
         });
 
+        // 「新增积木」弹窗：Ctrl+Enter / Cmd+Enter 提交（和代码编辑器习惯一致）
+        addBlockModal.addEventListener('keydown', (e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+            if (e.key !== 'Enter' || e.isComposing || e.repeat) return;
+            if (!addBlockModal.classList.contains('show')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            addBlockSaveBtn.click();
+        });
+
         addBlockCancelBtn.addEventListener('click', closeAddBlockModal);
 
         addBlockModal.addEventListener('click', (e) => {
@@ -6043,6 +6244,16 @@ except ZeroDivisionError:
             if (!commitNewBlock(getQuickAddFormValues())) return;
             closeQuickAddBlockModal();
             codeInput.focus();
+        });
+
+        // 「快速生成积木」弹窗：Ctrl+Enter / Cmd+Enter 提交（和代码编辑器习惯一致）
+        quickAddBlockModal.addEventListener('keydown', (e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+            if (e.key !== 'Enter' || e.isComposing || e.repeat) return;
+            if (!quickAddBlockModal.classList.contains('show')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            quickAddSaveBtn.click();
         });
 
         quickAddCancelBtn.addEventListener('click', closeQuickAddBlockModal);
@@ -6613,6 +6824,11 @@ except ZeroDivisionError:
                 openSearch(true);
                 return;
             }
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'g') {
+                e.preventDefault();
+                openGotoLine();
+                return;
+            }
             if (e.key === 'Escape') {
                 if (searchState.visible) {
                     closeSearch();
@@ -6687,6 +6903,15 @@ except ZeroDivisionError:
                 if (document.activeElement !== codeInput && document.activeElement !== searchInput) {
                     e.preventDefault();
                     openSearch(true);
+                }
+            }
+            // Ctrl+G 全局兜底：焦点不在任何输入框时也能唤起（在输入框里不抢，避免和输入内容冲突）
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'g') {
+                const ae = document.activeElement;
+                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+                if (!typing && !gotoLineModal.classList.contains('show')) {
+                    e.preventDefault();
+                    openGotoLine();
                 }
             }
         });
