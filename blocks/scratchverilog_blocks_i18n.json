@@ -2,7 +2,7 @@
   {
     "id": "cat-directive",
     "category": "Directives / Preprocessor",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "指令 / 预处理"
     },
     "icon": "file-import",
@@ -85,7 +85,7 @@
   {
     "id": "cat-module",
     "category": "Module / Port",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "模块 / 端口"
     },
     "icon": "cubes",
@@ -200,7 +200,7 @@
   {
     "id": "cat-always",
     "category": "Always / Initial",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "Always / Initial"
     },
     "icon": "bolt",
@@ -283,7 +283,7 @@
   {
     "id": "cat-analog",
     "category": "Analog Block",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "模拟块"
     },
     "icon": "wave-square",
@@ -345,7 +345,7 @@
   {
     "id": "cat-control",
     "category": "Control",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "控制"
     },
     "icon": "code-branch",
@@ -449,7 +449,7 @@
   {
     "id": "cat-assign",
     "category": "Assign",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "赋值"
     },
     "icon": "equals",
@@ -541,7 +541,7 @@
   {
     "id": "cat-operator",
     "category": "Operators / Expressions",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "运算符 / 表达式"
     },
     "icon": "calculator",
@@ -724,7 +724,7 @@
   {
     "id": "cat-math",
     "category": "Math / Analog Functions",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "数学 / 模拟函数"
     },
     "icon": "square-root-alt",
@@ -907,7 +907,7 @@
   {
     "id": "cat-system",
     "category": "System Tasks",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "系统任务"
     },
     "icon": "terminal",
@@ -1004,7 +1004,7 @@
   {
     "id": "cat-testbench",
     "category": "Testbench",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "测试平台"
     },
     "icon": "play",

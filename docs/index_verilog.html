@@ -153,6 +153,7 @@
         :root {
             /* 背景层 */
             --bg-root: #1e1e2f;
+            --bg-editor: #1e1e2f;   /* 代码区可与外围不同色；暗色保持同值 */
             --bg-toolbar: #2a2a3c;
             --bg-toolbar-2: #262636;
             --bg-panel: #252538;
@@ -229,6 +230,9 @@
             --tok-boolean: #ae81ff;
             --tok-comment: #7a7e85;
             --tok-func: #56a8f5;
+            /* 类型 token（class-name）单独一个变量：浅色用 Emacs 森林绿，
+               暗色默认沿用函数蓝，保证暗色观感与改前完全一致。 */
+            --tok-type: var(--tok-func);
             --tok-op: #a9b7c6;
 
             /* 子组标签 */
@@ -256,93 +260,100 @@
         }
 
         html[data-theme="light"] {
-            --bg-root: #f4f6f9;
+            /* ==================== Emacs 默认配色 ====================
+               关键字紫粗 / 字符串深紫红 / 注释砖红斜体 / 函数蓝 /
+               类型森林绿 / 数字深青 / 白底黑字。
+               代码区纯白，层次靠边框和行号列，不靠底色压暗。 */
+            --bg-root: #ffffff;
+            --bg-editor: #ffffff;
             --bg-toolbar: #ffffff;
-            --bg-toolbar-2: #fbfcfd;
+            --bg-toolbar-2: #f8f8f8;
             --bg-panel: #ffffff;
-            --bg-panel-header: #fafbfd;
-            --bg-elevated: #f4f6fa;
-            --bg-elevated-hover: #e9edf5;
-            --bg-gutter: #edf0f5;
+            --bg-panel-header: #f5f5f5;
+            --bg-elevated: #f7f7f7;
+            --bg-elevated-hover: #eeeeee;
+            --bg-gutter: #f0f0f0;
             --bg-input: #ffffff;
             --bg-modal: #ffffff;
             --bg-block: #ffffff;
-            --bg-block-hover: #eef1f8;
-            --bg-cat-header: #eef1f7;
-            --bg-hover-soft: #e3e8f2;
+            --bg-block-hover: #f2f2f2;
+            --bg-cat-header: #eeeeee;
+            --bg-hover-soft: #d8d8d8;
 
-            --btn-bg: #f4f6fa;
-            --btn-bg-hover: #e7ebf3;
-            --btn-border: #d5dbe6;
-            --btn-text: #2b2f38;
-            --btn-text-hover: #14171d;
+            --btn-bg: #f5f5f5;
+            --btn-bg-hover: #ebebeb;
+            --btn-border: #d0d0d0;
+            --btn-text: #000000;
+            --btn-text-hover: #000000;
 
-            --border: #e2e6ee;
-            --border-input: #d8dee9;
+            --border: #c8c8c8;
+            --border-input: #c0c0c0;
 
-            --text-primary: #1f2430;
-            --text-strong: #2b3038;
-            --text-secondary: #4b5261;
-            --text-muted: #6b7280;
-            --text-dim: #8a929f;
-            --text-faint: #a9b1bd;
-            --text-weak: #5c6472;
+            --text-primary: #000000;
+            --text-strong: #000000;
+            --text-secondary: #333333;
+            --text-muted: #555555;
+            --text-dim: #777777;
+            --text-faint: #999999;
+            --text-weak: #444444;
 
-            --accent: #6c5ce7;
-            --accent-hover: #5b4bd6;
-            --accent-light: #7f6ff0;
-            --accent-soft: #5a4ddb;
-            --accent-2: #8e44ad;
-            --accent-3: #2b7cd3;
-            --active-soft-bg: rgba(108, 92, 231, 0.12);
-            --heading: #6c5ce7;
-            --hint: #7b4fa8;
-            --success: #0a9c78;
+            --accent: #0000ff;
+            --accent-hover: #0000cc;
+            --accent-light: #3333ff;
+            --accent-soft: #0000cc;
+            --accent-2: #a020f0;
+            --accent-3: #008b8b;
+            --active-soft-bg: rgba(0, 0, 255, 0.10);
+            --heading: #a020f0;
+            --hint: #8b2252;
+            --success: #228b22;
 
-            --danger: #d93a3f;
-            --danger-text: #b8262b;
-            --danger-bg: #ffecec;
-            --danger-border: #f2c3c4;
-            --danger-hover: #ffdede;
-            --danger-border-soft: #f3c9c9;
-            --danger-hover-soft: #ffe4e4;
+            --danger: #b22222;
+            --danger-text: #8b1a1a;
+            --danger-bg: #fde8e8;
+            --danger-border: #f0c0c0;
+            --danger-hover: #fad4d4;
+            --danger-border-soft: #f0c0c0;
+            --danger-hover-soft: #fde8e8;
 
-            --caret: #1f2430;
-            --selection-bg: rgba(108, 92, 231, 0.22);
-            --search-bg: rgba(255, 196, 0, 0.55);
-            --search-bg-current: rgba(255, 170, 0, 0.85);
-            --search-ring: rgba(255, 150, 0, 0.95);
-            --gutter-text: #9aa3b0;
-            --gutter-current: #1f2430;
+            --caret: #000000;
+            --selection-bg: rgba(0, 0, 255, 0.15);
+            --search-bg: rgba(255, 200, 0, 0.45);
+            --search-bg-current: rgba(255, 160, 0, 0.75);
+            --search-ring: rgba(255, 140, 0, 0.9);
+            --gutter-text: #999999;
+            --gutter-current: #000000;
 
-            --tok-keyword: #a626a4;
-            --tok-macro: #c1613c;
-            --tok-string: #50a14f;
-            --tok-char: #50a14f;
-            --tok-number: #986801;
-            --tok-boolean: #986801;
-            --tok-comment: #a0a1a7;
-            --tok-func: #4078f2;
-            --tok-op: #383a42;
+            /* 语法高亮：Emacs 经典 face */
+            --tok-keyword: #a020f0;     /* 紫，font-lock-keyword-face（粗体由 CSS 控制） */
+            --tok-macro: #483d8b;       /* 暗蓝紫，预处理 */
+            --tok-string: #8b2252;      /* 深紫红，font-lock-string-face */
+            --tok-char: #8b2252;
+            --tok-number: #008b8b;      /* 深青，font-lock-constant-face */
+            --tok-boolean: #008b8b;
+            --tok-comment: #b22222;     /* 砖红，font-lock-comment-face（斜体由 CSS 控制） */
+            --tok-func: #0000ff;        /* 蓝，font-lock-function-name-face */
+            --tok-type: #228b22;        /* 森林绿，font-lock-type-face */
+            --tok-op: #000000;          /* 运算符黑色 */
 
-            --sub-c-bg: #e4f0fd;
-            --sub-c-fg: #1a73c9;
-            --sub-cpp-bg: #eee9ff;
-            --sub-cpp-fg: #6b4ee6;
-            --sub-custom-bg: #fff3d6;
-            --sub-custom-fg: #a06a00;
+            --sub-c-bg: #e8e8ff;
+            --sub-c-fg: #0000cc;
+            --sub-cpp-bg: #f3e8ff;
+            --sub-cpp-fg: #a020f0;
+            --sub-custom-bg: #fff8e0;
+            --sub-custom-fg: #8b6914;
 
-            --scroll-thumb: #c9d0dc;
-            --scroll-thumb-hover: #a9b2c0;
-            --scroll-track: #eef1f6;
+            --scroll-thumb: #c8c8c8;
+            --scroll-thumb-hover: #a8a8a8;
+            --scroll-track: #f0f0f0;
 
-            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-            --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
-            --shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.16);
-            --overlay-bg: rgba(15, 23, 42, 0.38);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.14);
+            --overlay-bg: rgba(0, 0, 0, 0.35);
 
-            --logo-1: #8e44ad;
-            --logo-2: #2b7cd3;
+            --logo-1: #a020f0;
+            --logo-2: #0000ff;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -996,7 +1007,7 @@
         .search-bar.show-replace .replace-group { display: flex; }
         .search-bar .sep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
 
-        .code-editor { flex: 1; position: relative; overflow: hidden; background: var(--bg-root); transition: background-color 0.18s ease; }
+        .code-editor { flex: 1; position: relative; overflow: hidden; background: var(--bg-editor); transition: background-color 0.18s ease; }
 
         .highlight-layer {
             position: absolute;
@@ -1188,8 +1199,9 @@
         .highlight-layer .token.number { color: var(--tok-number); }
         .highlight-layer .token.boolean { color: var(--tok-boolean); }
         .highlight-layer .token.keyword { color: var(--tok-keyword); }
-        .highlight-layer .token.function,
-        .highlight-layer .token.class-name { color: var(--tok-func); }
+        .highlight-layer .token.function { color: var(--tok-func); }
+        /* 类型 / 类名单独走 --tok-type：浅色森林绿（Emacs font-lock-type-face），暗色沿用函数蓝 */
+        .highlight-layer .token.class-name { color: var(--tok-type, var(--tok-func)); }
         .highlight-layer .token.operator,
         .highlight-layer .token.punctuation { color: var(--tok-op); }
         /* 预处理指令：`include / `define 整行 */
@@ -2657,7 +2669,7 @@
             {
                 id: 'cat-directive',
                 category: 'Directives / Preprocessor',
-                'category-i18n': { zh: '指令 / 预处理' },
+                category_i18n: { zh: '指令 / 预处理' },
                 icon: 'file-import',
                 collapsed: true,
                 subgroups: {
@@ -2680,7 +2692,7 @@
             {
                 id: 'cat-module',
                 category: 'Module / Port',
-                'category-i18n': { zh: '模块 / 端口' },
+                category_i18n: { zh: '模块 / 端口' },
                 icon: 'cubes',
                 collapsed: false,
                 subgroups: {
@@ -2709,7 +2721,7 @@
             {
                 id: 'cat-always',
                 category: 'Always / Initial',
-                'category-i18n': { zh: 'Always / Initial' },
+                category_i18n: { zh: 'Always / Initial' },
                 icon: 'bolt',
                 collapsed: false,
                 subgroups: {
@@ -2732,7 +2744,7 @@
             {
                 id: 'cat-analog',
                 category: 'Analog Block',
-                'category-i18n': { zh: '模拟块' },
+                category_i18n: { zh: '模拟块' },
                 icon: 'wave-square',
                 collapsed: false,
                 subgroups: {
@@ -2752,7 +2764,7 @@
             {
                 id: 'cat-control',
                 category: 'Control',
-                'category-i18n': { zh: '控制' },
+                category_i18n: { zh: '控制' },
                 icon: 'code-branch',
                 collapsed: true,
                 subgroups: {
@@ -2778,7 +2790,7 @@
             {
                 id: 'cat-assign',
                 category: 'Assign',
-                'category-i18n': { zh: '赋值' },
+                category_i18n: { zh: '赋值' },
                 icon: 'equals',
                 collapsed: true,
                 subgroups: {
@@ -2803,7 +2815,7 @@
             {
                 id: 'cat-operator',
                 category: 'Operators / Expressions',
-                'category-i18n': { zh: '运算符 / 表达式' },
+                category_i18n: { zh: '运算符 / 表达式' },
                 icon: 'calculator',
                 collapsed: true,
                 subgroups: {
@@ -2841,7 +2853,7 @@
             {
                 id: 'cat-math',
                 category: 'Math / Analog Functions',
-                'category-i18n': { zh: '数学 / 模拟函数' },
+                category_i18n: { zh: '数学 / 模拟函数' },
                 icon: 'square-root-alt',
                 collapsed: true,
                 subgroups: {
@@ -2879,7 +2891,7 @@
             {
                 id: 'cat-system',
                 category: 'System Tasks',
-                'category-i18n': { zh: '系统任务' },
+                category_i18n: { zh: '系统任务' },
                 icon: 'terminal',
                 collapsed: true,
                 subgroups: {
@@ -2904,7 +2916,7 @@
             {
                 id: 'cat-testbench',
                 category: 'Testbench',
-                'category-i18n': { zh: '测试平台' },
+                category_i18n: { zh: '测试平台' },
                 icon: 'play',
                 collapsed: true,
                 subgroups: {
@@ -2926,7 +2938,7 @@
             {
                 id: 'cat-include',
                 category: 'Includes / Preprocessor',
-                'category-i18n': { zh: '头文件 / 预处理' },
+                category_i18n: { zh: '头文件 / 预处理' },
                 icon: 'file-import',
                 collapsed: false,
                 subgroups: {
@@ -2966,7 +2978,7 @@
             {
                 id: 'cat-function',
                 category: 'Functions',
-                'category-i18n': { zh: '函数' },
+                category_i18n: { zh: '函数' },
                 icon: 'code',
                 collapsed: true,
                 subgroups: {
@@ -2996,7 +3008,7 @@
             {
                 id: 'cat-var',
                 category: 'Variables',
-                'category-i18n': { zh: '变量' },
+                category_i18n: { zh: '变量' },
                 icon: 'database',
                 collapsed: false,
                 subgroups: {
@@ -3034,7 +3046,7 @@
             {
                 id: 'cat-control',
                 category: 'Control Flow',
-                'category-i18n': { zh: '控制流' },
+                category_i18n: { zh: '控制流' },
                 icon: 'code-branch',
                 collapsed: false,
                 subgroups: {
@@ -3061,7 +3073,7 @@
             {
                 id: 'cat-io',
                 category: 'Common Functions',
-                'category-i18n': { zh: '常用函数' },
+                category_i18n: { zh: '常用函数' },
                 icon: 'terminal',
                 collapsed: false,
                 subgroups: {
@@ -3085,7 +3097,7 @@
             {
                 id: 'cat-math',
                 category: 'Math',
-                'category-i18n': { zh: '数学' },
+                category_i18n: { zh: '数学' },
                 icon: 'calculator',
                 collapsed: false,
                 subgroups: {
@@ -3126,7 +3138,7 @@
             {
                 id: 'cat-string',
                 category: 'Strings',
-                'category-i18n': { zh: '字符串' },
+                category_i18n: { zh: '字符串' },
                 icon: 'font',
                 collapsed: false,
                 subgroups: {
@@ -3157,19 +3169,38 @@
             }
         ];
 
-        // Python 积木：同结构（none / py 两种子类别），每个类别带 category-i18n.zh
+        // Python 积木：按「写代码顺序」编排 —— 从文件头到文件尾，从上到下、由外到内。
+        // 字段名用 category_i18n（下划线），可直接点号访问，避免 category-i18n 连字符必须加引号的麻烦。
         const DEFAULT_BLOCKS_PYTHON = [
+            {
+                id: 'cat-py-import',
+                category: 'Import',
+                category_i18n: { zh: '导入' },
+                icon: 'file-import',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-import', icon: 'file-import', label: 'import os', code: 'import os', mode: 'line' },
+                        { id: 'py-import-as', icon: 'file-import', label: 'import numpy as np', code: 'import numpy as np', mode: 'line' },
+                        { id: 'py-from-import', icon: 'file-import', label: 'from os import path', code: 'from os import path', mode: 'line' },
+                        { id: 'py-from-import-star', icon: 'file-import', label: 'from math import *', code: 'from math import *', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
             {
                 id: 'cat-py-basic',
                 category: 'Basic / Comments',
-                'category-i18n': { zh: '基础 / 注释' },
-                icon: 'file-import',
+                category_i18n: { zh: '基础 / 注释' },
+                icon: 'comment',
                 collapsed: false,
                 subgroups: {
                     none: [
                         { id: 'py-comment-line', icon: 'comment', label: '# comment', code: '# ', mode: 'line' },
                         { id: 'py-print', icon: 'print', label: 'print("Hello")', code: 'print("Hello")', mode: 'line' },
-                        { id: 'py-print-f', icon: 'print', label: 'print(f"{x}")', code: 'print(f"{x}")', mode: 'line' }
+                        { id: 'py-print-f', icon: 'print', label: 'print(f"{x}")', code: 'print(f"{x}")', mode: 'line' },
+                        { id: 'py-pass', icon: 'stop', label: 'pass', code: 'pass', mode: 'line' },
+                        { id: 'py-docstring', icon: 'quote-left', label: '"""docstring"""', code: '"""\n\n"""', mode: 'line' }
                     ],
                     py: []
                 }
@@ -3177,7 +3208,7 @@
             {
                 id: 'cat-py-var',
                 category: 'Variables',
-                'category-i18n': { zh: '变量' },
+                category_i18n: { zh: '变量' },
                 icon: 'database',
                 collapsed: false,
                 subgroups: {
@@ -3186,91 +3217,11 @@
                         { id: 'py-assign-multi', icon: 'equals', label: 'a = b = 0', code: 'a = b = 0', mode: 'line' },
                         { id: 'py-tuple', icon: 'list', label: 'a, b = 1, 2', code: 'a, b = 1, 2', mode: 'line' },
                         { id: 'py-add-assign', icon: 'plus', label: 'x += 1', code: 'x += 1', mode: 'line' },
-                        { id: 'py-sub-assign', icon: 'minus', label: 'x -= 1', code: 'x -= 1', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-control',
-                category: 'Control Flow',
-                'category-i18n': { zh: '控制流' },
-                icon: 'code-branch',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-if', icon: 'code-branch', label: 'if cond:', code: 'if cond:\n    ', mode: 'line' },
-                        { id: 'py-if-else', icon: 'code-branch', label: 'if cond: ... else: ...', code: 'if cond:\n    \nelse:\n    ', mode: 'line' },
-                        { id: 'py-if-elif-else', icon: 'code-branch', label: 'if / elif / else', code: 'if cond:\n    \nelif cond2:\n    \nelse:\n    ', mode: 'line' },
-                        { id: 'py-for', icon: 'redo', label: 'for x in xs:', code: 'for x in xs:\n    ', mode: 'line' },
-                        { id: 'py-for-range', icon: 'redo', label: 'for i in range(n):', code: 'for i in range(n):\n    ', mode: 'line' },
-                        { id: 'py-while', icon: 'redo', label: 'while cond:', code: 'while cond:\n    ', mode: 'line' },
-                        { id: 'py-break', icon: 'stop', label: 'break', code: 'break', mode: 'line' },
-                        { id: 'py-continue', icon: 'forward', label: 'continue', code: 'continue', mode: 'line' },
-                        { id: 'py-try', icon: 'exclamation-triangle', label: 'try / except', code: 'try:\n    \nexcept Exception as e:\n    ', mode: 'line' },
-                        { id: 'py-with', icon: 'code-branch', label: 'with open(...) as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-func',
-                category: 'Functions / Classes',
-                'category-i18n': { zh: '函数 / 类' },
-                icon: 'code',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-def', icon: 'code', label: 'def func():', code: 'def func():\n    ', mode: 'line' },
-                        { id: 'py-def-args', icon: 'code', label: 'def func(a, b):', code: 'def func(a, b):\n    ', mode: 'line' },
-                        { id: 'py-def-default', icon: 'equals', label: 'def func(a=0):', code: 'def func(a=0):\n    ', mode: 'line' },
-                        { id: 'py-lambda', icon: 'bolt', label: 'lambda x: x + 1', code: 'lambda x: x + 1', mode: 'exp' },
-                        { id: 'py-return', icon: 'sign-out-alt', label: 'return x', code: 'return x', mode: 'line' },
-                        { id: 'py-return-none', icon: 'sign-out-alt', label: 'return', code: 'return', mode: 'line' },
-                        { id: 'py-class', icon: 'cubes', label: 'class Foo:', code: 'class Foo:\n    ', mode: 'line' },
-                        { id: 'py-class-init', icon: 'cubes', label: 'class Foo: def __init__', code: 'class Foo:\n    def __init__(self):\n        ', mode: 'line' },
-                        { id: 'py-self', icon: 'location-arrow', label: 'self.x = x', code: 'self.x = x', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-io',
-                category: 'I/O / Files',
-                'category-i18n': { zh: '输入输出 / 文件' },
-                icon: 'terminal',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-input', icon: 'keyboard', label: 'input("prompt: ")', code: 'input("prompt: ")', mode: 'exp' },
-                        { id: 'py-open-read', icon: 'folder-open', label: 'open("file.txt", "r")', code: 'open("file.txt", "r")', mode: 'exp' },
-                        { id: 'py-open-write', icon: 'save', label: 'open("file.txt", "w")', code: 'open("file.txt", "w")', mode: 'exp' },
-                        { id: 'py-with-open', icon: 'folder-open', label: 'with open("file.txt") as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' },
-                        { id: 'py-read', icon: 'file-import', label: 'f.read()', code: 'f.read()', mode: 'exp' },
-                        { id: 'py-write', icon: 'print', label: 'f.write("...")', code: 'f.write("...")', mode: 'line' }
-                    ],
-                    py: []
-                }
-            },
-            {
-                id: 'cat-py-list',
-                category: 'Lists / Dicts / Sets',
-                'category-i18n': { zh: '列表 / 字典 / 集合' },
-                icon: 'list',
-                collapsed: false,
-                subgroups: {
-                    none: [
-                        { id: 'py-list', icon: 'list', label: '[1, 2, 3]', code: '[1, 2, 3]', mode: 'exp' },
-                        { id: 'py-dict', icon: 'database', label: '{"k": v}', code: '{"k": v}', mode: 'exp' },
-                        { id: 'py-set', icon: 'circle', label: '{1, 2, 3}', code: '{1, 2, 3}', mode: 'exp' },
-                        { id: 'py-tuple-lit', icon: 'list', label: '(1, 2, 3)', code: '(1, 2, 3)', mode: 'exp' },
-                        { id: 'py-comp-list', icon: 'bolt', label: '[x for x in xs]', code: '[x for x in xs]', mode: 'exp' },
-                        { id: 'py-comp-dict', icon: 'bolt', label: '{k: v for k, v in items}', code: '{k: v for k, v in items}', mode: 'exp' },
-                        { id: 'py-append', icon: 'plus', label: 'xs.append(x)', code: 'xs.append(x)', mode: 'line' },
-                        { id: 'py-len', icon: 'ruler-horizontal', label: 'len(xs)', code: 'len(xs)', mode: 'exp' },
-                        { id: 'py-range', icon: 'calculator', label: 'range(n)', code: 'range(n)', mode: 'exp' },
-                        { id: 'py-enumerate', icon: 'calculator', label: 'enumerate(xs)', code: 'enumerate(xs)', mode: 'exp' },
-                        { id: 'py-zip', icon: 'exchange-alt', label: 'zip(a, b)', code: 'zip(a, b)', mode: 'exp' }
+                        { id: 'py-sub-assign', icon: 'minus', label: 'x -= 1', code: 'x -= 1', mode: 'line' },
+                        { id: 'py-mul-assign', icon: 'times', label: 'x *= 2', code: 'x *= 2', mode: 'line' },
+                        { id: 'py-div-assign', icon: 'divide', label: 'x /= 2', code: 'x /= 2', mode: 'line' },
+                        { id: 'py-none', icon: 'circle', label: 'x = None', code: 'x = None', mode: 'line' },
+                        { id: 'py-type-cast', icon: 'exchange-alt', label: 'int("42")', code: 'int("42")', mode: 'exp' }
                     ],
                     py: []
                 }
@@ -3278,7 +3229,7 @@
             {
                 id: 'cat-py-string',
                 category: 'Strings',
-                'category-i18n': { zh: '字符串' },
+                category_i18n: { zh: '字符串' },
                 icon: 'font',
                 collapsed: false,
                 subgroups: {
@@ -3291,23 +3242,134 @@
                         { id: 'py-str-split', icon: 'cut', label: 's.split(",")', code: 's.split(",")', mode: 'exp' },
                         { id: 'py-str-join', icon: 'link', label: '"sep".join(xs)', code: '"sep".join(xs)', mode: 'exp' },
                         { id: 'py-str-replace', icon: 'exchange-alt', label: 's.replace(a, b)', code: 's.replace(a, b)', mode: 'exp' },
-                        { id: 'py-str-find', icon: 'search', label: 's.find("sub")', code: 's.find("sub")', mode: 'exp' }
+                        { id: 'py-str-find', icon: 'search', label: 's.find("sub")', code: 's.find("sub")', mode: 'exp' },
+                        { id: 'py-str-format', icon: 'magic', label: '"{}".format(x)', code: '"{}".format(x)', mode: 'exp' }
                     ],
                     py: []
                 }
             },
             {
-                id: 'cat-py-import',
-                category: 'Import',
-                'category-i18n': { zh: '导入' },
-                icon: 'file-import',
+                id: 'cat-py-list',
+                category: 'Lists / Dicts / Sets',
+                category_i18n: { zh: '列表 / 字典 / 集合' },
+                icon: 'list',
                 collapsed: false,
                 subgroups: {
                     none: [
-                        { id: 'py-import', icon: 'file-import', label: 'import os', code: 'import os', mode: 'line' },
-                        { id: 'py-import-as', icon: 'file-import', label: 'import numpy as np', code: 'import numpy as np', mode: 'line' },
-                        { id: 'py-from-import', icon: 'file-import', label: 'from os import path', code: 'from os import path', mode: 'line' },
-                        { id: 'py-from-import-star', icon: 'file-import', label: 'from math import *', code: 'from math import *', mode: 'line' }
+                        { id: 'py-list', icon: 'list', label: '[1, 2, 3]', code: '[1, 2, 3]', mode: 'exp' },
+                        { id: 'py-dict', icon: 'database', label: '{"k": v}', code: '{"k": v}', mode: 'exp' },
+                        { id: 'py-set', icon: 'circle', label: '{1, 2, 3}', code: '{1, 2, 3}', mode: 'exp' },
+                        { id: 'py-tuple-lit', icon: 'list', label: '(1, 2, 3)', code: '(1, 2, 3)', mode: 'exp' },
+                        { id: 'py-comp-list', icon: 'bolt', label: '[x for x in xs]', code: '[x for x in xs]', mode: 'exp' },
+                        { id: 'py-comp-dict', icon: 'bolt', label: '{k: v for k, v in items}', code: '{k: v for k, v in items}', mode: 'exp' },
+                        { id: 'py-append', icon: 'plus', label: 'xs.append(x)', code: 'xs.append(x)', mode: 'line' },
+                        { id: 'py-get', icon: 'search', label: 'd.get("k")', code: 'd.get("k")', mode: 'exp' },
+                        { id: 'py-items', icon: 'list', label: 'd.items()', code: 'd.items()', mode: 'exp' },
+                        { id: 'py-sorted', icon: 'sort', label: 'sorted(xs)', code: 'sorted(xs)', mode: 'exp' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-control',
+                category: 'Control Flow',
+                category_i18n: { zh: '控制流' },
+                icon: 'code-branch',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-if', icon: 'code-branch', label: 'if cond:', code: 'if cond:\n    ', mode: 'line' },
+                        { id: 'py-if-else', icon: 'code-branch', label: 'if cond: ... else: ...', code: 'if cond:\n    \nelse:\n    ', mode: 'line' },
+                        { id: 'py-if-elif-else', icon: 'code-branch', label: 'if / elif / else', code: 'if cond:\n    \nelif cond2:\n    \nelse:\n    ', mode: 'line' },
+                        { id: 'py-for', icon: 'redo', label: 'for x in xs:', code: 'for x in xs:\n    ', mode: 'line' },
+                        { id: 'py-for-range', icon: 'redo', label: 'for i in range(n):', code: 'for i in range(n):\n    ', mode: 'line' },
+                        { id: 'py-for-enumerate', icon: 'redo', label: 'for i, x in enumerate(xs):', code: 'for i, x in enumerate(xs):\n    ', mode: 'line' },
+                        { id: 'py-while', icon: 'redo', label: 'while cond:', code: 'while cond:\n    ', mode: 'line' },
+                        { id: 'py-break', icon: 'stop', label: 'break', code: 'break', mode: 'line' },
+                        { id: 'py-continue', icon: 'forward', label: 'continue', code: 'continue', mode: 'line' },
+                        { id: 'py-try', icon: 'exclamation-triangle', label: 'try / except', code: 'try:\n    \nexcept Exception as e:\n    ', mode: 'line' },
+                        { id: 'py-try-finally', icon: 'exclamation-triangle', label: 'try / except / finally', code: 'try:\n    \nexcept Exception as e:\n    \nfinally:\n    ', mode: 'line' },
+                        { id: 'py-with', icon: 'code-branch', label: 'with open(...) as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-func',
+                category: 'Functions',
+                category_i18n: { zh: '函数' },
+                icon: 'code',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-def', icon: 'code', label: 'def func():', code: 'def func():\n    ', mode: 'line' },
+                        { id: 'py-def-args', icon: 'code', label: 'def func(a, b):', code: 'def func(a, b):\n    ', mode: 'line' },
+                        { id: 'py-def-default', icon: 'equals', label: 'def func(a=0):', code: 'def func(a=0):\n    ', mode: 'line' },
+                        { id: 'py-def-docstring', icon: 'quote-left', label: 'def func(): """..."""', code: 'def func():\n    """docstring"""\n    ', mode: 'line' },
+                        { id: 'py-return', icon: 'sign-out-alt', label: 'return x', code: 'return x', mode: 'line' },
+                        { id: 'py-return-none', icon: 'sign-out-alt', label: 'return', code: 'return', mode: 'line' },
+                        { id: 'py-lambda', icon: 'bolt', label: 'lambda x: x + 1', code: 'lambda x: x + 1', mode: 'exp' },
+                        { id: 'py-main-guard', icon: 'play', label: 'if __name__ == "__main__":', code: 'if __name__ == "__main__":\n    ', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-class',
+                category: 'Classes',
+                category_i18n: { zh: '类' },
+                icon: 'cubes',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-class', icon: 'cubes', label: 'class Foo:', code: 'class Foo:\n    ', mode: 'line' },
+                        { id: 'py-class-init', icon: 'cubes', label: 'class Foo: def __init__', code: 'class Foo:\n    def __init__(self):\n        ', mode: 'line' },
+                        { id: 'py-class-method', icon: 'code', label: 'class Foo: def method', code: 'class Foo:\n    def method(self):\n        ', mode: 'line' },
+                        { id: 'py-self', icon: 'location-arrow', label: 'self.x = x', code: 'self.x = x', mode: 'line' },
+                        { id: 'py-super', icon: 'arrow-up', label: 'super().__init__()', code: 'super().__init__()', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-io',
+                category: 'I/O / Files',
+                category_i18n: { zh: '输入输出 / 文件' },
+                icon: 'terminal',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-input', icon: 'keyboard', label: 'input("prompt: ")', code: 'input("prompt: ")', mode: 'exp' },
+                        { id: 'py-open-read', icon: 'folder-open', label: 'open("file.txt", "r")', code: 'open("file.txt", "r")', mode: 'exp' },
+                        { id: 'py-open-write', icon: 'save', label: 'open("file.txt", "w")', code: 'open("file.txt", "w")', mode: 'exp' },
+                        { id: 'py-with-open', icon: 'folder-open', label: 'with open("file.txt") as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' },
+                        { id: 'py-read', icon: 'file-import', label: 'f.read()', code: 'f.read()', mode: 'exp' },
+                        { id: 'py-readlines', icon: 'list', label: 'f.readlines()', code: 'f.readlines()', mode: 'exp' },
+                        { id: 'py-write', icon: 'print', label: 'f.write("...")', code: 'f.write("...")', mode: 'line' }
+                    ],
+                    py: []
+                }
+            },
+            {
+                id: 'cat-py-math',
+                category: 'Math / Builtins',
+                category_i18n: { zh: '数学 / 内置函数' },
+                icon: 'calculator',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-len', icon: 'ruler-horizontal', label: 'len(xs)', code: 'len(xs)', mode: 'exp' },
+                        { id: 'py-range', icon: 'calculator', label: 'range(n)', code: 'range(n)', mode: 'exp' },
+                        { id: 'py-enumerate', icon: 'calculator', label: 'enumerate(xs)', code: 'enumerate(xs)', mode: 'exp' },
+                        { id: 'py-zip', icon: 'exchange-alt', label: 'zip(a, b)', code: 'zip(a, b)', mode: 'exp' },
+                        { id: 'py-abs', icon: 'absolute', label: 'abs(x)', code: 'abs(x)', mode: 'exp' },
+                        { id: 'py-min', icon: 'arrow-down', label: 'min(xs)', code: 'min(xs)', mode: 'exp' },
+                        { id: 'py-max', icon: 'arrow-up', label: 'max(xs)', code: 'max(xs)', mode: 'exp' },
+                        { id: 'py-sum', icon: 'plus', label: 'sum(xs)', code: 'sum(xs)', mode: 'exp' },
+                        { id: 'py-round', icon: 'circle', label: 'round(x, 2)', code: 'round(x, 2)', mode: 'exp' },
+                        { id: 'py-int', icon: 'hashtag', label: 'int(x)', code: 'int(x)', mode: 'exp' },
+                        { id: 'py-float', icon: 'hashtag', label: 'float(x)', code: 'float(x)', mode: 'exp' },
+                        { id: 'py-str', icon: 'font', label: 'str(x)', code: 'str(x)', mode: 'exp' }
                     ],
                     py: []
                 }
@@ -3695,6 +3757,31 @@ except ZeroDivisionError:
         /** Prism 是否已加载指定 grammar */
         function hasPrismGrammar(name) {
             return typeof Prism !== 'undefined' && !!Prism.languages && !!Prism.languages[name];
+        }
+
+        /**
+         * 状态栏提示：当前语言的 Prism grammar 加载失败。
+         * 幂等——同一个提示只占一个 span，反复切语言不会叠加；
+         * grammar 后来到位时用 clearPrismWarn() 收起。
+         */
+        function showPrismWarn() {
+            const bar = document.querySelector('.status-bar');
+            if (!bar) return;
+            let span = document.getElementById('prismWarn');
+            if (!span) {
+                span = document.createElement('span');
+                span.id = 'prismWarn';
+                span.style.color = 'var(--danger)';
+                bar.appendChild(span);
+            }
+            const lang = prismLangName();
+            span.textContent = t('warnPrism');
+            span.title = 'prism-' + lang + '.min.js 未加载（本地版检查 vendor 目录，在线版检查网络）';
+        }
+
+        function clearPrismWarn() {
+            const span = document.getElementById('prismWarn');
+            if (span && span.parentNode) span.parentNode.removeChild(span);
         }
 
         function updateHighlight() {
@@ -5046,8 +5133,16 @@ except ZeroDivisionError:
         function normalizeBlockStructure(data) {
             if (!Array.isArray(data) || data.length === 0) return null;
             const out = [];
-            for (const c of data) {
+            for (let c of data) {
                 if (!c || typeof c !== 'object' || !c.category) return null;
+                // 旧字段名迁移：'category-i18n'（带连字符，只能方括号访问）→ category_i18n。
+                // 老的导出 JSON 和旧 localStorage 都可能是旧名，不迁的话翻译会静默丢失（只回退主名）。
+                // 用拷贝，别改调用方传进来的对象。
+                if (c['category-i18n']) {
+                    c = Object.assign({}, c);
+                    if (!c.category_i18n) c.category_i18n = c['category-i18n'];
+                    delete c['category-i18n'];
+                }
                 const src = (c.subgroups && typeof c.subgroups === 'object') ? c.subgroups : {};
                 const groups = {};
                 // 拷贝数组，别把调用方传进来的对象改掉
@@ -5096,13 +5191,13 @@ except ZeroDivisionError:
 
         /**
          * 类别显示名。category 永远是字符串主名（合并/校验/编辑/导出都只认它）；
-         * category-i18n 是可选的翻译表，只在当前界面语言有非空翻译时才用，否则回退主名，
-         * 且不跨语言回退。注意：字段名带连字符，只能用方括号访问，
-         * 写成 cat.category-i18n 会被解析成减法。
+         * category_i18n 是可选的翻译表，只在当前界面语言有非空翻译时才用，否则回退主名，
+         * 且不跨语言回退。字段名用下划线，可以直接点号访问（旧名 'category-i18n' 带连字符，
+         * 只能方括号访问，已在 normalizeBlockStructure 里迁移）。
          */
         function getCategoryDisplayName(cat) {
             if (!cat) return '';
-            const i18n = cat['category-i18n'];
+            const i18n = cat.category_i18n;
             if (i18n && typeof i18n === 'object') {
                 const v = i18n[currentLang];
                 if (typeof v === 'string' && v) return v;
@@ -5199,7 +5294,7 @@ except ZeroDivisionError:
                 let targetCat = BLOCKS.find(c => c.category === inCat.category);
 
                 if (!targetCat) {
-                    // 以导入的分类为底稿，保留 category-i18n 等附加字段（已存在类别不更新这些字段）
+                    // 以导入的分类为底稿，保留 category_i18n 等附加字段（已存在类别不更新这些字段）
                     targetCat = Object.assign({}, inCat, {
                         id: ensureUniqueId(inCat.id, usedIds, 'cat'),
                         category: inCat.category,
@@ -5768,7 +5863,12 @@ except ZeroDivisionError:
         function openAddBlockModal(cat) {
             if (blockPickerState.visible) hideBlockPicker(false);
             addingBlockTo = { catId: cat.id };
-            addBlockCode.value = '';
+            // 与「新增」按钮 / Ctrl+Shift+/ 保持一致：编辑器里有选中就把选中内容预填进代码框。
+            // 不限制单行 —— 三个入口都按「选中什么就填什么」，避免行为分叉。
+            const selStart = codeInput.selectionStart;
+            const selEnd = codeInput.selectionEnd;
+            const selected = selStart !== selEnd ? codeInput.value.substring(selStart, selEnd) : '';
+            addBlockCode.value = selected;
             addBlockLabel.value = '';
             addBlockIconSelect.value = 'cube';
             addBlockIconInput.value = '';
@@ -5777,6 +5877,13 @@ except ZeroDivisionError:
             document.querySelector('input[name="addBlockMode"][value="line"]').checked = true;
             addBlockModal.classList.add('show');
             addBlockCode.focus();
+            if (selected) addBlockCode.setSelectionRange(selected.length, selected.length);
+        }
+
+        /** 关闭「新增积木」弹窗：保存 / 取消 / 点遮罩 / Esc 共用同一条分支 */
+        function closeAddBlockModal() {
+            addBlockModal.classList.remove('show');
+            addingBlockTo = null;   // 清掉目标类别，避免下次打开时残留上一次的 catId
         }
 
         /** 读「新增积木」弹窗的表单值 */
@@ -5797,20 +5904,13 @@ except ZeroDivisionError:
         addBlockSaveBtn.addEventListener('click', () => {
             if (!addingBlockTo) return;
             if (!commitNewBlock(getAddBlockFormValues())) return;   // 校验没过，弹窗保持打开
-            addBlockModal.classList.remove('show');
-            addingBlockTo = null;
+            closeAddBlockModal();
         });
 
-        addBlockCancelBtn.addEventListener('click', () => {
-            addBlockModal.classList.remove('show');
-            addingBlockTo = null;
-        });
+        addBlockCancelBtn.addEventListener('click', closeAddBlockModal);
 
         addBlockModal.addEventListener('click', (e) => {
-            if (e.target === addBlockModal) {
-                addBlockModal.classList.remove('show');
-                addingBlockTo = null;
-            }
+            if (e.target === addBlockModal) closeAddBlockModal();
         });
 
         // ==================== 快速生成积木弹窗 ====================
@@ -5909,6 +6009,27 @@ except ZeroDivisionError:
             if (e.target === quickAddBlockModal) closeQuickAddBlockModal();
         });
 
+        // Esc 关闭「新增积木」/「快速生成」弹窗：和「取消」按钮走同一个关闭分支，
+        // 避免出现「Esc 关了但状态没清干净」的第二套清理逻辑。
+        // 焦点落在 <select> 上时不抢：此时 Esc 是关原生下拉列表，不是关弹窗。
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape' || e.isComposing || e.repeat) return;
+            const ae = document.activeElement;
+            if (ae && ae.tagName === 'SELECT') return;
+            if (addBlockModal.classList.contains('show')) {
+                e.preventDefault();
+                closeAddBlockModal();
+                codeInput.focus();      // 焦点还给编辑器，接着就能继续敲代码
+                return;
+            }
+            if (quickAddBlockModal.classList.contains('show')) {
+                e.preventDefault();
+                closeQuickAddBlockModal();
+                codeInput.focus();
+                return;
+            }
+        });
+
         // ==================== 类别弹窗 ====================
         function openCategoryEditor(cat) {
             if (blockPickerState.visible) hideBlockPicker(false);
@@ -5945,9 +6066,8 @@ except ZeroDivisionError:
                     cat.category = name;
                     cat.icon = icon;
                     // 只要点过「保存」就丢弃翻译，显示回退到 category 主名。
-                    // 字段名带连字符，只能用方括号访问 / 删除。
-                    if (Object.prototype.hasOwnProperty.call(cat, 'category-i18n')) {
-                        delete cat['category-i18n'];
+                    if (Object.prototype.hasOwnProperty.call(cat, 'category_i18n')) {
+                        delete cat.category_i18n;
                     }
                 }
             } else {
@@ -7280,6 +7400,17 @@ except ZeroDivisionError:
         // ==================== 编辑语言切换 ====================
         const editorLangSelect = document.getElementById('editorLangSelect');
 
+        /** 切语言时等待 grammar 的轮询句柄（同一时刻最多一个，模块级统一管理） */
+        let prismPollTimer = null;
+
+        /** 停掉上一次切语言遗留的 grammar 轮询 */
+        function clearPrismPoll() {
+            if (prismPollTimer) {
+                clearInterval(prismPollTimer);
+                prismPollTimer = null;
+            }
+        }
+
         /**
          * 切换编辑语言。刻意不清空、不重排编辑器内容：
          * 代码原样保留，只换高亮 / 积木 / 缩进规则 / 文件扩展名。
@@ -7309,22 +7440,34 @@ except ZeroDivisionError:
             loadIndentConfig();
             applyIndentToEditor();
 
-            // 3. 高亮：清缓存强制重算（代码内容本身不动）
+            // 3. 高亮：先补丁（grammar 已加载时立即生效），再着色
+            //    补丁必须排在 updateHighlight 之前：若 grammar 已经到位，走「先着色再轮询」的
+            //    顺序会让 applyUserFunctionRules() 永不执行，foo( 这类调用名的兜底高亮就没了
+            //    （基础高亮看着正常，很难发现）。
+            clearPrismPoll();               // 切语言前先停掉上一次遗留的轮询
+            applyAllLangPatches();
+            applyUserFunctionRules();       // grammar 不存在时内部直接返回 false，无害
             lastHighlightedText = null;
             updateHighlight();
-            // grammar 可能还在路上（CDN 异步）：短期内轮询补一次
-            if (!hasPrismGrammar(prismLangName())) {
+
+            // grammar 还没到：起一个轮询，最多约 12 秒
+            if (hasPrismGrammar(prismLangName())) {
+                clearPrismWarn();           // 上一门语言缺文件的提示到这里收起
+            } else {
                 let tries = 0;
-                const timer = setInterval(() => {
+                prismPollTimer = setInterval(() => {
                     tries++;
                     if (hasPrismGrammar(prismLangName())) {
-                        clearInterval(timer);
+                        clearPrismPoll();
                         applyAllLangPatches();
                         applyUserFunctionRules();
                         lastHighlightedText = null;
                         updateHighlight();
+                        clearPrismWarn();
                     } else if (tries > 40) {
-                        clearInterval(timer);
+                        clearPrismPoll();
+                        // 静默失败会让用户以为高亮坏了：状态栏明确提示（幂等，不会叠多条）
+                        showPrismWarn();
                     }
                 }, 300);
             }
@@ -7435,13 +7578,12 @@ except ZeroDivisionError:
                 let tries = 0;
                 const timer = setInterval(() => {
                     tries++;
-                    if (checkPrism() || tries > 40) {
+                    if (checkPrism()) {
                         clearInterval(timer);
-                        if (tries > 40) {
-                            const bar = document.querySelector('.status-bar');
-                            if (bar) bar.insertAdjacentHTML('beforeend',
-                                '<span style="color:var(--danger);">' + t('warnPrism') + '</span>');
-                        }
+                        clearPrismWarn();
+                    } else if (tries > 40) {
+                        clearInterval(timer);
+                        showPrismWarn();
                     }
                 }, 300);
             }

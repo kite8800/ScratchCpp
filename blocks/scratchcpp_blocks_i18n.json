@@ -2,7 +2,7 @@
   {
     "id": "cat-include",
     "category": "Includes / Preprocessor",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "头文件 / 预处理"
     },
     "icon": "file-import",
@@ -194,7 +194,7 @@
   {
     "id": "cat-function",
     "category": "Functions",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "函数"
     },
     "icon": "code",
@@ -316,7 +316,7 @@
   {
     "id": "cat-var",
     "category": "Variables",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "变量"
     },
     "icon": "database",
@@ -504,7 +504,7 @@
   {
     "id": "cat-control",
     "category": "Control Flow",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "控制流"
     },
     "icon": "code-branch",
@@ -615,7 +615,7 @@
   {
     "id": "cat-io",
     "category": "Common Functions",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "常用函数"
     },
     "icon": "terminal",
@@ -700,7 +700,7 @@
   {
     "id": "cat-math",
     "category": "Math",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "数学"
     },
     "icon": "calculator",
@@ -904,7 +904,7 @@
   {
     "id": "cat-string",
     "category": "Strings",
-    "category-i18n": {
+    "category_i18n": {
       "zh": "字符串"
     },
     "icon": "font",
