@@ -1,0 +1,416 @@
+[
+    {
+        "id": "cat-py-llm-alg-tokenize",
+        "category": "LLM / ALG / Tokenize",
+        "category_i18n": { "zh": "LLM / 算法 / 分词" },
+        "icon": "font",
+        "collapsed": false,
+        "subgroups": {
+            "build": [
+                { "id": "py-llm-alg-tok-build-import", "icon": "file-import", "label": "from tokenizers import Tokenizer", "code": "from tokenizers import Tokenizer", "mode": "line" },
+                { "id": "py-llm-alg-tok-build-trainers", "icon": "file-import", "label": "from tokenizers import trainers", "code": "from tokenizers import trainers", "mode": "line" },
+                { "id": "py-llm-alg-tok-build-load", "icon": "font", "label": "tokenizer = Tokenizer.from_file(\"tokenizer.json\")", "code": "tokenizer = Tokenizer.from_file(\"tokenizer.json\")", "mode": "line" },
+                { "id": "py-llm-alg-tok-build-bpe", "icon": "font", "label": "tokenizer = Tokenizer(models.BPE())", "code": "tokenizer = Tokenizer(models.BPE())", "mode": "line" },
+                { "id": "py-llm-alg-tok-build-trainer", "icon": "tools", "label": "trainer = trainers.BpeTrainer(vocab_size=32000)", "code": "trainer = trainers.BpeTrainer(vocab_size=32000)", "mode": "line" },
+                { "id": "py-llm-alg-tok-build-train", "icon": "play", "label": "tokenizer.train_from_iterator(texts, trainer)", "code": "tokenizer.train_from_iterator(texts, trainer)", "mode": "line" }
+            ],
+            "special": [
+                { "id": "py-llm-alg-tok-special-import", "icon": "file-import", "label": "from tokenizers import Tokenizer", "code": "from tokenizers import Tokenizer", "mode": "line" },
+                { "id": "py-llm-alg-tok-special-add", "icon": "hashtag", "label": "tokenizer.add_special_tokens([\"<pad>\", \"<eos>\"])", "code": "tokenizer.add_special_tokens([\"<pad>\", \"<eos>\"])", "mode": "line" },
+                { "id": "py-llm-alg-tok-special-resize", "icon": "exchange-alt", "label": "model.resize_token_embeddings(len(tokenizer))", "code": "model.resize_token_embeddings(len(tokenizer))", "mode": "line" }
+            ],
+            "text": [
+                { "id": "py-llm-alg-tok-text-import", "icon": "file-import", "label": "from transformers import AutoTokenizer", "code": "from transformers import AutoTokenizer", "mode": "line" },
+                { "id": "py-llm-alg-tok-text-encode", "icon": "code", "label": "ids = tokenizer.encode(text)", "code": "ids = tokenizer.encode(text)", "mode": "line" },
+                { "id": "py-llm-alg-tok-text-decode", "icon": "code", "label": "text = tokenizer.decode(ids)", "code": "text = tokenizer.decode(ids)", "mode": "line" },
+                { "id": "py-llm-alg-tok-text-truncate", "icon": "cut", "label": "ids = tokenizer.encode(text, truncation=True, max_length=512)", "code": "ids = tokenizer.encode(text, truncation=True, max_length=512)", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-embed",
+        "category": "LLM / ALG / Embedding",
+        "category_i18n": { "zh": "LLM / 算法 / 嵌入" },
+        "icon": "database",
+        "collapsed": false,
+        "subgroups": {
+            "token": [
+                { "id": "py-llm-alg-emb-token-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-emb-token-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-emb-token-emb", "icon": "database", "label": "emb = nn.Embedding(vocab_size, d_model)", "code": "emb = nn.Embedding(vocab_size, d_model)", "mode": "line" },
+                { "id": "py-llm-alg-emb-token-add", "icon": "plus", "label": "x = emb(tokens) + pos(positions)", "code": "x = emb(tokens) + pos(positions)", "mode": "exp" }
+            ],
+            "pos": [
+                { "id": "py-llm-alg-emb-pos-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-emb-pos-abs", "icon": "location-arrow", "label": "pos = nn.Embedding(max_len, d_model)", "code": "pos = nn.Embedding(max_len, d_model)", "mode": "line" },
+                { "id": "py-llm-alg-emb-pos-rope", "icon": "rotate-left", "label": "class RoPE(nn.Module): ...", "code": "class RoPE(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-emb-pos-alibi", "icon": "ruler-horizontal", "label": "class ALiBi(nn.Module): ...", "code": "class ALiBi(nn.Module):\n    ", "mode": "line" }
+            ],
+            "init": [
+                { "id": "py-llm-alg-emb-init-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-emb-init-normal", "icon": "magic", "label": "nn.init.normal_(emb.weight, std=0.02)", "code": "nn.init.normal_(emb.weight, std=0.02)", "mode": "line" },
+                { "id": "py-llm-alg-emb-init-scale", "icon": "ruler-horizontal", "label": "x = x * (d_model ** 0.5)", "code": "x = x * (d_model ** 0.5)", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-attention",
+        "category": "LLM / ALG / Attention",
+        "category_i18n": { "zh": "LLM / 算法 / 注意力" },
+        "icon": "cubes",
+        "collapsed": false,
+        "subgroups": {
+            "variants": [
+                { "id": "py-llm-alg-att-var-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-att-var-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-att-var-mha", "icon": "cubes", "label": "class MHA(nn.Module): ...", "code": "class MHA(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-att-var-mqa", "icon": "cubes", "label": "class MQA(nn.Module): ...", "code": "class MQA(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-att-var-gqa", "icon": "cubes", "label": "class GQA(nn.Module): ...", "code": "class GQA(nn.Module):\n    ", "mode": "line" }
+            ],
+            "mask": [
+                { "id": "py-llm-alg-att-mask-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-att-mask-causal", "icon": "code-branch", "label": "mask = torch.triu(torch.ones(L, L), diagonal=1).bool()", "code": "mask = torch.triu(torch.ones(L, L), diagonal=1).bool()", "mode": "line" },
+                { "id": "py-llm-alg-att-mask-window", "icon": "ruler-horizontal", "label": "sliding_window = 4096", "code": "sliding_window = 4096", "mode": "exp" }
+            ],
+            "kernel": [
+                { "id": "py-llm-alg-att-ker-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-att-ker-softmax", "icon": "percent", "label": "attn = torch.softmax(scores / scale, dim=-1)", "code": "attn = torch.softmax(scores / scale, dim=-1)", "mode": "line" },
+                { "id": "py-llm-alg-att-ker-flash-import", "icon": "file-import", "label": "from flash_attn import flash_attn_func", "code": "from flash_attn import flash_attn_func", "mode": "line" },
+                { "id": "py-llm-alg-att-ker-flash-call", "icon": "bolt", "label": "out = flash_attn_func(q, k, v, causal=True)", "code": "out = flash_attn_func(q, k, v, causal=True)", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-layer",
+        "category": "LLM / ALG / Layer",
+        "category_i18n": { "zh": "LLM / 算法 / 网络层" },
+        "icon": "cubes",
+        "collapsed": false,
+        "subgroups": {
+            "ffn": [
+                { "id": "py-llm-alg-lay-ffn-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-lay-ffn-mlp", "icon": "cubes", "label": "class MLP(nn.Module): ...", "code": "class MLP(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-lay-ffn-swiglu", "icon": "cubes", "label": "class SwiGLU(nn.Module): ...", "code": "class SwiGLU(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-lay-ffn-act", "icon": "bolt", "label": "from torch.nn import GELU, SiLU", "code": "from torch.nn import GELU, SiLU", "mode": "line" }
+            ],
+            "norm": [
+                { "id": "py-llm-alg-lay-norm-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-lay-norm-rms", "icon": "cubes", "label": "class RMSNorm(nn.Module): ...", "code": "class RMSNorm(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-lay-norm-ln", "icon": "cubes", "label": "norm = nn.LayerNorm(d_model)", "code": "norm = nn.LayerNorm(d_model)", "mode": "line" }
+            ],
+            "residual": [
+                { "id": "py-llm-alg-lay-res-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-lay-res-add", "icon": "plus", "label": "x = x + attn(norm(x))", "code": "x = x + attn(norm(x))", "mode": "exp" },
+                { "id": "py-llm-alg-lay-res-prenorm", "icon": "arrow-up", "label": "x = x + mlp(norm(x))", "code": "x = x + mlp(norm(x))", "mode": "exp" }
+            ],
+            "moe": [
+                { "id": "py-llm-alg-lay-moe-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-lay-moe-cls", "icon": "cubes", "label": "class MoE(nn.Module): ...", "code": "class MoE(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-lay-moe-topk", "icon": "ruler-horizontal", "label": "top_k = 2", "code": "top_k = 2", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-arch",
+        "category": "LLM / ALG / Architecture",
+        "category_i18n": { "zh": "LLM / 算法 / 结构" },
+        "icon": "cubes",
+        "collapsed": false,
+        "subgroups": {
+            "config": [
+                { "id": "py-llm-alg-arch-cfg-import", "icon": "file-import", "label": "from transformers import AutoConfig", "code": "from transformers import AutoConfig", "mode": "line" },
+                { "id": "py-llm-alg-arch-cfg-load", "icon": "tools", "label": "config = AutoConfig.from_pretrained(\"gpt2\")", "code": "config = AutoConfig.from_pretrained(\"gpt2\")", "mode": "line" },
+                { "id": "py-llm-alg-arch-cfg-layer", "icon": "ruler-horizontal", "label": "config.n_layer = 12", "code": "config.n_layer = 12", "mode": "exp" },
+                { "id": "py-llm-alg-arch-cfg-head", "icon": "ruler-horizontal", "label": "config.n_head = 8", "code": "config.n_head = 8", "mode": "exp" },
+                { "id": "py-llm-alg-arch-cfg-hidden", "icon": "ruler-horizontal", "label": "config.hidden_size = 768", "code": "config.hidden_size = 768", "mode": "exp" }
+            ],
+            "build": [
+                { "id": "py-llm-alg-arch-build-import", "icon": "file-import", "label": "from transformers import AutoModelForCausalLM", "code": "from transformers import AutoModelForCausalLM", "mode": "line" },
+                { "id": "py-llm-alg-arch-build-model", "icon": "cubes", "label": "model = AutoModelForCausalLM.from_config(config)", "code": "model = AutoModelForCausalLM.from_config(config)", "mode": "line" },
+                { "id": "py-llm-alg-arch-build-tie", "icon": "link", "label": "model.lm_head.weight = model.transformer.wte.weight", "code": "model.lm_head.weight = model.transformer.wte.weight", "mode": "line" }
+            ],
+            "stack": [
+                { "id": "py-llm-alg-arch-stack-import", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-arch-stack-iter", "icon": "redo", "label": "for layer in model.transformer.h:", "code": "for layer in model.transformer.h:\n    ", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-forward",
+        "category": "LLM / ALG / Forward",
+        "category_i18n": { "zh": "LLM / 算法 / 前向与损失" },
+        "icon": "code",
+        "collapsed": false,
+        "subgroups": {
+            "forward": [
+                { "id": "py-llm-alg-fwd-def-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-fwd-def", "icon": "code", "label": "def forward(self, x): ...", "code": "def forward(self, x):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-fwd-logits", "icon": "equals", "label": "logits = self.lm_head(hidden)", "code": "logits = self.lm_head(hidden)", "mode": "exp" }
+            ],
+            "loss": [
+                { "id": "py-llm-alg-fwd-loss-import", "icon": "file-import", "label": "import torch.nn.functional as F", "code": "import torch.nn.functional as F", "mode": "line" },
+                { "id": "py-llm-alg-fwd-loss-ce", "icon": "calculator", "label": "loss = F.cross_entropy(logits.view(-1, V), labels.view(-1))", "code": "loss = F.cross_entropy(logits.view(-1, V), labels.view(-1))", "mode": "line" },
+                { "id": "py-llm-alg-fwd-loss-ls", "icon": "calculator", "label": "loss = F.cross_entropy(logits, labels, label_smoothing=0.1)", "code": "loss = F.cross_entropy(logits, labels, label_smoothing=0.1)", "mode": "line" },
+                { "id": "py-llm-alg-fwd-loss-kl", "icon": "calculator", "label": "loss = F.kl_div(log_probs, target_probs)", "code": "loss = F.kl_div(log_probs, target_probs)", "mode": "line" },
+                { "id": "py-llm-alg-fwd-loss-contrast", "icon": "equals", "label": "loss = contrastive_loss(z1, z2)", "code": "loss = contrastive_loss(z1, z2)", "mode": "exp" }
+            ],
+            "backward": [
+                { "id": "py-llm-alg-fwd-bwd-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-fwd-bwd-call", "icon": "rotate-left", "label": "loss.backward()", "code": "loss.backward()", "mode": "line" },
+                { "id": "py-llm-alg-fwd-bwd-grad", "icon": "calculator", "label": "grad = torch.autograd.grad(loss, emb)[0]", "code": "grad = torch.autograd.grad(loss, emb)[0]", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-pool",
+        "category": "LLM / ALG / Pool",
+        "category_i18n": { "zh": "LLM / 算法 / 池化" },
+        "icon": "compact",
+        "collapsed": false,
+        "subgroups": {
+            "token": [
+                { "id": "py-llm-alg-pool-tok-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-pool-tok-mean", "icon": "calculator", "label": "vec = hidden.mean(dim=1)", "code": "vec = hidden.mean(dim=1)", "mode": "line" },
+                { "id": "py-llm-alg-pool-tok-cls", "icon": "hashtag", "label": "vec = hidden[:, 0]", "code": "vec = hidden[:, 0]", "mode": "line" },
+                { "id": "py-llm-alg-pool-tok-last", "icon": "arrow-right", "label": "vec = hidden[:, -1]", "code": "vec = hidden[:, -1]", "mode": "line" },
+                { "id": "py-llm-alg-pool-tok-max", "icon": "arrow-up", "label": "vec = hidden.max(dim=1).values", "code": "vec = hidden.max(dim=1).values", "mode": "line" }
+            ],
+            "weighted": [
+                { "id": "py-llm-alg-pool-wgt-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-pool-wgt-mask", "icon": "ruler-horizontal", "label": "mask = attention_mask.unsqueeze(-1)", "code": "mask = attention_mask.unsqueeze(-1)", "mode": "exp" },
+                { "id": "py-llm-alg-pool-wgt-mean", "icon": "calculator", "label": "vec = (hidden * mask).sum(1) / mask.sum(1)", "code": "vec = (hidden * mask).sum(1) / mask.sum(1)", "mode": "line" }
+            ],
+            "attn": [
+                { "id": "py-llm-alg-pool-att-import", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-pool-att-cls", "icon": "cubes", "label": "class AttentionPooling(nn.Module): ...", "code": "class AttentionPooling(nn.Module):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-pool-att-weight", "icon": "percent", "label": "w = torch.softmax(scores, dim=1)", "code": "w = torch.softmax(scores, dim=1)", "mode": "exp" }
+            ],
+            "norm": [
+                { "id": "py-llm-alg-pool-nrm-import", "icon": "file-import", "label": "import torch.nn.functional as F", "code": "import torch.nn.functional as F", "mode": "line" },
+                { "id": "py-llm-alg-pool-nrm-l2", "icon": "ruler-horizontal", "label": "vec = F.normalize(vec, dim=-1)", "code": "vec = F.normalize(vec, dim=-1)", "mode": "line" },
+                { "id": "py-llm-alg-pool-nrm-matmul", "icon": "times", "label": "sim = torch.matmul(a, b.T)", "code": "sim = torch.matmul(a, b.T)", "mode": "line" },
+                { "id": "py-llm-alg-pool-nrm-cosine", "icon": "equals", "label": "sim = F.cosine_similarity(a, b, dim=-1)", "code": "sim = F.cosine_similarity(a, b, dim=-1)", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-decode",
+        "category": "LLM / ALG / Decode",
+        "category_i18n": { "zh": "LLM / 算法 / 解码" },
+        "icon": "location-arrow",
+        "collapsed": false,
+        "subgroups": {
+            "search": [
+                { "id": "py-llm-alg-dec-sch-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-dec-sch-greedy", "icon": "location-arrow", "label": "out = model.generate(**inputs, do_sample=False)", "code": "out = model.generate(**inputs, do_sample=False)", "mode": "line" },
+                { "id": "py-llm-alg-dec-sch-beam", "icon": "arrow-right", "label": "out = model.generate(**inputs, num_beams=4)", "code": "out = model.generate(**inputs, num_beams=4)", "mode": "line" }
+            ],
+            "sample": [
+                { "id": "py-llm-alg-dec-smp-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-dec-smp-topk", "icon": "arrow-up", "label": "out = model.generate(**inputs, top_k=50)", "code": "out = model.generate(**inputs, top_k=50)", "mode": "line" },
+                { "id": "py-llm-alg-dec-smp-topp", "icon": "percent", "label": "out = model.generate(**inputs, top_p=0.9)", "code": "out = model.generate(**inputs, top_p=0.9)", "mode": "line" },
+                { "id": "py-llm-alg-dec-smp-temp", "icon": "sun", "label": "out = model.generate(**inputs, temperature=0.7)", "code": "out = model.generate(**inputs, temperature=0.7)", "mode": "line" },
+                { "id": "py-llm-alg-dec-smp-temp-param", "icon": "sun", "label": "temperature=0.7", "code": "temperature=0.7", "mode": "exp" }
+            ],
+            "custom": [
+                { "id": "py-llm-alg-dec-cus-import", "icon": "file-import", "label": "from transformers import LogitsProcessor", "code": "from transformers import LogitsProcessor", "mode": "line" },
+                { "id": "py-llm-alg-dec-cus-cls", "icon": "code", "label": "class MyLogitsProcessor(LogitsProcessor): ...", "code": "class MyLogitsProcessor(LogitsProcessor):\n    ", "mode": "line" },
+                { "id": "py-llm-alg-dec-cus-spec", "icon": "bolt", "label": "from transformers import AssistedGenerationCandidateGenerator", "code": "from transformers import AssistedGenerationCandidateGenerator", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-optim",
+        "category": "LLM / ALG / Optim",
+        "category_i18n": { "zh": "LLM / 算法 / 优化" },
+        "icon": "tools",
+        "collapsed": false,
+        "subgroups": {
+            "optimizer": [
+                { "id": "py-llm-alg-opt-opt-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-opt-opt-import-adamw", "icon": "file-import", "label": "from torch.optim import AdamW", "code": "from torch.optim import AdamW", "mode": "line" },
+                { "id": "py-llm-alg-opt-opt-adamw", "icon": "tools", "label": "optimizer = AdamW(model.parameters(), lr=1e-4)", "code": "optimizer = AdamW(model.parameters(), lr=1e-4)", "mode": "line" }
+            ],
+            "schedule": [
+                { "id": "py-llm-alg-opt-sch-import", "icon": "file-import", "label": "from transformers import get_linear_schedule_with_warmup", "code": "from transformers import get_linear_schedule_with_warmup", "mode": "line" },
+                { "id": "py-llm-alg-opt-sch-linear", "icon": "chart-line", "label": "scheduler = get_linear_schedule_with_warmup(optimizer, 100, 1000)", "code": "scheduler = get_linear_schedule_with_warmup(optimizer, 100, 1000)", "mode": "line" },
+                { "id": "py-llm-alg-opt-sch-clip", "icon": "cut", "label": "torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)", "code": "torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)", "mode": "line" }
+            ],
+            "amp": [
+                { "id": "py-llm-alg-opt-amp-import", "icon": "file-import", "label": "from torch.cuda.amp import autocast, GradScaler", "code": "from torch.cuda.amp import autocast, GradScaler", "mode": "line" },
+                { "id": "py-llm-alg-opt-amp-autocast", "icon": "bolt", "label": "with autocast(): ...", "code": "with autocast():\n    ", "mode": "line" },
+                { "id": "py-llm-alg-opt-amp-scaler", "icon": "calculator", "label": "scaler.scale(loss).backward()", "code": "scaler.scale(loss).backward()", "mode": "line" }
+            ],
+            "distributed": [
+                { "id": "py-llm-alg-opt-dis-import", "icon": "file-import", "label": "from torch.nn.parallel import DistributedDataParallel", "code": "from torch.nn.parallel import DistributedDataParallel", "mode": "line" },
+                { "id": "py-llm-alg-opt-dis-accum", "icon": "cubes", "label": "loss = loss / accum_steps", "code": "loss = loss / accum_steps", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-align",
+        "category": "LLM / ALG / Align",
+        "category_i18n": { "zh": "LLM / 算法 / 对齐" },
+        "icon": "balance-scale",
+        "collapsed": false,
+        "subgroups": {
+            "sft": [
+                { "id": "py-llm-alg-aln-sft-import-trainer", "icon": "file-import", "label": "from transformers import Trainer", "code": "from transformers import Trainer", "mode": "line" },
+                { "id": "py-llm-alg-aln-sft-trainer", "icon": "tools", "label": "trainer = Trainer(model=model, args=args, train_dataset=ds)", "code": "trainer = Trainer(model=model, args=args, train_dataset=ds)", "mode": "line" },
+                { "id": "py-llm-alg-aln-sft-import-trl", "icon": "file-import", "label": "from trl import SFTTrainer", "code": "from trl import SFTTrainer", "mode": "line" }
+            ],
+            "lora": [
+                { "id": "py-llm-alg-aln-lora-import-peft", "icon": "file-import", "label": "from peft import LoraConfig, get_peft_model", "code": "from peft import LoraConfig, get_peft_model", "mode": "line" },
+                { "id": "py-llm-alg-aln-lora-model", "icon": "cubes", "label": "model = get_peft_model(model, LoraConfig(r=8))", "code": "model = get_peft_model(model, LoraConfig(r=8))", "mode": "line" },
+                { "id": "py-llm-alg-aln-lora-qlora", "icon": "file-import", "label": "from peft import prepare_model_for_kbit_training", "code": "from peft import prepare_model_for_kbit_training", "mode": "line" }
+            ],
+            "pref": [
+                { "id": "py-llm-alg-aln-pref-import-dpo", "icon": "file-import", "label": "from trl import DPOTrainer", "code": "from trl import DPOTrainer", "mode": "line" },
+                { "id": "py-llm-alg-aln-pref-import-orpo", "icon": "file-import", "label": "from trl import ORPOTrainer", "code": "from trl import ORPOTrainer", "mode": "line" },
+                { "id": "py-llm-alg-aln-pref-import-kto", "icon": "file-import", "label": "from trl import KTOTrainer", "code": "from trl import KTOTrainer", "mode": "line" }
+            ],
+            "rl": [
+                { "id": "py-llm-alg-aln-rl-import-ppo", "icon": "file-import", "label": "from trl import PPOTrainer", "code": "from trl import PPOTrainer", "mode": "line" },
+                { "id": "py-llm-alg-aln-rl-reward", "icon": "star", "label": "from trl import RewardTrainer", "code": "from trl import RewardTrainer", "mode": "line" }
+            ],
+            "distill": [
+                { "id": "py-llm-alg-aln-dis-import", "icon": "file-import", "label": "import torch.nn.functional as F", "code": "import torch.nn.functional as F", "mode": "line" },
+                { "id": "py-llm-alg-aln-dis-kd", "icon": "exchange-alt", "label": "kd_loss = alpha * ce_loss + (1 - alpha) * kl_loss", "code": "kd_loss = alpha * ce_loss + (1 - alpha) * kl_loss", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-quant",
+        "category": "LLM / ALG / Quant",
+        "category_i18n": { "zh": "LLM / 算法 / 量化" },
+        "icon": "compact",
+        "collapsed": false,
+        "subgroups": {
+            "bnb": [
+                { "id": "py-llm-alg-qnt-bnb-import", "icon": "file-import", "label": "from transformers import BitsAndBytesConfig", "code": "from transformers import BitsAndBytesConfig", "mode": "line" },
+                { "id": "py-llm-alg-qnt-bnb-4", "icon": "compact", "label": "bnb = BitsAndBytesConfig(load_in_4bit=True)", "code": "bnb = BitsAndBytesConfig(load_in_4bit=True)", "mode": "line" },
+                { "id": "py-llm-alg-qnt-bnb-8", "icon": "compact", "label": "bnb = BitsAndBytesConfig(load_in_8bit=True)", "code": "bnb = BitsAndBytesConfig(load_in_8bit=True)", "mode": "line" }
+            ],
+            "format": [
+                { "id": "py-llm-alg-qnt-fmt-gptq", "icon": "file-import", "label": "from auto_gptq import AutoGPTQForCausalLM", "code": "from auto_gptq import AutoGPTQForCausalLM", "mode": "line" },
+                { "id": "py-llm-alg-qnt-fmt-awq", "icon": "file-import", "label": "from awq import AutoAWQForCausalLM", "code": "from awq import AutoAWQForCausalLM", "mode": "line" },
+                { "id": "py-llm-alg-qnt-fmt-gguf", "icon": "file-import", "label": "from llama_cpp import Llama", "code": "from llama_cpp import Llama", "mode": "line" },
+                { "id": "py-llm-alg-qnt-fmt-gguf-load", "icon": "compact", "label": "llm = Llama(model_path=\"model.gguf\")", "code": "llm = Llama(model_path=\"model.gguf\")", "mode": "line" }
+            ],
+            "prune": [
+                { "id": "py-llm-alg-qnt-prn-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-qnt-prn-call", "icon": "cut", "label": "pruned = torch.nn.utils.prune.l1_unstructured(...)", "code": "pruned = torch.nn.utils.prune.l1_unstructured(module, name=\"weight\", amount=0.3)", "mode": "line" },
+                { "id": "py-llm-alg-qnt-prn-save", "icon": "save", "label": "torch.save(model.state_dict(), \"out.pt\")", "code": "torch.save(model.state_dict(), \"out.pt\")", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-analysis",
+        "category": "LLM / ALG / Analysis",
+        "category_i18n": { "zh": "LLM / 算法 / 分析" },
+        "icon": "search",
+        "collapsed": false,
+        "subgroups": {
+            "attention": [
+                { "id": "py-llm-alg-ana-att-import-plt", "icon": "file-import", "label": "import matplotlib.pyplot as plt", "code": "import matplotlib.pyplot as plt", "mode": "line" },
+                { "id": "py-llm-alg-ana-att-take", "icon": "search", "label": "attn = outputs.attentions[0]", "code": "attn = outputs.attentions[0]", "mode": "exp" },
+                { "id": "py-llm-alg-ana-att-imshow", "icon": "chart-line", "label": "plt.imshow(attn[0, 0].cpu())", "code": "plt.imshow(attn[0, 0].cpu())", "mode": "line" },
+                { "id": "py-llm-alg-ana-att-save", "icon": "save", "label": "plt.savefig(\"attn.png\")", "code": "plt.savefig(\"attn.png\")", "mode": "line" }
+            ],
+            "embedding": [
+                { "id": "py-llm-alg-ana-emb-import-pca", "icon": "file-import", "label": "from sklearn.decomposition import PCA", "code": "from sklearn.decomposition import PCA", "mode": "line" },
+                { "id": "py-llm-alg-ana-emb-pca", "icon": "chart-line", "label": "X = PCA(n_components=2).fit_transform(hidden)", "code": "X = PCA(n_components=2).fit_transform(hidden)", "mode": "line" },
+                { "id": "py-llm-alg-ana-emb-scatter", "icon": "chart-line", "label": "plt.scatter(X[:, 0], X[:, 1])", "code": "plt.scatter(X[:, 0], X[:, 1])", "mode": "line" },
+                { "id": "py-llm-alg-ana-emb-pool", "icon": "calculator", "label": "vec = hidden.mean(dim=1)", "code": "vec = hidden.mean(dim=1)", "mode": "line" }
+            ],
+            "probe": [
+                { "id": "py-llm-alg-ana-prb-import-nn", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-ana-prb-linear", "icon": "search", "label": "probe = nn.Linear(hidden_size, n_classes)", "code": "probe = nn.Linear(hidden_size, n_classes)", "mode": "line" }
+            ],
+            "attribution": [
+                { "id": "py-llm-alg-ana-atr-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-ana-atr-grad", "icon": "calculator", "label": "grad = torch.autograd.grad(loss, emb)[0]", "code": "grad = torch.autograd.grad(loss, emb)[0]", "mode": "line" },
+                { "id": "py-llm-alg-ana-atr-importance", "icon": "calculator", "label": "importance = (grad * emb).sum(-1)", "code": "importance = (grad * emb).sum(-1)", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-experiment",
+        "category": "LLM / ALG / Experiment",
+        "category_i18n": { "zh": "LLM / 算法 / 实验" },
+        "icon": "chart-line",
+        "collapsed": false,
+        "subgroups": {
+            "seed": [
+                { "id": "py-llm-alg-exp-seed-import-random", "icon": "file-import", "label": "import random", "code": "import random", "mode": "line" },
+                { "id": "py-llm-alg-exp-seed-import-numpy", "icon": "file-import", "label": "import numpy as np", "code": "import numpy as np", "mode": "line" },
+                { "id": "py-llm-alg-exp-seed-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-exp-seed-set", "icon": "rotate-left", "label": "random.seed(42); np.random.seed(42); torch.manual_seed(42)", "code": "random.seed(42)\nnp.random.seed(42)\ntorch.manual_seed(42)", "mode": "line" }
+            ],
+            "config": [
+                { "id": "py-llm-alg-exp-cfg-import", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-llm-alg-exp-cfg-dict", "icon": "tools", "label": "config = {\"lr\": 1e-4, \"bs\": 8}", "code": "config = {\"lr\": 1e-4, \"bs\": 8}", "mode": "line" },
+                { "id": "py-llm-alg-exp-cfg-dumps", "icon": "database", "label": "text = json.dumps(config, ensure_ascii=False)", "code": "text = json.dumps(config, ensure_ascii=False)", "mode": "line" }
+            ],
+            "grid": [
+                { "id": "py-llm-alg-exp-grd-import", "icon": "file-import", "label": "import itertools", "code": "import itertools", "mode": "line" },
+                { "id": "py-llm-alg-exp-grd-lr", "icon": "redo", "label": "for lr in [1e-5, 2e-5, 1e-4]: ...", "code": "for lr in [1e-5, 2e-5, 1e-4]:\n    ", "mode": "line" },
+                { "id": "py-llm-alg-exp-grd-bs", "icon": "redo", "label": "for bs in [8, 16]: ...", "code": "for bs in [8, 16]:\n    ", "mode": "line" }
+            ],
+            "track": [
+                { "id": "py-llm-alg-exp-trk-import", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-llm-alg-exp-trk-append", "icon": "list", "label": "results.append({\"lr\": lr, \"bs\": bs, \"acc\": acc})", "code": "results.append({\"lr\": lr, \"bs\": bs, \"acc\": acc})", "mode": "line" },
+                { "id": "py-llm-alg-exp-trk-dumps", "icon": "database", "label": "text = json.dumps(results, ensure_ascii=False)", "code": "text = json.dumps(results, ensure_ascii=False)", "mode": "line" },
+                { "id": "py-llm-alg-exp-trk-compare", "icon": "equals", "label": "same = abs(acc_a - acc_b) < 0.01", "code": "same = abs(acc_a - acc_b) < 0.01", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-example",
+        "category": "LLM / ALG / Example",
+        "category_i18n": { "zh": "LLM / 算法 / 示例" },
+        "icon": "play",
+        "collapsed": false,
+        "subgroups": {
+            "model / min-gpt": [
+                { "id": "py-llm-alg-ex-min-gpt", "icon": "cubes", "label": "class MiniGPT(nn.Module): ...", "code": "import torch\nimport torch.nn as nn\n\nclass MiniGPT(nn.Module):\n    def __init__(self, vocab_size=1000, d_model=256, n_head=4, n_layer=4):\n        super().__init__()\n        self.emb = nn.Embedding(vocab_size, d_model)\n        self.blocks = nn.ModuleList([nn.TransformerEncoderLayer(d_model, n_head, batch_first=True) for _ in range(n_layer)])\n        self.lm_head = nn.Linear(d_model, vocab_size)\n\n    def forward(self, x, labels=None):\n        h = self.emb(x)\n        mask = torch.triu(torch.ones(x.size(1), x.size(1)), diagonal=1).bool()\n        for block in self.blocks:\n            h = block(h, src_mask=mask)\n        logits = self.lm_head(h)\n        loss = None\n        if labels is not None:\n            loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))\n        return logits, loss", "mode": "line" }
+            ],
+            "model / gqa": [
+                { "id": "py-llm-alg-ex-gqa", "icon": "cubes", "label": "class GQA(nn.Module): ...", "code": "import torch\nimport torch.nn as nn\n\nclass GQA(nn.Module):\n    def __init__(self, d_model=256, n_head=8, n_kv_head=2):\n        super().__init__()\n        self.n_head, self.n_kv_head = n_head, n_kv_head\n        self.q = nn.Linear(d_model, d_model)\n        self.k = nn.Linear(d_model, d_model // n_head * n_kv_head)\n        self.v = nn.Linear(d_model, d_model // n_head * n_kv_head)\n        self.o = nn.Linear(d_model, d_model)\n\n    def forward(self, x):\n        B, L, D = x.shape\n        q = self.q(x).view(B, L, self.n_head, -1).transpose(1, 2)\n        k = self.k(x).view(B, L, self.n_kv_head, -1).transpose(1, 2)\n        v = self.v(x).view(B, L, self.n_kv_head, -1).transpose(1, 2)\n        k = k.repeat_interleave(self.n_head // self.n_kv_head, dim=1)\n        v = v.repeat_interleave(self.n_head // self.n_kv_head, dim=1)\n        attn = torch.softmax(q @ k.transpose(-2, -1) / (q.size(-1) ** 0.5), dim=-1)\n        out = (attn @ v).transpose(1, 2).reshape(B, L, D)\n        return self.o(out)", "mode": "line" }
+            ],
+            "model / rope": [
+                { "id": "py-llm-alg-ex-rope", "icon": "rotate-left", "label": "class RoPE(nn.Module): ...", "code": "import torch\nimport torch.nn as nn\n\nclass RoPE(nn.Module):\n    def __init__(self, dim):\n        super().__init__()\n        self.dim = dim\n\n    def forward(self, x):\n        L = x.size(1)\n        inv_freq = 1.0 / (10000 ** (torch.arange(0, self.dim, 2).float() / self.dim))\n        freqs = torch.outer(torch.arange(L).float(), inv_freq)\n        cos = torch.cos(freqs)[None, :, None, :]\n        sin = torch.sin(freqs)[None, :, None, :]\n        x1, x2 = x[..., ::2], x[..., 1::2]\n        return torch.stack([x1 * cos - x2 * sin, x1 * sin + x2 * cos], dim=-1).flatten(-2)", "mode": "line" }
+            ],
+            "model / moe": [
+                { "id": "py-llm-alg-ex-moe", "icon": "cubes", "label": "class MoE(nn.Module): ...", "code": "import torch\nimport torch.nn as nn\n\nclass MoE(nn.Module):\n    def __init__(self, d_model=256, n_expert=4, top_k=2):\n        super().__init__()\n        self.top_k = top_k\n        self.gate = nn.Linear(d_model, n_expert)\n        self.experts = nn.ModuleList([nn.Linear(d_model, d_model) for _ in range(n_expert)])\n\n    def forward(self, x):\n        scores = torch.softmax(self.gate(x), dim=-1)\n        topv, topi = scores.topk(self.top_k, dim=-1)\n        out = torch.zeros_like(x)\n        for k in range(self.top_k):\n            idx = topi[..., k]\n            for e, expert in enumerate(self.experts):\n                mask = (idx == e).unsqueeze(-1)\n                out = out + mask * expert(x) * topv[..., k].unsqueeze(-1)\n        return out", "mode": "line" }
+            ],
+            "model / sentence-encoder": [
+                { "id": "py-llm-alg-ex-sentence-encoder", "icon": "link", "label": "sentence encoder: pool + normalize", "code": "import torch\nimport torch.nn.functional as F\nfrom transformers import AutoModel, AutoTokenizer\n\nmodel = AutoModel.from_pretrained(\"bert-base-uncased\")\ntokenizer = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\n\ndef encode(texts):\n    batch = tokenizer(texts, padding=True, truncation=True, return_tensors=\"pt\")\n    with torch.no_grad():\n        out = model(**batch)\n    hidden = out.last_hidden_state\n    mask = batch[\"attention_mask\"].unsqueeze(-1)\n    vec = (hidden * mask).sum(1) / mask.sum(1)\n    return F.normalize(vec, dim=-1)\n\nvecs = encode([\"hello world\", \"你好世界\"])\nsim = torch.matmul(vecs, vecs.T)\nprint(sim)", "mode": "line" }
+            ],
+            "train / loop": [
+                { "id": "py-llm-alg-ex-train-loop", "icon": "redo", "label": "for epoch in range(epochs): ...", "code": "import torch\n\nmodel = MiniGPT()\noptimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)\ndata = torch.randint(0, 1000, (64, 32))\n\nfor epoch in range(10):\n    for i in range(0, len(data), 8):\n        batch = data[i:i+8]\n        logits, loss = model(batch[:, :-1], labels=batch[:, 1:])\n        optimizer.zero_grad()\n        loss.backward()\n        optimizer.step()\n    print(f\"epoch {epoch} loss {loss.item():.4f}\")", "mode": "line" }
+            ],
+            "train / sft": [
+                { "id": "py-llm-alg-ex-sft", "icon": "bolt", "label": "SFT: Trainer(...).train()", "code": "from datasets import load_dataset\nfrom transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments\n\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\nds = load_dataset(\"json\", data_files=\"data.jsonl\")[\"train\"]\n\ndef tok(ex):\n    return tokenizer(ex[\"text\"], truncation=True, max_length=512)\n\nds = ds.map(tok)\nargs = TrainingArguments(output_dir=\"out\", num_train_epochs=1, per_device_train_batch_size=2)\ntrainer = Trainer(model=model, args=args, train_dataset=ds)\ntrainer.train()\ntrainer.save_model(\"out\")", "mode": "line" }
+            ],
+            "train / lora": [
+                { "id": "py-llm-alg-ex-lora", "icon": "cubes", "label": "LoRA: get_peft_model(...)", "code": "from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments\nfrom peft import LoraConfig, get_peft_model\n\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\nconfig = LoraConfig(r=8, lora_alpha=16, target_modules=[\"c_attn\"])\nmodel = get_peft_model(model, config)\nargs = TrainingArguments(output_dir=\"lora_out\", num_train_epochs=1)\ntrainer = Trainer(model=model, args=args, train_dataset=ds)\ntrainer.train()\nmodel.save_pretrained(\"lora_out\")", "mode": "line" }
+            ],
+            "train / dpo": [
+                { "id": "py-llm-alg-ex-dpo", "icon": "balance-scale", "label": "DPO: DPOTrainer(...).train()", "code": "from datasets import load_dataset\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nfrom trl import DPOTrainer, DPOConfig\n\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\nds = load_dataset(\"json\", data_files=\"pref.jsonl\")[\"train\"]\nargs = DPOConfig(output_dir=\"dpo_out\", beta=0.1)\ntrainer = DPOTrainer(model=model, args=args, train_dataset=ds, tokenizer=tokenizer)\ntrainer.train()", "mode": "line" }
+            ],
+            "train / distill": [
+                { "id": "py-llm-alg-ex-distill", "icon": "exchange-alt", "label": "KD: alpha*CE + (1-alpha)*KL", "code": "import torch\nimport torch.nn.functional as F\nfrom transformers import AutoModelForCausalLM\n\nteacher = AutoModelForCausalLM.from_pretrained(\"gpt2\")\nstudent = AutoModelForCausalLM.from_pretrained(\"gpt2\")\noptimizer = torch.optim.AdamW(student.parameters(), lr=1e-4)\nalpha, T = 0.5, 2.0\n\nfor batch in loader:\n    with torch.no_grad():\n        t_logits = teacher(batch).logits\n    s_logits = student(batch).logits\n    ce = F.cross_entropy(s_logits.view(-1, s_logits.size(-1)), batch.view(-1))\n    kl = F.kl_div(F.log_softmax(s_logits / T, -1), F.softmax(t_logits / T, -1), reduction=\"batchmean\")\n    loss = alpha * ce + (1 - alpha) * kl * T * T\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()", "mode": "line" }
+            ],
+            "train / ppo": [
+                { "id": "py-llm-alg-ex-ppo", "icon": "bolt", "label": "PPO: PPOTrainer(...).step(...)", "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\nfrom trl import PPOTrainer, PPOConfig\n\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\nref_model = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\nconfig = PPOConfig(batch_size=4, learning_rate=1e-5)\ntrainer = PPOTrainer(config=config, model=model, ref_model=ref_model, tokenizer=tokenizer)\n\nfor query in queries:\n    inputs = tokenizer(query, return_tensors=\"pt\")\n    response = trainer.generate(inputs.input_ids, max_new_tokens=32)\n    reward = torch.tensor([score(query, response)])\n    trainer.step([query], [response], [reward])", "mode": "line" }
+            ],
+            "run / generate": [
+                { "id": "py-llm-alg-ex-generate", "icon": "play", "label": "generate: model.generate(...)", "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\nprompt = \"Once upon a time\"\ninputs = tokenizer(prompt, return_tensors=\"pt\")\nout = model.generate(**inputs, max_new_tokens=64, do_sample=True, top_p=0.9)\ntext = tokenizer.decode(out[0], skip_special_tokens=True)\nprint(text)", "mode": "line" }
+            ],
+            "run / eval": [
+                { "id": "py-llm-alg-ex-eval", "icon": "chart-line", "label": "eval: for case in dataset ...", "code": "import json\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\ncases = [json.loads(l) for l in open(\"eval.jsonl\")]\n\nscores = []\nfor case in cases:\n    inputs = tokenizer(case[\"input\"], return_tensors=\"pt\")\n    out = model.generate(**inputs, max_new_tokens=32)\n    text = tokenizer.decode(out[0], skip_special_tokens=True)\n    scores.append(1 if case[\"expected\"] in text else 0)\n\nprint(f\"acc={sum(scores) / len(scores):.2f}\")", "mode": "line" }
+            ]
+        }
+    }
+]

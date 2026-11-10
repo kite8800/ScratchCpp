@@ -1,0 +1,362 @@
+[
+    {
+        "id": "cat-py-llm-tokenizer",
+        "category": "LLM / Tokenizer",
+        "category_i18n": { "zh": "LLM / 分词器" },
+        "icon": "font",
+        "collapsed": false,
+        "subgroups": {
+            "load": [
+                { "id": "py-llm-tok-import", "icon": "file-import", "label": "from transformers import AutoTokenizer", "code": "from transformers import AutoTokenizer", "mode": "line" },
+                { "id": "py-llm-tok-load", "icon": "font", "label": "tokenizer = AutoTokenizer.from_pretrained(\"gpt2\")", "code": "tokenizer = AutoTokenizer.from_pretrained(\"gpt2\")", "mode": "line" }
+            ],
+            "encode": [
+                { "id": "py-llm-tok-encode-import", "icon": "file-import", "label": "from transformers import AutoTokenizer", "code": "from transformers import AutoTokenizer", "mode": "line" },
+                { "id": "py-llm-tok-encode", "icon": "code", "label": "ids = tokenizer.encode(text)", "code": "ids = tokenizer.encode(text)", "mode": "line" },
+                { "id": "py-llm-tok-decode", "icon": "code", "label": "text = tokenizer.decode(ids)", "code": "text = tokenizer.decode(ids)", "mode": "line" },
+                { "id": "py-llm-tok-truncate", "icon": "cut", "label": "ids = tokenizer.encode(text, truncation=True, max_length=512)", "code": "ids = tokenizer.encode(text, truncation=True, max_length=512)", "mode": "line" },
+                { "id": "py-llm-tok-pad", "icon": "ruler-horizontal", "label": "batch = tokenizer(texts, padding=True, return_tensors=\"pt\")", "code": "batch = tokenizer(texts, padding=True, return_tensors=\"pt\")", "mode": "line" }
+            ],
+            "special": [
+                { "id": "py-llm-tok-special-import", "icon": "file-import", "label": "from transformers import AutoTokenizer", "code": "from transformers import AutoTokenizer", "mode": "line" },
+                { "id": "py-llm-tok-bos", "icon": "hashtag", "label": "bos = tokenizer.bos_token_id", "code": "bos = tokenizer.bos_token_id", "mode": "line" },
+                { "id": "py-llm-tok-eos", "icon": "hashtag", "label": "eos = tokenizer.eos_token_id", "code": "eos = tokenizer.eos_token_id", "mode": "line" },
+                { "id": "py-llm-tok-pad-id", "icon": "hashtag", "label": "pad = tokenizer.pad_token_id", "code": "pad = tokenizer.pad_token_id", "mode": "line" },
+                { "id": "py-llm-tok-len-dist", "icon": "chart-line", "label": "lengths = [len(tokenizer.encode(t)) for t in texts]", "code": "lengths = [len(tokenizer.encode(t)) for t in texts]", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-data",
+        "category": "LLM / Data",
+        "category_i18n": { "zh": "LLM / 数据准备" },
+        "icon": "database",
+        "collapsed": false,
+        "subgroups": {
+            "read": [
+                { "id": "py-llm-data-read-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-llm-data-read-import-datasets", "icon": "file-import", "label": "from datasets import load_dataset", "code": "from datasets import load_dataset", "mode": "line" },
+                { "id": "py-llm-data-read-jsonl", "icon": "database", "label": "rows = [json.loads(l) for l in open(\"data.jsonl\")]", "code": "rows = [json.loads(l) for l in open(\"data.jsonl\")]", "mode": "line" },
+                { "id": "py-llm-data-read-dataset", "icon": "database", "label": "ds = load_dataset(\"json\", data_files=\"data.jsonl\")", "code": "ds = load_dataset(\"json\", data_files=\"data.jsonl\")", "mode": "line" },
+                { "id": "py-llm-data-read-csv", "icon": "database", "label": "ds = load_dataset(\"csv\", data_files=\"data.csv\")", "code": "ds = load_dataset(\"csv\", data_files=\"data.csv\")", "mode": "line" }
+            ],
+            "clean": [
+                { "id": "py-llm-data-clean-import", "icon": "file-import", "label": "import re", "code": "import re", "mode": "line" },
+                { "id": "py-llm-data-clean-strip", "icon": "cut", "label": "text = text.strip()", "code": "text = text.strip()", "mode": "line" },
+                { "id": "py-llm-data-clean-regex", "icon": "cut", "label": "text = re.sub(r\"\\s+\", \" \", text)", "code": "text = re.sub(r\"\\s+\", \" \", text)", "mode": "line" },
+                { "id": "py-llm-data-clean-dedup", "icon": "copy", "label": "rows = list({r[\"text\"]: r for r in rows}.values())", "code": "rows = list({r[\"text\"]: r for r in rows}.values())", "mode": "line" },
+                { "id": "py-llm-data-clean-filter", "icon": "filter", "label": "rows = [r for r in rows if len(r[\"text\"]) > 10]", "code": "rows = [r for r in rows if len(r[\"text\"]) > 10]", "mode": "line" },
+                { "id": "py-llm-data-clean-format", "icon": "file-signature", "label": "row = {\"instruction\": q, \"response\": a}", "code": "row = {\"instruction\": q, \"response\": a}", "mode": "line" }
+            ],
+            "split": [
+                { "id": "py-llm-data-split-import", "icon": "file-import", "label": "from datasets import load_dataset", "code": "from datasets import load_dataset", "mode": "line" },
+                { "id": "py-llm-data-split-train", "icon": "sort", "label": "ds = ds.train_test_split(test_size=0.1)", "code": "ds = ds.train_test_split(test_size=0.1)", "mode": "line" },
+                { "id": "py-llm-data-split-get", "icon": "list", "label": "train_ds = ds[\"train\"]", "code": "train_ds = ds[\"train\"]", "mode": "line" },
+                { "id": "py-llm-data-split-val", "icon": "list", "label": "val_ds = ds[\"test\"]", "code": "val_ds = ds[\"test\"]", "mode": "line" },
+                { "id": "py-llm-data-split-save", "icon": "save", "label": "ds.save_to_disk(\"out\")", "code": "ds.save_to_disk(\"out\")", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-local",
+        "category": "LLM / Local Model",
+        "category_i18n": { "zh": "LLM / 本地模型" },
+        "icon": "cubes",
+        "collapsed": false,
+        "subgroups": {
+            "load": [
+                { "id": "py-llm-local-load-import-torch", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-local-load-import-tf", "icon": "file-import", "label": "from transformers import AutoModelForCausalLM, AutoTokenizer", "code": "from transformers import AutoModelForCausalLM, AutoTokenizer", "mode": "line" },
+                { "id": "py-llm-local-load-tokenizer", "icon": "font", "label": "tokenizer = AutoTokenizer.from_pretrained(\"gpt2\")", "code": "tokenizer = AutoTokenizer.from_pretrained(\"gpt2\")", "mode": "line" },
+                { "id": "py-llm-local-load-model", "icon": "cubes", "label": "model = AutoModelForCausalLM.from_pretrained(\"gpt2\")", "code": "model = AutoModelForCausalLM.from_pretrained(\"gpt2\")", "mode": "line" },
+                { "id": "py-llm-local-load-cuda", "icon": "bolt", "label": "model.to(\"cuda\")", "code": "model.to(\"cuda\")", "mode": "line" },
+                { "id": "py-llm-local-load-eval", "icon": "check", "label": "model.eval()", "code": "model.eval()", "mode": "line" }
+            ],
+            "generate": [
+                { "id": "py-llm-local-gen-import", "icon": "file-import", "label": "from transformers import AutoModelForCausalLM, AutoTokenizer", "code": "from transformers import AutoModelForCausalLM, AutoTokenizer", "mode": "line" },
+                { "id": "py-llm-local-gen-inputs", "icon": "keyboard", "label": "inputs = tokenizer(prompt, return_tensors=\"pt\")", "code": "inputs = tokenizer(prompt, return_tensors=\"pt\")", "mode": "line" },
+                { "id": "py-llm-local-gen-out", "icon": "bolt", "label": "out = model.generate(**inputs, max_new_tokens=128)", "code": "out = model.generate(**inputs, max_new_tokens=128)", "mode": "line" },
+                { "id": "py-llm-local-gen-decode", "icon": "quote-left", "label": "text = tokenizer.decode(out[0], skip_special_tokens=True)", "code": "text = tokenizer.decode(out[0], skip_special_tokens=True)", "mode": "line" }
+            ],
+            "param": [
+                { "id": "py-llm-local-param-max", "icon": "ruler-horizontal", "label": "max_new_tokens=128", "code": "max_new_tokens=128", "mode": "exp" },
+                { "id": "py-llm-local-param-sample", "icon": "magic", "label": "do_sample=True", "code": "do_sample=True", "mode": "exp" },
+                { "id": "py-llm-local-param-topk", "icon": "arrow-up", "label": "top_k=50", "code": "top_k=50", "mode": "exp" },
+                { "id": "py-llm-local-param-topp", "icon": "percent", "label": "top_p=0.9", "code": "top_p=0.9", "mode": "exp" },
+                { "id": "py-llm-local-param-temp", "icon": "sun", "label": "temperature=0.7", "code": "temperature=0.7", "mode": "exp" },
+                { "id": "py-llm-local-param-rep", "icon": "rotate-left", "label": "repetition_penalty=1.1", "code": "repetition_penalty=1.1", "mode": "exp" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-infer",
+        "category": "LLM / Inference",
+        "category_i18n": { "zh": "LLM / 推理服务" },
+        "icon": "terminal",
+        "collapsed": false,
+        "subgroups": {
+            "server": [
+                { "id": "py-llm-infer-server-import", "icon": "file-import", "label": "import subprocess", "code": "import subprocess", "mode": "line" },
+                { "id": "py-llm-infer-server-serve", "icon": "play", "label": "subprocess.run([\"ollama\", \"serve\"])", "code": "subprocess.run([\"ollama\", \"serve\"])", "mode": "line" },
+                { "id": "py-llm-infer-server-pull", "icon": "download", "label": "subprocess.run([\"ollama\", \"pull\", \"llama3\"])", "code": "subprocess.run([\"ollama\", \"pull\", \"llama3\"])", "mode": "line" }
+            ],
+            "client": [
+                { "id": "py-llm-infer-client-import", "icon": "file-import", "label": "import requests", "code": "import requests", "mode": "line" },
+                { "id": "py-llm-infer-client-post", "icon": "bolt", "label": "resp = requests.post(\"http://localhost:11434/api/generate\", json={...})", "code": "resp = requests.post(\"http://localhost:11434/api/generate\", json={\"model\": \"llama3\", \"prompt\": prompt})", "mode": "line" },
+                { "id": "py-llm-infer-client-text", "icon": "quote-left", "label": "text = resp.json()[\"response\"]", "code": "text = resp.json()[\"response\"]", "mode": "line" },
+                { "id": "py-llm-infer-client-stream", "icon": "wave-square", "label": "resp = requests.post(..., stream=True)", "code": "resp = requests.post(\"http://localhost:11434/api/generate\", json={\"model\": \"llama3\", \"prompt\": prompt}, stream=True)", "mode": "line" },
+                { "id": "py-llm-infer-client-lines", "icon": "list", "label": "for line in resp.iter_lines(): ...", "code": "for line in resp.iter_lines():\n    ", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-train",
+        "category": "LLM / Training",
+        "category_i18n": { "zh": "LLM / 训练" },
+        "icon": "bolt",
+        "collapsed": false,
+        "subgroups": {
+            "data": [
+                { "id": "py-llm-train-data-import-ds", "icon": "file-import", "label": "from datasets import load_dataset", "code": "from datasets import load_dataset", "mode": "line" },
+                { "id": "py-llm-train-data-load", "icon": "database", "label": "ds = load_dataset(\"json\", data_files=\"data.jsonl\")", "code": "ds = load_dataset(\"json\", data_files=\"data.jsonl\")", "mode": "line" },
+                { "id": "py-llm-train-data-tokenize-def", "icon": "code", "label": "def tokenize(ex): return tokenizer(ex[\"text\"])", "code": "def tokenize(ex):\n    return tokenizer(ex[\"text\"])", "mode": "line" },
+                { "id": "py-llm-train-data-map", "icon": "sort", "label": "ds = ds.map(tokenize)", "code": "ds = ds.map(tokenize)", "mode": "line" }
+            ],
+            "train": [
+                { "id": "py-llm-train-train-import-tf", "icon": "file-import", "label": "from transformers import TrainingArguments, Trainer", "code": "from transformers import TrainingArguments, Trainer", "mode": "line" },
+                { "id": "py-llm-train-train-args", "icon": "tools", "label": "args = TrainingArguments(output_dir=\"out\", num_train_epochs=1)", "code": "args = TrainingArguments(output_dir=\"out\", num_train_epochs=1)", "mode": "line" },
+                { "id": "py-llm-train-train-trainer", "icon": "tools", "label": "trainer = Trainer(model=model, args=args, train_dataset=ds)", "code": "trainer = Trainer(model=model, args=args, train_dataset=ds)", "mode": "line" },
+                { "id": "py-llm-train-train-run", "icon": "play", "label": "trainer.train()", "code": "trainer.train()", "mode": "line" },
+                { "id": "py-llm-train-train-import-peft", "icon": "file-import", "label": "from peft import LoraConfig, get_peft_model", "code": "from peft import LoraConfig, get_peft_model", "mode": "line" },
+                { "id": "py-llm-train-train-lora", "icon": "cubes", "label": "model = get_peft_model(model, LoraConfig(r=8))", "code": "model = get_peft_model(model, LoraConfig(r=8))", "mode": "line" }
+            ],
+            "save": [
+                { "id": "py-llm-train-save-import-tf", "icon": "file-import", "label": "from transformers import TrainingArguments, Trainer", "code": "from transformers import TrainingArguments, Trainer", "mode": "line" },
+                { "id": "py-llm-train-save-model", "icon": "save", "label": "trainer.save_model(\"out\")", "code": "trainer.save_model(\"out\")", "mode": "line" },
+                { "id": "py-llm-train-save-tokenizer", "icon": "save", "label": "tokenizer.save_pretrained(\"out\")", "code": "tokenizer.save_pretrained(\"out\")", "mode": "line" },
+                { "id": "py-llm-train-save-hub", "icon": "upload", "label": "trainer.push_to_hub(\"repo\")", "code": "trainer.push_to_hub(\"repo\")", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-align",
+        "category": "LLM / Alignment",
+        "category_i18n": { "zh": "LLM / 对齐" },
+        "icon": "balance-scale",
+        "collapsed": false,
+        "subgroups": {
+            "pref": [
+                { "id": "py-llm-align-pref-import-ds", "icon": "file-import", "label": "from datasets import load_dataset", "code": "from datasets import load_dataset", "mode": "line" },
+                { "id": "py-llm-align-pref-load", "icon": "database", "label": "ds = load_dataset(\"json\", data_files=\"pref.jsonl\")", "code": "ds = load_dataset(\"json\", data_files=\"pref.jsonl\")", "mode": "line" },
+                { "id": "py-llm-align-pref-row", "icon": "list", "label": "row = {\"prompt\": p, \"chosen\": a, \"rejected\": b}", "code": "row = {\"prompt\": p, \"chosen\": a, \"rejected\": b}", "mode": "line" }
+            ],
+            "dpo": [
+                { "id": "py-llm-align-dpo-import", "icon": "file-import", "label": "from trl import DPOTrainer", "code": "from trl import DPOTrainer", "mode": "line" },
+                { "id": "py-llm-align-dpo-trainer", "icon": "tools", "label": "trainer = DPOTrainer(model=model, args=args, train_dataset=ds)", "code": "trainer = DPOTrainer(model=model, args=args, train_dataset=ds)", "mode": "line" },
+                { "id": "py-llm-align-dpo-run", "icon": "play", "label": "trainer.train()", "code": "trainer.train()", "mode": "line" },
+                { "id": "py-llm-align-reward", "icon": "star", "label": "from trl import RewardTrainer", "code": "from trl import RewardTrainer", "mode": "line" },
+                { "id": "py-llm-align-reject", "icon": "x", "label": "samples = [model.generate(...) for _ in range(n)]", "code": "samples = [model.generate(**inputs, max_new_tokens=128) for _ in range(n)]", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-prompt",
+        "category": "LLM / Prompt Engineering",
+        "category_i18n": { "zh": "LLM / 提示工程" },
+        "icon": "magic",
+        "collapsed": false,
+        "subgroups": {
+            "chain": [
+                { "id": "py-llm-prompt-chain-cot", "icon": "quote-left", "label": "prompt = \"Let's think step by step.\"", "code": "prompt = \"Let's think step by step.\"", "mode": "line" },
+                { "id": "py-llm-prompt-chain-steps", "icon": "list", "label": "prompt = \"First ... Then ... Finally ...\"", "code": "prompt = \"First analyze the problem, then solve it step by step, finally give the answer.\"", "mode": "line" },
+                { "id": "py-llm-prompt-chain-sc", "icon": "redo", "label": "for _ in range(5): ...", "code": "for _ in range(5):\n    ", "mode": "line" }
+            ],
+            "react": [
+                { "id": "py-llm-prompt-react-tpl", "icon": "quote-left", "label": "prompt = \"Thought: ... Action: ... Observation: ...\"", "code": "prompt = \"Thought: ... Action: ... Observation: ...\"", "mode": "line" },
+                { "id": "py-llm-prompt-react-loop", "icon": "redo", "label": "for step in range(max_steps): ...", "code": "for step in range(max_steps):\n    ", "mode": "line" },
+                { "id": "py-llm-prompt-react-check", "icon": "code-branch", "label": "if \"Action:\" in text: ...", "code": "if \"Action:\" in text:\n    ", "mode": "line" }
+            ],
+            "template": [
+                { "id": "py-llm-prompt-tpl-import", "icon": "file-import", "label": "from jinja2 import Template", "code": "from jinja2 import Template", "mode": "line" },
+                { "id": "py-llm-prompt-tpl-new", "icon": "font", "label": "t = Template(\"Hello {{ name }}\")", "code": "t = Template(\"Hello {{ name }}\")", "mode": "line" },
+                { "id": "py-llm-prompt-tpl-render", "icon": "magic", "label": "prompt = t.render(name=\"Alice\")", "code": "prompt = t.render(name=\"Alice\")", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-eval",
+        "category": "LLM / Evaluation",
+        "category_i18n": { "zh": "LLM / 评测" },
+        "icon": "chart-line",
+        "collapsed": false,
+        "subgroups": {
+            "bench": [
+                { "id": "py-llm-eval-bench-import", "icon": "file-import", "label": "import evaluate", "code": "import evaluate", "mode": "line" },
+                { "id": "py-llm-eval-bench-bleu", "icon": "chart-line", "label": "bleu = evaluate.load(\"bleu\")", "code": "bleu = evaluate.load(\"bleu\")", "mode": "line" },
+                { "id": "py-llm-eval-bench-compute", "icon": "calculator", "label": "score = bleu.compute(predictions=preds, references=refs)", "code": "score = bleu.compute(predictions=preds, references=refs)", "mode": "line" },
+                { "id": "py-llm-eval-bench-acc", "icon": "check", "label": "acc = sum(scores) / len(scores)", "code": "acc = sum(scores) / len(scores)", "mode": "line" }
+            ],
+            "judge": [
+                { "id": "py-llm-eval-judge-prompt", "icon": "quote-left", "label": "judge_prompt = f\"Rate 1-5: {text}\"", "code": "judge_prompt = f\"Rate 1-5: {text}\"", "mode": "line" },
+                { "id": "py-llm-eval-judge-score", "icon": "calculator", "label": "score = int(text.strip())", "code": "score = int(text.strip())", "mode": "line" },
+                { "id": "py-llm-eval-judge-same", "icon": "equals", "label": "same = text_a.strip() == text_b.strip()", "code": "same = text_a.strip() == text_b.strip()", "mode": "line" }
+            ],
+            "report": [
+                { "id": "py-llm-eval-report-import", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-llm-eval-report-dumps", "icon": "database", "label": "text = json.dumps(results, ensure_ascii=False)", "code": "text = json.dumps(results, ensure_ascii=False)", "mode": "line" },
+                { "id": "py-llm-eval-report-print", "icon": "print", "label": "print(f\"acc={acc:.2f}\")", "code": "print(f\"acc={acc:.2f}\")", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-framework",
+        "category": "LLM / Framework",
+        "category_i18n": { "zh": "LLM / 应用框架" },
+        "icon": "link",
+        "collapsed": false,
+        "subgroups": {
+            "chain": [
+                { "id": "py-llm-fw-chain-import-chain", "icon": "file-import", "label": "from langchain.chains import LLMChain", "code": "from langchain.chains import LLMChain", "mode": "line" },
+                { "id": "py-llm-fw-chain-import-prompt", "icon": "file-import", "label": "from langchain.prompts import PromptTemplate", "code": "from langchain.prompts import PromptTemplate", "mode": "line" },
+                { "id": "py-llm-fw-chain-pipe", "icon": "link", "label": "chain = prompt | llm", "code": "chain = prompt | llm", "mode": "line" },
+                { "id": "py-llm-fw-chain-invoke", "icon": "play", "label": "out = chain.invoke({\"topic\": \"Python\"})", "code": "out = chain.invoke({\"topic\": \"Python\"})", "mode": "line" }
+            ],
+            "memory": [
+                { "id": "py-llm-fw-mem-import", "icon": "file-import", "label": "from langchain.memory import ConversationBufferMemory", "code": "from langchain.memory import ConversationBufferMemory", "mode": "line" },
+                { "id": "py-llm-fw-mem-new", "icon": "database", "label": "memory = ConversationBufferMemory()", "code": "memory = ConversationBufferMemory()", "mode": "line" },
+                { "id": "py-llm-fw-mem-save", "icon": "save", "label": "memory.save_context({\"input\": q}, {\"output\": a})", "code": "memory.save_context({\"input\": q}, {\"output\": a})", "mode": "line" }
+            ],
+            "retriever": [
+                { "id": "py-llm-fw-ret-import", "icon": "file-import", "label": "from langchain.vectorstores import Chroma", "code": "from langchain.vectorstores import Chroma", "mode": "line" },
+                { "id": "py-llm-fw-ret-new", "icon": "search", "label": "retriever = db.as_retriever()", "code": "retriever = db.as_retriever()", "mode": "line" },
+                { "id": "py-llm-fw-ret-invoke", "icon": "list", "label": "docs = retriever.invoke(query)", "code": "docs = retriever.invoke(query)", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-vector",
+        "category": "LLM / Vector Store",
+        "category_i18n": { "zh": "LLM / 向量库" },
+        "icon": "database",
+        "collapsed": false,
+        "subgroups": {
+            "store": [
+                { "id": "py-llm-vec-store-import", "icon": "file-import", "label": "import chromadb", "code": "import chromadb", "mode": "line" },
+                { "id": "py-llm-vec-store-client", "icon": "keyboard", "label": "client = chromadb.Client()", "code": "client = chromadb.Client()", "mode": "line" },
+                { "id": "py-llm-vec-store-col", "icon": "database", "label": "col = client.create_collection(\"docs\")", "code": "col = client.create_collection(\"docs\")", "mode": "line" },
+                { "id": "py-llm-vec-store-add", "icon": "plus", "label": "col.add(documents=docs, ids=ids)", "code": "col.add(documents=docs, ids=ids)", "mode": "line" }
+            ],
+            "search": [
+                { "id": "py-llm-vec-search-import", "icon": "file-import", "label": "import faiss", "code": "import faiss", "mode": "line" },
+                { "id": "py-llm-vec-search-index", "icon": "list", "label": "index = faiss.IndexFlatL2(dim)", "code": "index = faiss.IndexFlatL2(dim)", "mode": "line" },
+                { "id": "py-llm-vec-search-add", "icon": "plus", "label": "index.add(vectors)", "code": "index.add(vectors)", "mode": "line" },
+                { "id": "py-llm-vec-search-query", "icon": "search", "label": "res = col.query(query_texts=[q], n_results=3)", "code": "res = col.query(query_texts=[q], n_results=3)", "mode": "line" },
+                { "id": "py-llm-vec-search-docs", "icon": "list", "label": "docs = res[\"documents\"][0]", "code": "docs = res[\"documents\"][0]", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-deploy",
+        "category": "LLM / Deploy",
+        "category_i18n": { "zh": "LLM / 部署" },
+        "icon": "upload",
+        "collapsed": false,
+        "subgroups": {
+            "api": [
+                { "id": "py-llm-deploy-api-import", "icon": "file-import", "label": "from fastapi import FastAPI", "code": "from fastapi import FastAPI", "mode": "line" },
+                { "id": "py-llm-deploy-api-app", "icon": "globe", "label": "app = FastAPI()", "code": "app = FastAPI()", "mode": "line" },
+                { "id": "py-llm-deploy-api-route", "icon": "link", "label": "@app.post(\"/generate\")", "code": "@app.post(\"/generate\")\ndef generate(prompt: str):\n    ", "mode": "line" },
+                { "id": "py-llm-deploy-api-uvicorn", "icon": "play", "label": "uvicorn.run(app, host=\"0.0.0.0\", port=8000)", "code": "uvicorn.run(app, host=\"0.0.0.0\", port=8000)", "mode": "line" }
+            ],
+            "container": [
+                { "id": "py-llm-deploy-ct-import", "icon": "file-import", "label": "import subprocess", "code": "import subprocess", "mode": "line" },
+                { "id": "py-llm-deploy-ct-vllm", "icon": "terminal", "label": "subprocess.run([\"vllm\", \"serve\", \"model\"])", "code": "subprocess.run([\"vllm\", \"serve\", \"model\"])", "mode": "line" },
+                { "id": "py-llm-deploy-ct-docker", "icon": "cubes", "label": "subprocess.run([\"docker\", \"run\", \"-p\", \"8000:8000\", \"img\"])", "code": "subprocess.run([\"docker\", \"run\", \"-p\", \"8000:8000\", \"img\"])", "mode": "line" }
+            ],
+            "health": [
+                { "id": "py-llm-deploy-health-import", "icon": "file-import", "label": "import requests", "code": "import requests", "mode": "line" },
+                { "id": "py-llm-deploy-health-check", "icon": "check", "label": "ok = requests.get(\"http://localhost:8000/health\").ok", "code": "ok = requests.get(\"http://localhost:8000/health\").ok", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-cache",
+        "category": "LLM / Cache",
+        "category_i18n": { "zh": "LLM / 缓存限流" },
+        "icon": "database",
+        "collapsed": false,
+        "subgroups": {
+            "memory_cache": [
+                { "id": "py-llm-cache-mem-import", "icon": "file-import", "label": "import time", "code": "import time", "mode": "line" },
+                { "id": "py-llm-cache-mem-dict", "icon": "database", "label": "cache = {}", "code": "cache = {}", "mode": "line" },
+                { "id": "py-llm-cache-mem-get", "icon": "search", "label": "text = cache.get(prompt)", "code": "text = cache.get(prompt)", "mode": "line" },
+                { "id": "py-llm-cache-mem-set", "icon": "save", "label": "cache[prompt] = text", "code": "cache[prompt] = text", "mode": "line" },
+                { "id": "py-llm-cache-mem-ttl", "icon": "stop", "label": "expire = time.time() + 3600", "code": "expire = time.time() + 3600", "mode": "line" }
+            ],
+            "rate": [
+                { "id": "py-llm-cache-rate-import", "icon": "file-import", "label": "import time", "code": "import time", "mode": "line" },
+                { "id": "py-llm-cache-rate-sleep", "icon": "stop", "label": "time.sleep(1)", "code": "time.sleep(1)", "mode": "line" },
+                { "id": "py-llm-cache-rate-budget", "icon": "calculator", "label": "if cost > budget: ...", "code": "if cost > budget:\n    ", "mode": "line" },
+                { "id": "py-llm-cache-rate-retry", "icon": "rotate-left", "label": "for attempt in range(3): ...", "code": "for attempt in range(3):\n    ", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-safety",
+        "category": "LLM / Safety",
+        "category_i18n": { "zh": "LLM / 安全护栏" },
+        "icon": "exclamation-triangle",
+        "collapsed": false,
+        "subgroups": {
+            "input": [
+                { "id": "py-llm-safety-in-import", "icon": "file-import", "label": "import re", "code": "import re", "mode": "line" },
+                { "id": "py-llm-safety-in-inject", "icon": "exclamation-triangle", "label": "if \"ignore previous\" in prompt.lower(): ...", "code": "if \"ignore previous\" in prompt.lower():\n    ", "mode": "line" },
+                { "id": "py-llm-safety-in-pii", "icon": "search", "label": "text = re.sub(r\"\\d{11}\", \"***\", text)", "code": "text = re.sub(r\"\\d{11}\", \"***\", text)", "mode": "line" }
+            ],
+            "output": [
+                { "id": "py-llm-safety-out-import", "icon": "file-import", "label": "import re", "code": "import re", "mode": "line" },
+                { "id": "py-llm-safety-out-filter", "icon": "x", "label": "if bad_word in text: text = \"...\"", "code": "if bad_word in text:\n    text = \"...\"", "mode": "line" },
+                { "id": "py-llm-safety-out-leak", "icon": "exclamation-triangle", "label": "if system_prompt in text: ...", "code": "if system_prompt in text:\n    ", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-llm-observe",
+        "category": "LLM / Observability",
+        "category_i18n": { "zh": "LLM / 可观测" },
+        "icon": "monitor",
+        "collapsed": false,
+        "subgroups": {
+            "log": [
+                { "id": "py-llm-obs-log-import", "icon": "file-import", "label": "import logging", "code": "import logging", "mode": "line" },
+                { "id": "py-llm-obs-log-config", "icon": "tools", "label": "logging.basicConfig(level=logging.INFO)", "code": "logging.basicConfig(level=logging.INFO)", "mode": "line" },
+                { "id": "py-llm-obs-log-info", "icon": "file-signature", "label": "logging.info(f\"prompt={prompt[:50]}\")", "code": "logging.info(f\"prompt={prompt[:50]}\")", "mode": "line" }
+            ],
+            "trace": [
+                { "id": "py-llm-obs-trace-import", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-llm-obs-trace-list", "icon": "list", "label": "trace = []", "code": "trace = []", "mode": "line" },
+                { "id": "py-llm-obs-trace-append", "icon": "plus", "label": "trace.append({\"step\": step, \"text\": text})", "code": "trace.append({\"step\": step, \"text\": text})", "mode": "line" },
+                { "id": "py-llm-obs-trace-dumps", "icon": "database", "label": "text = json.dumps(trace, ensure_ascii=False)", "code": "text = json.dumps(trace, ensure_ascii=False)", "mode": "line" }
+            ],
+            "cost": [
+                { "id": "py-llm-obs-cost-import", "icon": "file-import", "label": "import tiktoken", "code": "import tiktoken", "mode": "line" },
+                { "id": "py-llm-obs-cost-n", "icon": "calculator", "label": "n = len(tiktoken.get_encoding(\"cl100k_base\").encode(text))", "code": "n = len(tiktoken.get_encoding(\"cl100k_base\").encode(text))", "mode": "line" },
+                { "id": "py-llm-obs-cost-cost", "icon": "calculator", "label": "cost = n * 0.000002", "code": "cost = n * 0.000002", "mode": "line" }
+            ],
+            "py": []
+        }
+    }
+]

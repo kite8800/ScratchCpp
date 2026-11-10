@@ -1,0 +1,284 @@
+[
+    {
+        "id": "cat-py-ai-client",
+        "category": "AI / Client",
+        "category_i18n": { "zh": "AI / 客户端" },
+        "icon": "keyboard",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-client-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-client-import-os", "icon": "file-import", "label": "import os", "code": "import os", "mode": "line" },
+                { "id": "py-ai-client-new", "icon": "keyboard", "label": "client = OpenAI(api_key=\"...\")", "code": "client = OpenAI(api_key=\"sk-...\")", "mode": "line" },
+                { "id": "py-ai-client-env", "icon": "keyboard", "label": "client = OpenAI()  # 读环境变量", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-client-baseurl", "icon": "link", "label": "client = OpenAI(base_url=\"...\")", "code": "client = OpenAI(base_url=\"https://api.example.com/v1\", api_key=\"sk-...\")", "mode": "line" },
+                { "id": "py-ai-client-timeout", "icon": "stop", "label": "client = OpenAI(timeout=30)", "code": "client = OpenAI(timeout=30)", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-prompt",
+        "category": "AI / Prompt",
+        "category_i18n": { "zh": "AI / 提示词" },
+        "icon": "magic",
+        "collapsed": false,
+        "subgroups": {
+            "prompt": [
+                { "id": "py-ai-prompt-system", "icon": "comment", "label": "system_prompt = \"You are ...\"", "code": "system_prompt = \"You are a helpful assistant.\"", "mode": "line" },
+                { "id": "py-ai-prompt-user", "icon": "quote-left", "label": "user_prompt = \"...\"", "code": "user_prompt = \"Explain Python decorators.\"", "mode": "line" },
+                { "id": "py-ai-prompt-fstring", "icon": "quote-left", "label": "prompt = f\"...\"", "code": "prompt = f\"Summarize: {text}\"", "mode": "line" },
+                { "id": "py-ai-prompt-template", "icon": "font", "label": "prompt = template.format(...)", "code": "prompt = template.format(topic=\"Python\")", "mode": "line" }
+            ],
+            "none": [
+                { "id": "py-ai-prompt-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-prompt-messages", "icon": "list", "label": "messages = [...]", "code": "messages = [{\"role\": \"system\", \"content\": system_prompt}, {\"role\": \"user\", \"content\": user_prompt}]", "mode": "line" },
+                { "id": "py-ai-prompt-append-user", "icon": "plus", "label": "messages.append({\"role\": \"user\", ...})", "code": "messages.append({\"role\": \"user\", \"content\": user_prompt})", "mode": "line" },
+                { "id": "py-ai-prompt-append-assistant", "icon": "plus", "label": "messages.append({\"role\": \"assistant\", ...})", "code": "messages.append({\"role\": \"assistant\", \"content\": text})", "mode": "line" },
+                { "id": "py-ai-prompt-fewshot", "icon": "list", "label": "messages = [few-shot ...]", "code": "messages = [{\"role\": \"user\", \"content\": \"2+2?\"}, {\"role\": \"assistant\", \"content\": \"4\"}, {\"role\": \"user\", \"content\": \"3+3?\"}]", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-chat",
+        "category": "AI / Chat",
+        "category_i18n": { "zh": "AI / 对话调用" },
+        "icon": "comment",
+        "collapsed": false,
+        "subgroups": {
+            "call": [
+                { "id": "py-ai-chat-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-chat-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-chat-basic", "icon": "bolt", "label": "resp = client.chat.completions.create(...)", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=messages\n)", "mode": "line" },
+                { "id": "py-ai-chat-temp", "icon": "bolt", "label": "resp = ...(temperature=0.7)", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=messages,\n    temperature=0.7\n)", "mode": "line" },
+                { "id": "py-ai-chat-maxtokens", "icon": "bolt", "label": "resp = ...(max_tokens=256)", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=messages,\n    max_tokens=256\n)", "mode": "line" },
+                { "id": "py-ai-chat-stream", "icon": "wave-square", "label": "resp = ...(stream=True)", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=messages,\n    stream=True\n)", "mode": "line" }
+            ],
+            "param": [
+                { "id": "py-ai-chat-param-temperature", "icon": "sun", "label": "temperature=0.7", "code": "temperature=0.7", "mode": "exp" },
+                { "id": "py-ai-chat-param-maxtokens", "icon": "ruler-horizontal", "label": "max_tokens=256", "code": "max_tokens=256", "mode": "exp" },
+                { "id": "py-ai-chat-param-topp", "icon": "percent", "label": "top_p=0.9", "code": "top_p=0.9", "mode": "exp" },
+                { "id": "py-ai-chat-param-stop", "icon": "stop", "label": "stop=[\"\\n\"]", "code": "stop=[\"\\n\"]", "mode": "exp" }
+            ],
+            "parse": [
+                { "id": "py-ai-chat-parse-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-chat-parse-text", "icon": "quote-left", "label": "text = resp.choices[0].message.content", "code": "text = resp.choices[0].message.content", "mode": "line" },
+                { "id": "py-ai-chat-parse-finish", "icon": "check", "label": "reason = resp.choices[0].finish_reason", "code": "reason = resp.choices[0].finish_reason", "mode": "line" },
+                { "id": "py-ai-chat-parse-usage", "icon": "calculator", "label": "n = resp.usage.total_tokens", "code": "n = resp.usage.total_tokens", "mode": "line" },
+                { "id": "py-ai-chat-parse-json", "icon": "database", "label": "data = json.loads(text)", "code": "data = json.loads(text)", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-tool",
+        "category": "AI / Tools",
+        "category_i18n": { "zh": "AI / 工具调用" },
+        "icon": "tools",
+        "collapsed": false,
+        "subgroups": {
+            "schema": [
+                { "id": "py-ai-tool-schema-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-tool-schema-one", "icon": "tools", "label": "tool = {... 单参数 ...}", "code": "tool = {\"type\": \"function\", \"function\": {\"name\": \"get_weather\", \"description\": \"Get weather\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"]}}}", "mode": "line" },
+                { "id": "py-ai-tool-schema-multi", "icon": "tools", "label": "tool = {... 多参数 ...}", "code": "tool = {\"type\": \"function\", \"function\": {\"name\": \"search\", \"description\": \"Search web\", \"parameters\": {\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\"}, \"limit\": {\"type\": \"integer\"}}, \"required\": [\"query\"]}}}", "mode": "line" },
+                { "id": "py-ai-tool-schema-list", "icon": "list", "label": "tools = [tool]", "code": "tools = [tool]", "mode": "line" }
+            ],
+            "invoke": [
+                { "id": "py-ai-tool-invoke-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-tool-invoke-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-tool-invoke-call", "icon": "bolt", "label": "resp = ...create(..., tools=tools)", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=messages,\n    tools=tools\n)", "mode": "line" },
+                { "id": "py-ai-tool-invoke-calls", "icon": "list", "label": "tool_calls = resp.choices[0].message.tool_calls", "code": "tool_calls = resp.choices[0].message.tool_calls", "mode": "line" },
+                { "id": "py-ai-tool-invoke-args", "icon": "code", "label": "args = json.loads(tool_call.function.arguments)", "code": "args = json.loads(tool_call.function.arguments)", "mode": "line" },
+                { "id": "py-ai-tool-invoke-result", "icon": "check", "label": "result = get_weather(**args)", "code": "result = get_weather(**args)", "mode": "line" },
+                { "id": "py-ai-tool-invoke-append", "icon": "plus", "label": "messages.append({\"role\": \"tool\", ...})", "code": "messages.append({\"role\": \"tool\", \"tool_call_id\": tool_call.id, \"content\": json.dumps(result)})", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-structured",
+        "category": "AI / Structured Output",
+        "category_i18n": { "zh": "AI / 结构化输出" },
+        "icon": "database",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-structured-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-structured-loads", "icon": "database", "label": "data = json.loads(text)", "code": "data = json.loads(text)", "mode": "line" },
+                { "id": "py-ai-structured-dumps", "icon": "database", "label": "text = json.dumps(data, ensure_ascii=False)", "code": "text = json.dumps(data, ensure_ascii=False)", "mode": "line" },
+                { "id": "py-ai-structured-prompt", "icon": "quote-left", "label": "prompt = f\"... 输出 JSON ...\"", "code": "prompt = f\"Return JSON with keys name and age for: {text}\"", "mode": "line" },
+                { "id": "py-ai-structured-get", "icon": "search", "label": "v = data.get(\"key\")", "code": "v = data.get(\"key\")", "mode": "line" },
+                { "id": "py-ai-structured-items", "icon": "list", "label": "items = data[\"items\"]", "code": "items = data[\"items\"]", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-embed",
+        "category": "AI / Embedding",
+        "category_i18n": { "zh": "AI / 向量嵌入" },
+        "icon": "circle",
+        "collapsed": false,
+        "subgroups": {
+            "embed": [
+                { "id": "py-ai-embed-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-embed-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-embed-call", "icon": "bolt", "label": "resp = client.embeddings.create(...)", "code": "resp = client.embeddings.create(\n    model=\"text-embedding-3-small\",\n    input=text\n)", "mode": "line" },
+                { "id": "py-ai-embed-vector", "icon": "list", "label": "vec = resp.data[0].embedding", "code": "vec = resp.data[0].embedding", "mode": "line" }
+            ],
+            "none": [
+                { "id": "py-ai-embed-cosine", "icon": "calculator", "label": "def cosine(a, b): ...", "code": "def cosine(a, b):\n    dot = sum(x * y for x, y in zip(a, b))\n    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)\n    return dot / norm", "mode": "line" },
+                { "id": "py-ai-embed-sim", "icon": "equals", "label": "sim = cosine(vec_a, vec_b)", "code": "sim = cosine(vec_a, vec_b)", "mode": "line" },
+                { "id": "py-ai-embed-store", "icon": "database", "label": "index = {\"doc1\": vec1}", "code": "index = {\"doc1\": vec1, \"doc2\": vec2}", "mode": "line" },
+                { "id": "py-ai-embed-nearest", "icon": "search", "label": "best = max(index, key=...)", "code": "best = max(index, key=lambda k: cosine(vec, index[k]))", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-rag",
+        "category": "AI / RAG",
+        "category_i18n": { "zh": "AI / 检索增强" },
+        "icon": "search",
+        "collapsed": false,
+        "subgroups": {
+            "index": [
+                { "id": "py-ai-rag-index-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-rag-index-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-rag-index-chunk", "icon": "cut", "label": "chunks = [text[i:i+500] ...]", "code": "chunks = [text[i:i+500] for i in range(0, len(text), 500)]", "mode": "line" },
+                { "id": "py-ai-rag-index-build", "icon": "database", "label": "index = {chunk: embed(chunk) ...}", "code": "index = {chunk: embed(chunk) for chunk in chunks}", "mode": "line" }
+            ],
+            "retrieve": [
+                { "id": "py-ai-rag-retrieve-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-rag-retrieve-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-rag-retrieve-topk", "icon": "search", "label": "top = sorted(...)[:k]", "code": "top = sorted(index, key=lambda c: cosine(query_vec, index[c]), reverse=True)[:3]", "mode": "line" },
+                { "id": "py-ai-rag-retrieve-context", "icon": "link", "label": "context = \"\\n\".join(top)", "code": "context = \"\\n\".join(top)", "mode": "line" },
+                { "id": "py-ai-rag-retrieve-prompt", "icon": "quote-left", "label": "prompt = f\"Context: {context} ...\"", "code": "prompt = f\"Context:\\n{context}\\n\\nQuestion: {question}\"", "mode": "line" },
+                { "id": "py-ai-rag-retrieve-ask", "icon": "bolt", "label": "resp = ...create(messages=[...])", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=[{\"role\": \"user\", \"content\": prompt}]\n)", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-util",
+        "category": "AI / Utils",
+        "category_i18n": { "zh": "AI / 辅助" },
+        "icon": "tools",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-util-import-tiktoken", "icon": "file-import", "label": "import tiktoken", "code": "import tiktoken", "mode": "line" },
+                { "id": "py-ai-util-import-time", "icon": "file-import", "label": "import time", "code": "import time", "mode": "line" },
+                { "id": "py-ai-util-encoding", "icon": "keyboard", "label": "encoding = tiktoken.get_encoding(\"cl100k_base\")", "code": "encoding = tiktoken.get_encoding(\"cl100k_base\")", "mode": "line" },
+                { "id": "py-ai-util-token-count", "icon": "calculator", "label": "n = len(encoding.encode(text))", "code": "n = len(encoding.encode(text))", "mode": "line" },
+                { "id": "py-ai-util-token-messages", "icon": "calculator", "label": "n = sum(... for m in messages)", "code": "n = sum(len(encoding.encode(m[\"content\"])) for m in messages)", "mode": "line" },
+                { "id": "py-ai-util-retry", "icon": "rotate-left", "label": "for attempt in range(3): try: ...", "code": "for attempt in range(3):\n    try:\n        resp = client.chat.completions.create(model=\"gpt-4o-mini\", messages=messages)\n        break\n    except Exception as e:\n        print(f\"retry {attempt}: {e}\")\n        time.sleep(1)", "mode": "line" },
+                { "id": "py-ai-util-cache", "icon": "database", "label": "cache = {}", "code": "cache = {}", "mode": "line" },
+                { "id": "py-ai-util-cache-get", "icon": "search", "label": "text = cache.get(prompt)", "code": "text = cache.get(prompt)", "mode": "line" },
+                { "id": "py-ai-util-log", "icon": "file-signature", "label": "print(f\"[AI] {prompt[:50]}\")", "code": "print(f\"[AI] {prompt[:50]}\")", "mode": "line" },
+                { "id": "py-ai-util-cost", "icon": "calculator", "label": "cost = n * 0.000002", "code": "cost = n * 0.000002", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-image",
+        "category": "AI / Image",
+        "category_i18n": { "zh": "AI / 图像" },
+        "icon": "star",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-image-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-image-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-image-generate", "icon": "star", "label": "resp = client.images.generate(...)", "code": "resp = client.images.generate(\n    model=\"dall-e-3\",\n    prompt=prompt,\n    size=\"1024x1024\"\n)", "mode": "line" },
+                { "id": "py-ai-image-url", "icon": "link", "label": "url = resp.data[0].url", "code": "url = resp.data[0].url", "mode": "line" },
+                { "id": "py-ai-image-understand", "icon": "comment", "label": "resp = ...create(messages=[image_url ...])", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=[{\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"描述这张图\"}, {\"type\": \"image_url\", \"image_url\": {\"url\": url}}]}]\n)", "mode": "line" },
+                { "id": "py-ai-image-text", "icon": "quote-left", "label": "text = resp.choices[0].message.content", "code": "text = resp.choices[0].message.content", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-speech",
+        "category": "AI / Speech",
+        "category_i18n": { "zh": "AI / 语音" },
+        "icon": "wave-square",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-speech-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-speech-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-speech-tts", "icon": "wave-square", "label": "resp = client.audio.speech.create(...)", "code": "resp = client.audio.speech.create(\n    model=\"tts-1\",\n    voice=\"alloy\",\n    input=text\n)", "mode": "line" },
+                { "id": "py-ai-speech-save", "icon": "save", "label": "resp.stream_to_file(\"out.mp3\")", "code": "resp.stream_to_file(\"out.mp3\")", "mode": "line" },
+                { "id": "py-ai-speech-open", "icon": "folder-open", "label": "audio_file = open(\"in.mp3\", \"rb\")", "code": "audio_file = open(\"in.mp3\", \"rb\")", "mode": "line" },
+                { "id": "py-ai-speech-stt", "icon": "keyboard", "label": "text = ...transcriptions.create(...)", "code": "text = client.audio.transcriptions.create(\n    model=\"whisper-1\",\n    file=audio_file\n).text", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-multimodal",
+        "category": "AI / Multimodal",
+        "category_i18n": { "zh": "AI / 多模态" },
+        "icon": "cubes",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-multimodal-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-multimodal-new-client", "icon": "keyboard", "label": "client = OpenAI()", "code": "client = OpenAI()", "mode": "line" },
+                { "id": "py-ai-multimodal-content", "icon": "list", "label": "content = [text, image_url ...]", "code": "content = [{\"type\": \"text\", \"text\": \"描述这张图\"}, {\"type\": \"image_url\", \"image_url\": {\"url\": url}}]", "mode": "line" },
+                { "id": "py-ai-multimodal-messages", "icon": "list", "label": "messages = [{\"role\": \"user\", \"content\": content}]", "code": "messages = [{\"role\": \"user\", \"content\": content}]", "mode": "line" },
+                { "id": "py-ai-multimodal-call", "icon": "bolt", "label": "resp = ...create(messages=messages)", "code": "resp = client.chat.completions.create(\n    model=\"gpt-4o-mini\",\n    messages=messages\n)", "mode": "line" },
+                { "id": "py-ai-multimodal-text", "icon": "quote-left", "label": "text = resp.choices[0].message.content", "code": "text = resp.choices[0].message.content", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-agent",
+        "category": "AI / Agent",
+        "category_i18n": { "zh": "AI / 智能体" },
+        "icon": "cubes",
+        "collapsed": false,
+        "subgroups": {
+            "agent": [
+                { "id": "py-ai-agent-import-openai", "icon": "file-import", "label": "from openai import OpenAI", "code": "from openai import OpenAI", "mode": "line" },
+                { "id": "py-ai-agent-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-agent-plan-prompt", "icon": "quote-left", "label": "prompt = \"先制定计划 ...\"", "code": "prompt = \"First make a plan, then answer step by step.\"", "mode": "line" },
+                { "id": "py-ai-agent-select-prompt", "icon": "quote-left", "label": "prompt = \"选择合适的工具 ...\"", "code": "prompt = \"Choose the best tool for the task and explain why.\"", "mode": "line" },
+                { "id": "py-ai-agent-loop", "icon": "redo", "label": "for step in range(max_steps): ...", "code": "for step in range(max_steps):\n    ", "mode": "line" },
+                { "id": "py-ai-agent-tool-check", "icon": "code-branch", "label": "if tool_calls: ...", "code": "if tool_calls:\n    ", "mode": "line" }
+            ],
+            "none": [
+                { "id": "py-ai-agent-import-json2", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-agent-trace", "icon": "list", "label": "trace = []", "code": "trace = []", "mode": "line" },
+                { "id": "py-ai-agent-trace-append", "icon": "plus", "label": "trace.append({\"step\": step, ...})", "code": "trace.append({\"step\": step, \"text\": text})", "mode": "line" },
+                { "id": "py-ai-agent-print-step", "icon": "print", "label": "print(f\"step {step}: {text[:50]}\")", "code": "print(f\"step {step}: {text[:50]}\")", "mode": "line" },
+                { "id": "py-ai-agent-max-steps", "icon": "ruler-horizontal", "label": "max_steps = 5", "code": "max_steps = 5", "mode": "line" },
+                { "id": "py-ai-agent-save-trace", "icon": "save", "label": "text = json.dumps(trace)", "code": "text = json.dumps(trace, ensure_ascii=False)", "mode": "line" }
+            ],
+            "py": []
+        }
+    },
+    {
+        "id": "cat-py-ai-eval",
+        "category": "AI / Eval",
+        "category_i18n": { "zh": "AI / 评估" },
+        "icon": "chart-line",
+        "collapsed": false,
+        "subgroups": {
+            "none": [
+                { "id": "py-ai-eval-import-json", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-ai-eval-dataset", "icon": "database", "label": "dataset = [{\"input\": ..., \"expected\": ...}]", "code": "dataset = [{\"input\": \"2+2?\", \"expected\": \"4\"}]", "mode": "line" },
+                { "id": "py-ai-eval-loop", "icon": "redo", "label": "for case in dataset:", "code": "for case in dataset:\n    ", "mode": "line" },
+                { "id": "py-ai-eval-score", "icon": "check", "label": "score = 1 if text.strip() == case[\"expected\"].strip() else 0", "code": "score = 1 if text.strip() == case[\"expected\"].strip() else 0", "mode": "line" },
+                { "id": "py-ai-eval-acc", "icon": "chart-line", "label": "acc = sum(scores) / len(scores)", "code": "acc = sum(scores) / len(scores)", "mode": "line" },
+                { "id": "py-ai-eval-compare", "icon": "equals", "label": "same = text_a.strip() == text_b.strip()", "code": "same = text_a.strip() == text_b.strip()", "mode": "line" },
+                { "id": "py-ai-eval-save", "icon": "save", "label": "text = json.dumps(results)", "code": "text = json.dumps(results, ensure_ascii=False)", "mode": "line" }
+            ],
+            "py": []
+        }
+    }
+]
