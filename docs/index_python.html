@@ -416,6 +416,7 @@
             flex-wrap: wrap;
             box-shadow: var(--shadow-sm);
             transition: background-color 0.18s ease, border-color 0.18s ease;
+            position: relative;   /* 保留定位上下文（超精简菜单已改用 fixed，不依赖它） */
         }
         .toolbar.toolbar-second {
             padding-top: 6px;
@@ -438,7 +439,7 @@
         }
         .toolbar .logo .icon { color: var(--text-strong); -webkit-text-fill-color: initial; }
 
-        .toolbar button {
+        .toolbar > button {
             background: var(--btn-bg);
             border: none;
             color: var(--btn-text);
@@ -453,26 +454,26 @@
             border: 1px solid var(--btn-border);
         }
 
-        .toolbar button:hover {
+        .toolbar > button:hover {
             background: var(--btn-bg-hover);
             border-color: var(--accent-2);
             transform: translateY(-1px);
         }
 
-        .toolbar button:disabled {
+        .toolbar > button:disabled {
             opacity: 0.4;
             cursor: not-allowed;
             transform: none;
         }
 
-        .toolbar button.icon-only { padding: 6px 8px; }
+        .toolbar > button.icon-only { padding: 6px 8px; }
         /* 语言切换按钮里的「中 / EN」小字：放 CSS 里，精简模式才能覆盖（内联样式优先级更高） */
         #langToggleText { font-size: 0.8rem; font-weight: 600; }
         .toolbar .spacer { flex: 1; }
         .toolbar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
 
         /* 开关型工具栏按钮（精简模式）的开启态 */
-        .toolbar button.active {
+        .toolbar > button.active {
             background: var(--accent);
             color: #fff;
             border-color: var(--accent-light);
@@ -510,12 +511,12 @@
            裸文本节点用 font-size:0 隐藏；而图标尺寸是 width/height:1em，
            所以必须把图标自己的 font-size 补回来，否则会一起缩成 0 */
         body.compact-toolbar .toolbar { gap: 6px; }
-        body.compact-toolbar .toolbar button:not(.icon-only) {
+        body.compact-toolbar .toolbar > button:not(.icon-only) {
             font-size: 0;
             gap: 0;
             padding: 6px 9px;
         }
-        body.compact-toolbar .toolbar button:not(.icon-only) .icon { font-size: 1rem; }
+        body.compact-toolbar .toolbar > button:not(.icon-only) .icon { font-size: 1rem; }
         /* 精简模式：语言切换按钮的文字缩小 + 内边距收紧，宽度接近旁边两个纯图标按钮 */
         body.compact-toolbar #langToggleText {
             font-size: 0.62rem;
@@ -533,25 +534,107 @@
         /* 精简模式 + 很窄：语言下拉框多占了约 70px，再压一档保证第一行仍是单行 */
         @media (max-width: 780px) {
             body.compact-toolbar .toolbar { gap: 4px; }
-            body.compact-toolbar .toolbar button { padding: 6px 7px; }
+            body.compact-toolbar .toolbar > button { padding: 6px 7px; }
             body.compact-toolbar .toolbar-select { padding: 4px 16px 4px 7px; background-position: right 5px center; }
         }
         body.compact-toolbar .toolbar-hint { display: none; }
         body.compact-toolbar .toolbar .divider { margin: 0 2px; }
 
+        /* ==================== 超精简模式（第三档）==================== */
+        /* 第一行：只留 logo + 精简按钮；第二行：只留 文件 / 编辑 / 设置 三个菜单按钮。
+           `.toolbar .ultra-only` 是为了权重压过 .toolbar button 的 display:inline-flex */
+        .toolbar .ultra-only { display: none; }
+        body.ultra-compact-toolbar .toolbar .ultra-only { display: inline-flex; }
+        /* 第一行（:not(.toolbar-second)）只留 logo / 精简 / 菜单 / spacer，其余按钮与下拉隐藏。
+           必须排除 .ultra-only，否则同一条规则会把第二行的三个菜单按钮也吃掉。 */
+        body.ultra-compact-toolbar .toolbar:not(.toolbar-second) > :not(.ultra-only):not(#compactToggleBtn):not(.logo):not(.ultra-menu):not(.spacer) { display: none; }
+        /* 第二行保留，只留 .ultra-only 三个按钮（外加积木栏开关，它在最前、不带竖线） */
+        body.ultra-compact-toolbar .toolbar-second { display: flex; }
+        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn) { display: none; }
+        body.ultra-compact-toolbar .toolbar { gap: 6px; padding: 6px 10px; }
+        body.ultra-compact-toolbar .toolbar-second { gap: 6px; padding: 6px 10px; }
+
+        /* 超精简时精简按钮变紫，提示当前是第三档（图标不变） */
+        body.ultra-compact-toolbar #compactToggleBtn {
+            background: var(--accent-2);
+            color: #fff;
+            border-color: var(--accent-light);
+        }
+        body.ultra-compact-toolbar #compactToggleBtn:hover { background: var(--accent-hover); }
+
+        /* 超精简的三个下拉菜单（共用样式；fixed + 视口坐标，
+           因为触发按钮在第二行、菜单 DOM 在第一行，用 absolute 会算错基准） */
+        .ultra-menu {
+            position: fixed;
+            min-width: 200px;
+            max-height: 70vh;   /* 兜底：老浏览器 */
+            max-height: 70dvh;  /* 现代浏览器：动态视口高度 */
+            overflow-y: auto;
+            background: var(--bg-modal);
+            border: 1px solid var(--btn-border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            padding: 4px;
+            display: none;
+            flex-direction: column;
+            z-index: 1500;
+        }
+        .ultra-menu.show { display: flex; }
+        .ultra-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            text-align: left;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .ultra-menu-item:hover { background: var(--bg-block-hover); }
+        .ultra-menu-item svg.icon { color: var(--text-secondary); flex-shrink: 0; }
+        .ultra-menu-item:hover svg.icon { color: var(--text-strong); }
+        .ultra-menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* 设置菜单的分组标题 */
+        .ultra-menu-label {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            padding: 6px 10px 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 设置菜单的单选勾：占位 + 选中时显示 ✓ */
+        .ultra-menu-check {
+            width: 1em;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .ultra-menu-item.checked .ultra-menu-check::before {
+            content: '✓';
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .ultra-menu-sep { height: 1px; background: var(--border); margin: 4px 6px; }
+
         /* 窄屏（约 1100px）下第一行会被语言按钮挤到第二行：略收 gap 和内边距，
            大约省出 90px，让「[精简][主题][语言]」留在同一行。宽屏走原样式，视觉不变 */
         @media (max-width: 1200px) {
             .toolbar { gap: 8px; }
-            .toolbar button { padding: 6px 11px; }
-            .toolbar button.icon-only { padding: 6px 8px; }
+            .toolbar > button { padding: 6px 11px; }
+            .toolbar > button.icon-only { padding: 6px 8px; }
             .toolbar-select { font-size: 0.8rem; padding: 6px 22px 6px 10px; }
         }
         /* 1100px 一带：语言下拉框多占了约 86px，这里再压一档让第一行保持单行 */
         @media (max-width: 1140px) {
             .toolbar { gap: 6px; }
-            .toolbar button { padding: 6px 9px; }
-            .toolbar button.icon-only { padding: 6px 7px; }
+            .toolbar > button { padding: 6px 9px; }
+            .toolbar > button.icon-only { padding: 6px 7px; }
             .toolbar-select { font-size: 0.78rem; padding: 5px 19px 5px 8px; background-position: right 6px center; }
         }
 
@@ -594,6 +677,9 @@
             transition: background-color 0.18s ease, border-color 0.18s ease;
             position: relative;   /* 三点菜单以此为定位上下文 */
         }
+
+        /* 积木栏隐藏：面板整个消失，编辑器占满整行（.main-container 的 gap 在只剩一个子项时不占空间） */
+        body.blocks-hidden .blocks-panel { display: none; }
 
         /* 面板标题行 */
         .panel-title-row { gap: 6px; }
@@ -1670,10 +1756,12 @@
         <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
         <symbol id="icon-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
         <symbol id="icon-compact" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/></symbol>
+        <symbol id="icon-edit-3" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
         <symbol id="icon-more-horizontal" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
         <symbol id="icon-book-open" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
         <symbol id="icon-chevrons-up" viewBox="0 0 24 24"><path d="m17 11-5-5-5 5M17 18l-5-5-5 5"/></symbol>
         <symbol id="icon-chevrons-down" viewBox="0 0 24 24"><path d="m7 6 5 5 5-5M7 13l5 5 5-5"/></symbol>
+        <symbol id="icon-panel-left" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
     </svg>
 
     <div class="toolbar">
@@ -1696,9 +1784,58 @@
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
         <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
         <input type="file" id="openFileInput" accept=".v,.va,.vams,.sv,.svh,.vh,.txt" style="display:none">
+
+        <!-- 超精简模式：文件 / 编辑 / 设置 三个下拉菜单（position:fixed，JS 按按钮视口坐标定位） -->
+        <div class="ultra-menu" id="ultraFileMenu">
+            <button class="ultra-menu-item" data-action="file" data-target="openBtn"><svg class="icon"><use href="#icon-folder-open"/></svg> <span data-i18n="btnOpen">打开</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="saveBtn"><svg class="icon"><use href="#icon-save"/></svg> <span data-i18n="btnSave">保存</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="saveAsBtn"><svg class="icon"><use href="#icon-file-signature"/></svg> <span data-i18n="btnSaveAs">另存为</span></button>
+            <span class="ultra-menu-sep"></span>
+            <button class="ultra-menu-item" data-action="file" data-target="clipboardImportBtn"><svg class="icon"><use href="#icon-paste"/></svg> <span data-i18n="btnImportClip">导入剪贴板</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="clipboardExportBtn"><svg class="icon"><use href="#icon-copy"/></svg> <span data-i18n="btnExportClip">导出剪贴板</span></button>
+            <span class="ultra-menu-sep"></span>
+            <button class="ultra-menu-item" data-action="file" data-target="clearBtn"><svg class="icon"><use href="#icon-trash"/></svg> <span data-i18n="btnClear">清空</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="exampleBtn"><svg class="icon"><use href="#icon-lightbulb"/></svg> <span data-i18n="btnExample">示例</span></button>
+        </div>
+
+        <div class="ultra-menu" id="ultraEditMenu">
+            <button class="ultra-menu-item" data-action="file" data-target="undoBtn"><svg class="icon"><use href="#icon-undo"/></svg> <span data-i18n="btnUndo">撤销</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="redoBtn"><svg class="icon"><use href="#icon-redo"/></svg> <span data-i18n="btnRedo">重做</span></button>
+            <span class="ultra-menu-sep"></span>
+            <button class="ultra-menu-item" data-action="file" data-target="autoIndentBtn"><svg class="icon"><use href="#icon-autoindent"/></svg> <span data-i18n="menuAutoIndent">自动缩进</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="indentBtn"><svg class="icon"><use href="#icon-indent"/></svg> <span data-i18n="btnIndent">缩进</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="outdentBtn"><svg class="icon"><use href="#icon-outdent"/></svg> <span data-i18n="btnOutdent">反缩进</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="indentSettingsBtn"><svg class="icon"><use href="#icon-tools"/></svg> <span data-i18n="btnIndentSettings">缩进设置</span></button>
+            <span class="ultra-menu-sep"></span>
+            <button class="ultra-menu-item" data-action="file" data-target="blockPickerBtn"><svg class="icon"><use href="#icon-cube"/></svg> <span data-i18n="menuBlockPicker">插入积木</span></button>
+            <button class="ultra-menu-item" data-action="file" data-target="quickAddBtn"><svg class="icon"><use href="#icon-cube-plus"/></svg> <span data-i18n="menuQuickAdd">新增积木</span></button>
+        </div>
+
+        <div class="ultra-menu" id="ultraSettingsMenu">
+            <div class="ultra-menu-label" data-i18n="ultraEditorLang">编程语言</div>
+            <button class="ultra-menu-item" data-action="editorLang" data-value="verilog"><span class="ultra-menu-check"></span> Verilog</button>
+            <button class="ultra-menu-item" data-action="editorLang" data-value="cpp"><span class="ultra-menu-check"></span> C++</button>
+            <button class="ultra-menu-item" data-action="editorLang" data-value="python"><span class="ultra-menu-check"></span> Python</button>
+            <span class="ultra-menu-sep"></span>
+            <div class="ultra-menu-label" data-i18n="ultraUiLang">界面语言</div>
+            <button class="ultra-menu-item" data-action="uiLang" data-value="zh"><span class="ultra-menu-check"></span> 中文</button>
+            <button class="ultra-menu-item" data-action="uiLang" data-value="en"><span class="ultra-menu-check"></span> English</button>
+            <span class="ultra-menu-sep"></span>
+            <div class="ultra-menu-label" data-i18n="ultraTheme">主题</div>
+            <button class="ultra-menu-item" data-action="theme" data-value="dark"><span class="ultra-menu-check"></span> <span data-i18n="themeDark">深色</span></button>
+            <button class="ultra-menu-item" data-action="theme" data-value="light"><span class="ultra-menu-check"></span> <span data-i18n="themeLight">浅色</span></button>
+            <button class="ultra-menu-item" data-action="theme" data-value="system"><span class="ultra-menu-check"></span> <span data-i18n="themeSystem">跟随系统</span></button>
+        </div>
     </div>
 
     <div class="toolbar toolbar-second">
+        <!-- 积木栏显示 / 隐藏：超精简下也保留，排在三个菜单按钮之前 -->
+        <button id="toggleBlocksBtn" class="icon-only" data-i18n-title="toggleBlocksTitle" title="隐藏 / 显示积木栏"><svg class="icon"><use href="#icon-panel-left"/></svg></button>
+        <span class="divider" id="toggleBlocksDivider"></span>
+        <!-- 超精简模式下这三个按钮是第二行唯一保留的内容，平时隐藏（.ultra-only） -->
+        <button id="ultraFileBtn" class="icon-only ultra-only" data-i18n-title="ultraFileTitle" title="文件菜单"><svg class="icon"><use href="#icon-folder-open"/></svg></button>
+        <button id="ultraEditBtn" class="icon-only ultra-only" data-i18n-title="ultraEditTitle" title="编辑菜单"><svg class="icon"><use href="#icon-edit-3"/></svg></button>
+        <button id="ultraSettingsBtn" class="icon-only ultra-only" data-i18n-title="ultraSettingsTitle" title="设置菜单"><svg class="icon"><use href="#icon-tools"/></svg></button>
         <button id="undoBtn" data-i18n="btnUndo" data-i18n-title="btnUndoTitle" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
         <button id="redoBtn" data-i18n="btnRedo" data-i18n-title="btnRedoTitle" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
         <span class="divider"></span>
@@ -2372,6 +2509,25 @@
                 // 精简模式开关
                 compactToggleOnTitle: '精简模式（已开启，点击关闭）',
                 compactToggleOffTitle: '精简模式（已关闭，点击开启）',
+                compactToggleUltraTitle: '超精简模式（点击切回正常）',
+                // 积木栏显示 / 隐藏
+                toggleBlocksTitle: '隐藏 / 显示积木栏',
+                toggleBlocksHideTitle: '隐藏积木栏',
+                toggleBlocksShowTitle: '显示积木栏',
+                // 超精简模式的三个菜单
+                ultraFileTitle: '文件菜单',
+                ultraEditTitle: '编辑菜单',
+                ultraSettingsTitle: '设置菜单',
+                ultraEditorLang: '编程语言',
+                ultraUiLang: '界面语言',
+                ultraTheme: '主题',
+                themeDark: '深色',
+                themeLight: '浅色',
+                themeSystem: '跟随系统',
+                btnIndentSettings: '缩进设置',
+                menuAutoIndent: '自动缩进',
+                menuBlockPicker: '插入积木',
+                menuQuickAdd: '新增积木',
                 // 编辑语言下拉框
                 editorLangTitle: '编辑语言（切换后代码保留，仅高亮 / 积木 / 缩进规则变化）'
             },
@@ -2579,6 +2735,25 @@
                 // Compact mode toggle
                 compactToggleOnTitle: 'Compact mode (on, click to disable)',
                 compactToggleOffTitle: 'Compact mode (off, click to enable)',
+                compactToggleUltraTitle: 'Ultra compact (click for normal)',
+                // Blocks panel show / hide
+                toggleBlocksTitle: 'Hide / show blocks panel',
+                toggleBlocksHideTitle: 'Hide blocks panel',
+                toggleBlocksShowTitle: 'Show blocks panel',
+                // Ultra compact menus
+                ultraFileTitle: 'File menu',
+                ultraEditTitle: 'Edit menu',
+                ultraSettingsTitle: 'Settings menu',
+                ultraEditorLang: 'Language',
+                ultraUiLang: 'UI language',
+                ultraTheme: 'Theme',
+                themeDark: 'Dark',
+                themeLight: 'Light',
+                themeSystem: 'System',
+                btnIndentSettings: 'Indent settings',
+                menuAutoIndent: 'Auto indent',
+                menuBlockPicker: 'Insert block',
+                menuQuickAdd: 'New block',
                 // Editor language dropdown
                 editorLangTitle: 'Editor language (code is kept; only highlighting, blocks and indent rules change)'
             }
@@ -2762,6 +2937,9 @@
             // 缩进弹窗的 hint 是动态文案，跟着语言刷新
             const hintEl = document.getElementById('indentWidthHint');
             if (hintEl) hintEl.textContent = indentHintText();
+            // 超精简设置菜单开着时，切语言 / 主题后刷新单选勾（此时相关变量都已初始化）
+            const ultraMenuEl = document.getElementById('ultraSettingsMenu');
+            if (ultraMenuEl && ultraMenuEl.classList.contains('show')) refreshUltraSettingsChecks();
         }
 
         /** 缩进宽度 hint 文案：Tab 模式说明显示宽度，空格模式带出当前选中的宽度 */
@@ -7738,29 +7916,37 @@ except ZeroDivisionError:
 
         updateThemeButton(getThemePref());
 
-        // ==================== 精简模式 ====================
-        // 两行工具栏只留图标，窄屏下不再折行
+        // ==================== 精简模式（三态：正常 / 精简 / 超精简）====================
+        // 档位 1：两行工具栏只留图标；档位 2：再收起成「文件 / 编辑 / 设置」三个菜单
         const COMPACT_KEY = 'compact-toolbar-v1';
-        let compactEnabled = false;
+        let compactLevel = 0;   // 0=正常 1=精简 2=超精简
 
         function getCompactPref() {
-            try { return localStorage.getItem(COMPACT_KEY) === '1'; } catch (e) { return false; }
+            try {
+                const v = parseInt(localStorage.getItem(COMPACT_KEY), 10);
+                return (v >= 0 && v <= 2) ? v : 0;   // 旧值 '0'/'1' 照样解析
+            } catch (e) { return 0; }
         }
 
         function updateCompactBtn() {
             const btn = document.getElementById('compactToggleBtn');
             if (!btn) return;
-            btn.classList.toggle('active', compactEnabled);
-            // 两种状态的 key 都写成字面量：语言切换时 applyI18n 按 data-i18n-title 取值
-            btn.dataset.i18nTitle = compactEnabled ? 'compactToggleOnTitle' : 'compactToggleOffTitle';
-            btn.title = t(compactEnabled ? 'compactToggleOnTitle' : 'compactToggleOffTitle');
+            btn.classList.toggle('active', compactLevel >= 1);
+            // 三档的 key 都写成字面量：语言切换时 applyI18n 按 data-i18n-title 取值
+            const key = compactLevel === 2 ? 'compactToggleUltraTitle'
+                : compactLevel === 1 ? 'compactToggleOnTitle'
+                    : 'compactToggleOffTitle';
+            btn.dataset.i18nTitle = key;
+            btn.title = t(key);
         }
 
-        function setCompactMode(on, opts) {
-            compactEnabled = !!on;
-            document.body.classList.toggle('compact-toolbar', compactEnabled);
+        function setCompactMode(level, opts) {
+            compactLevel = Math.min(2, Math.max(0, level | 0));
+            document.body.classList.toggle('compact-toolbar', compactLevel >= 1);
+            document.body.classList.toggle('ultra-compact-toolbar', compactLevel === 2);
+            if (compactLevel !== 2) closeAllUltraMenus();
             if (!opts || opts.persist !== false) {
-                try { localStorage.setItem(COMPACT_KEY, compactEnabled ? '1' : '0'); } catch (e) { }
+                try { localStorage.setItem(COMPACT_KEY, String(compactLevel)); } catch (e) { }
             }
             updateCompactBtn();
         }
@@ -7768,11 +7954,147 @@ except ZeroDivisionError:
         (function initCompactToggle() {
             const btn = document.getElementById('compactToggleBtn');
             if (!btn) return;
-            btn.addEventListener('click', () => setCompactMode(!compactEnabled));
+            // 正常 → 精简 → 超精简 → 正常
+            btn.addEventListener('click', () => setCompactMode((compactLevel + 1) % 3));
         })();
 
         // 首帧就套上，避免进页面后工具栏先宽后窄地跳一下
         setCompactMode(getCompactPref(), { persist: false });
+
+        // ==================== 积木栏隐藏 / 显示 ====================
+        const BLOCKS_HIDDEN_KEY = 'blocks-panel-hidden-v1';
+        const toggleBlocksBtn = document.getElementById('toggleBlocksBtn');
+
+        function getBlocksHiddenPref() {
+            try { return localStorage.getItem(BLOCKS_HIDDEN_KEY) === '1'; } catch (e) { return false; }
+        }
+
+        function updateToggleBlocksBtn() {
+            if (!toggleBlocksBtn) return;
+            const hidden = document.body.classList.contains('blocks-hidden');
+            toggleBlocksBtn.classList.toggle('active', hidden);
+            // key 写成字面量，语言切换时 applyI18n 按 data-i18n-title 取值
+            const key = hidden ? 'toggleBlocksShowTitle' : 'toggleBlocksHideTitle';
+            toggleBlocksBtn.dataset.i18nTitle = key;
+            toggleBlocksBtn.title = t(key);
+        }
+
+        function setBlocksHidden(hidden, opts) {
+            document.body.classList.toggle('blocks-hidden', !!hidden);
+            if (!opts || opts.persist !== false) {
+                try { localStorage.setItem(BLOCKS_HIDDEN_KEY, hidden ? '1' : '0'); } catch (e) { }
+            }
+            updateToggleBlocksBtn();
+        }
+
+        if (toggleBlocksBtn) {
+            toggleBlocksBtn.addEventListener('click', () => {
+                setBlocksHidden(!document.body.classList.contains('blocks-hidden'));
+            });
+        }
+
+        setBlocksHidden(getBlocksHiddenPref(), { persist: false });
+
+        // ==================== 超精简模式：文件 / 编辑 / 设置 三个菜单 ====================
+        const ultraFileBtn = document.getElementById('ultraFileBtn');
+        const ultraEditBtn = document.getElementById('ultraEditBtn');
+        const ultraSettingsBtn = document.getElementById('ultraSettingsBtn');
+        const ultraFileMenu = document.getElementById('ultraFileMenu');
+        const ultraEditMenu = document.getElementById('ultraEditMenu');
+        const ultraSettingsMenu = document.getElementById('ultraSettingsMenu');
+        const ULTRA_MENUS = [ultraFileMenu, ultraEditMenu, ultraSettingsMenu].filter(Boolean);
+        const ULTRA_BTNS = [ultraFileBtn, ultraEditBtn, ultraSettingsBtn].filter(Boolean);
+
+        /**
+         * 关闭三个 ultra 菜单。
+         * 故意用 DOM 查询而不是读 ULTRA_MENUS：setCompactMode 的首帧调用比本段代码更早，
+         * 那时 const ULTRA_MENUS 还在 TDZ 里，读它会直接 ReferenceError。
+         */
+        function closeAllUltraMenus() {
+            document.querySelectorAll('.ultra-menu.show').forEach(m => m.classList.remove('show'));
+        }
+
+        function positionUltraMenu(menu, btn) {
+            // 菜单 position: fixed（视口坐标）；按钮在第二行工具栏里，不能再减 barRect
+            const btnRect = btn.getBoundingClientRect();
+            menu.style.left = btnRect.left + 'px';
+            menu.style.top = (btnRect.bottom + 4) + 'px';
+        }
+
+        function toggleUltraMenu(menu, btn) {
+            const willOpen = !menu.classList.contains('show');
+            closeAllUltraMenus();
+            if (willOpen) {
+                positionUltraMenu(menu, btn);
+                menu.classList.add('show');
+                if (menu === ultraSettingsMenu) refreshUltraSettingsChecks();
+            }
+        }
+
+        if (ultraFileBtn && ultraFileMenu) {
+            ultraFileBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleUltraMenu(ultraFileMenu, ultraFileBtn); });
+        }
+        if (ultraEditBtn && ultraEditMenu) {
+            ultraEditBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleUltraMenu(ultraEditMenu, ultraEditBtn); });
+        }
+        if (ultraSettingsBtn && ultraSettingsMenu) {
+            ultraSettingsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleUltraMenu(ultraSettingsMenu, ultraSettingsBtn); });
+        }
+
+        // 点菜单外部关闭
+        document.addEventListener('click', (e) => {
+            if (!document.querySelector('.ultra-menu.show')) return;
+            const insideMenu = ULTRA_MENUS.some(m => m.contains(e.target));
+            const insideBtn = ULTRA_BTNS.some(b => b.contains(e.target));
+            if (!insideMenu && !insideBtn) closeAllUltraMenus();
+        });
+
+        // 文件 / 编辑菜单：转发到原按钮（按钮 disabled 时跳过）
+        [ultraFileMenu, ultraEditMenu].forEach(menu => {
+            if (!menu) return;
+            menu.querySelectorAll('.ultra-menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const btn = document.getElementById(item.dataset.target);
+                    closeAllUltraMenus();
+                    if (btn && !btn.disabled) btn.click();
+                });
+            });
+        });
+
+        // 设置菜单：单选分派
+        function refreshUltraSettingsChecks() {
+            const menu = document.getElementById('ultraSettingsMenu');
+            if (!menu) return;
+            const themePref = (typeof getThemePref === 'function') ? getThemePref() : null;
+            menu.querySelectorAll('.ultra-menu-item').forEach(item => {
+                const action = item.dataset.action;
+                const value = item.dataset.value;
+                let checked = false;
+                if (action === 'editorLang') checked = (value === currentEditorLang);
+                else if (action === 'uiLang') checked = (value === currentLang);
+                else if (action === 'theme') checked = (value === themePref);
+                item.classList.toggle('checked', checked);
+            });
+        }
+
+        if (ultraSettingsMenu) {
+            ultraSettingsMenu.querySelectorAll('.ultra-menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const action = item.dataset.action;
+                    const value = item.dataset.value;
+                    if (action === 'editorLang') {
+                        if (value !== currentEditorLang) switchEditorLang(value);
+                    } else if (action === 'uiLang') {
+                        clearUrlLangParam();
+                        if (value !== currentLang) setLang(value);
+                    } else if (action === 'theme') {
+                        applyTheme(value);
+                    }
+                    refreshUltraSettingsChecks();   // 菜单还开着时先把勾挪过去
+                    closeAllUltraMenus();
+                });
+            });
+        }
 
         // ==================== 编辑语言切换 ====================
         const editorLangSelect = document.getElementById('editorLangSelect');
