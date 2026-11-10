@@ -33,13 +33,21 @@
                     'laplace_nd', 'laplace_np', 'transition', 'slew', 'absdelay',
                     'last_crossing', 'cross'
                 ],
+                // 反引号 + 用户自定义宏名（`NUM_BIT）：Prism 原生只认 `define/`include
+                // 等白名单指令，宏名匹配不到，反引号与宏名都是正文色。这里补一条，
+                // alias 到 macro，与 `define 同色（CSS 已有 .token.macro，不用新增）
+                extraTokens: {
+                    'user-macro': { pattern: /`[A-Za-z_]\w*/, alias: 'macro' }
+                },
                 // 顺序即语义（见 rebuildTokenOrder 注释）：
                 // preprocessor 必须在 keyword 之前 —— `include 里的 include 本身也是关键字，
                 //   否则反引号被当普通字符、include 被吃成 keyword；
+                // user-macro 紧跟在 keyword 之后、user-function/number/operator 之前 ——
+                //   `define 这类白名单指令由 preprocessor 先匹配，用户宏名由它兜住；
                 // user-function 必须在 punctuation 之前 —— '(' 一旦先被 punctuation 吃掉，
                 //   靠 (?=\() 前瞻的规则就再也匹配不到了。
                 tokenOrder: ['preprocessor', 'comment', 'string', 'keyword',
-                    'user-function', 'number', 'operator', 'punctuation', 'function']
+                    'user-macro', 'user-function', 'number', 'operator', 'punctuation', 'function']
             }
         };
 
@@ -102,7 +110,12 @@
                 g['function'] = new RegExp('\\b(?:' + patch.functions.join('|') + ')\\b');
             }
 
-            // 3. 按声明的顺序落位
+            // 3. 追加自定义 token（alias 到已有 token，CSS 不用新增）
+            if (patch.extraTokens) {
+                Object.keys(patch.extraTokens).forEach(name => { g[name] = patch.extraTokens[name]; });
+            }
+
+            // 4. 按声明的顺序落位
             rebuildTokenOrder(langName);
 
             return true;
@@ -229,7 +242,9 @@
 
             /* 语法高亮 */
             --tok-keyword: #cf8e6d;
-            --tok-macro: #cf8e6d;
+            /* 宏 / 预处理原本与 keyword 同为 #cf8e6d，`NUM_BIT 和 module 撞色，
+               改用紫 #b48ead：和橙关键字、绿字符串、蓝函数都能区分，暗底对比度约 5.9:1 */
+            --tok-macro: #b48ead;
             --tok-string: #6aab73;
             --tok-char: #a6e22e;
             --tok-number: #2aacb8;
