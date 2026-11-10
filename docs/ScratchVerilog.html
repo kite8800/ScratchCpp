@@ -261,7 +261,6 @@
             --accent-3: #3498db;
             --active-soft-bg: rgba(108, 92, 231, 0.22);
             --heading: #a29bfe;
-            --hint: #9b59b6;
             --success: #00b894;
 
             /* 危险色 */
@@ -371,7 +370,6 @@
             --accent-3: #008b8b;
             --active-soft-bg: rgba(0, 0, 255, 0.10);
             --heading: #a020f0;
-            --hint: #8b2252;
             --success: #228b22;
 
             --danger: #b22222;
@@ -562,17 +560,23 @@
             padding: 6px 9px;
         }
         body.compact-toolbar .toolbar > button:not(.icon-only) .icon { font-size: 1rem; }
-        /* 精简模式：语言切换 / 主题两个纯图标按钮统一收紧，和旁边纯图标按钮宽度一致 */
-        body.compact-toolbar #langToggleText {
+        /* 精简 / 超精简：语言切换与主题按钮共用同一对 DOM，两档都收紧 */
+        body.compact-toolbar #langToggleText,
+        body.ultra-compact-toolbar #langToggleText {
             font-size: 0.62rem;
             font-weight: 700;
         }
         body.compact-toolbar #langToggleBtn,
-        body.compact-toolbar #themeToggleBtn {
+        body.compact-toolbar #themeToggleBtn,
+        body.ultra-compact-toolbar #langToggleBtn,
+        body.ultra-compact-toolbar #themeToggleBtn {
             padding: 6px 6px;
         }
-        body.compact-toolbar #themeToggleBtn .icon {
-            font-size: 0.95rem;
+        /* 主题按钮的图标保持工具栏默认 0.85rem（实测 13.6px），与旁边纯图标按钮同尺寸。
+           注意别写 0.95rem：那是 15.2px，反而比邻居大一圈，按钮高度也会从 27.6px 涨到 29.2px */
+        body.compact-toolbar #themeToggleBtn .icon,
+        body.ultra-compact-toolbar #themeToggleBtn .icon {
+            font-size: 0.85rem;
         }
         /* 精简模式：下拉框缩窄，但仍保留语言文字（缩成小药丸会看不出是什么控件） */
         body.compact-toolbar .toolbar-select {
@@ -586,7 +590,6 @@
             body.compact-toolbar .toolbar > button { padding: 6px 7px; }
             body.compact-toolbar .toolbar-select { padding: 4px 16px 4px 7px; background-position: right 5px center; }
         }
-        body.compact-toolbar .toolbar-hint { display: none; }
         body.compact-toolbar .toolbar .divider { margin: 0 2px; }
 
         /* ==================== 超精简模式（第三档）==================== */
@@ -598,9 +601,9 @@
         /* 第一行（:not(.toolbar-second)）只留 logo / 语言下拉 / 精简 / 菜单挂载点 / spacer。
            必须排除 .ultra-only，否则同一条规则会把第二行的菜单按钮也吃掉。 */
         body.ultra-compact-toolbar .toolbar:not(.toolbar-second) > :not(.ultra-only):not(#compactToggleBtn):not(#ultraLangSelect):not(.logo):not(.ultra-menu):not(.spacer) { display: none; }
-        /* 第二行：积木栏开关 + 文件 / 编辑 / 界面语言 / 主题（都是 .ultra-only）+ spacer */
+        /* 第二行：积木栏开关 + 文件 / 编辑 靠左；语言 / 主题靠右（三档共用这一对按钮） */
         body.ultra-compact-toolbar .toolbar-second { display: flex; }
-        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn):not(.spacer) { display: none; }
+        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn):not(.spacer):not(#langToggleBtn):not(#themeToggleBtn) { display: none; }
         /* 语言下拉用 id 控制显隐：select 被 inline-flex 接管会挤掉箭头 */
         #ultraLangSelect { display: none; }
         body.ultra-compact-toolbar #ultraLangSelect { display: inline-block; }
@@ -614,10 +617,17 @@
             background-position: right 6px center;
         }
 
-        /* 第二行界面语言按钮里的小字（中 / EN） */
-        .ultra-mini-text {
-            font-size: 0.62rem;
-            font-weight: 700;
+        /* 超精简：编辑器头部「查找 / 替换」只留图标。
+           font-size:0 吃掉文字，图标是 1em 也会归零，必须补回 0.85rem */
+        body.ultra-compact-toolbar #findBtn,
+        body.ultra-compact-toolbar #replaceBtn {
+            font-size: 0;
+            gap: 0;
+            padding: 3px 5px;
+        }
+        body.ultra-compact-toolbar #findBtn .icon,
+        body.ultra-compact-toolbar #replaceBtn .icon {
+            font-size: 0.85rem;
         }
 
         /* 超精简时精简按钮变紫，提示当前是第三档（图标不变） */
@@ -681,31 +691,6 @@
             .toolbar > button { padding: 6px 9px; }
             .toolbar > button.icon-only { padding: 6px 7px; }
             .toolbar-select { font-size: 0.78rem; padding: 5px 19px 5px 8px; background-position: right 6px center; }
-        }
-
-        /* 第二行工具栏右端的帮助提示：靠 margin-left:auto 贴右，空间不足时省略而不是换行撑高 */
-        .toolbar-hint {
-            margin-left: auto;
-            display: inline-flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            min-width: 0;
-            /* flex-basis 取 0：换行是按基准尺寸判定的，基准为 0 就永远不会被挤到下一行，
-               剩余空间归它，再由 justify-content:flex-end 让图标和文字贴着右边缘 */
-            flex: 1 1 0;
-            font-size: 0.75rem;
-            color: var(--hint);
-            white-space: nowrap;
-        }
-        .toolbar-hint > span {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        @media (max-width: 900px) {
-            .toolbar-hint { display: none; }
         }
 
         .main-container { display: flex; flex: 1; overflow: hidden; gap: 8px; padding: 8px; }
@@ -1832,8 +1817,6 @@
             <option value="cpp">C++</option>
             <option value="python">Python</option>
         </select>
-        <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText">中</span></button>
-        <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
         <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
         <input type="file" id="openFileInput" accept=".v,.va,.vams,.sv,.svh,.vh,.txt" style="display:none">
 
@@ -1881,17 +1864,10 @@
         <span class="divider"></span>
         <button id="blockPickerBtn" data-i18n="btnBlockPicker" data-i18n-title="btnBlockPickerTitle" title="插入积木 (Ctrl+/，或 Ctrl+点击编辑器)；快速生成积木 (Ctrl+Shift+/)"><svg class="icon"><use href="#icon-cube"/></svg> 积木</button>
         <button id="quickAddBtn" data-i18n="btnQuickAdd" data-i18n-title="btnQuickAddTitle" title="新增积木 (Ctrl+Shift+/)"><svg class="icon"><use href="#icon-cube-plus"/></svg> 新增</button>
-        <span class="toolbar-hint">
-            <svg class="icon"><use href="#icon-search"/></svg><span data-i18n="toolbarHint">点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+Shift+/ 生成 · Ctrl+F 查找</span>
-        </span>
-        <!-- 超精简第二行右端：界面语言 / 主题（spacer 把它们推到右边） -->
-        <span class="spacer ultra-only"></span>
-        <button id="ultraUiLangBtn" class="icon-only ultra-only" data-i18n-title="ultraUiLangTitle" title="界面语言">
-            <svg class="icon"><use href="#icon-globe"/></svg><span id="ultraUiLangText" class="ultra-mini-text">中</span>
-        </button>
-        <button id="ultraThemeBtn" class="icon-only ultra-only" data-i18n-title="ultraThemeTitle" title="主题">
-            <svg class="icon"><use href="#icon-moon"/></svg>
-        </button>
+        <!-- 界面语言 / 主题：三档共用同一对按钮，spacer 把它们推到第二行最右 -->
+        <span class="spacer"></span>
+        <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText">中</span></button>
+        <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
     </div>
 
     <div class="main-container">
@@ -2369,7 +2345,6 @@
                 btnClearTitle: '清空编辑器（可撤销）',
                 btnExample: '示例',
                 btnExampleTitle: '插入示例代码',
-                toolbarHint: '点击/拖拽积木 · 右键编辑 · Ctrl+/ 插入 · Ctrl+Shift+/ 生成 · Ctrl+F 查找',
                 langToggleTitle: '切换语言 / Switch language',
                 // 第二栏工具栏
                 btnUndo: '撤销',
@@ -2557,11 +2532,9 @@
                 toggleBlocksTitle: '隐藏 / 显示积木栏',
                 toggleBlocksHideTitle: '隐藏积木栏',
                 toggleBlocksShowTitle: '显示积木栏',
-                // 超精简模式的两个菜单 + 界面语言 / 主题按钮
+                // 超精简模式的两个菜单
                 ultraFileTitle: '文件菜单',
                 ultraEditTitle: '编辑菜单',
-                ultraUiLangTitle: '界面语言',
-                ultraThemeTitle: '主题',
                 btnIndentSettings: '缩进设置',
                 menuAutoIndent: '自动缩进',
                 menuBlockPicker: '插入积木',
@@ -2590,7 +2563,6 @@
                 btnClearTitle: 'Clear the editor (undoable)',
                 btnExample: 'Example',
                 btnExampleTitle: 'Insert example code',
-                toolbarHint: 'Click/drag blocks · Right-click to edit · Ctrl+/ insert · Ctrl+Shift+/ quick add · Ctrl+F find',
                 langToggleTitle: '切换语言 / Switch language',
                 // Toolbar 2
                 btnUndo: 'Undo',
@@ -2781,8 +2753,6 @@
                 // Ultra compact menus
                 ultraFileTitle: 'File menu',
                 ultraEditTitle: 'Edit menu',
-                ultraUiLangTitle: 'UI language',
-                ultraThemeTitle: 'Theme',
                 btnIndentSettings: 'Indent settings',
                 menuAutoIndent: 'Auto indent',
                 menuBlockPicker: 'Insert block',
@@ -2970,10 +2940,8 @@
             // 缩进弹窗的 hint 是动态文案，跟着语言刷新
             const hintEl = document.getElementById('indentWidthHint');
             if (hintEl) hintEl.textContent = indentHintText();
-            // 超精简控件（语言下拉 / 界面语言 / 主题按钮）跟随界面语言刷新
+            // 超精简第一行的编程语言下拉跟着编辑语言同步
             if (typeof syncUltraLangSelect === 'function') syncUltraLangSelect();
-            if (typeof updateUltraUiLangBtn === 'function') updateUltraUiLangBtn();
-            if (typeof updateUltraThemeBtn === 'function') updateUltraThemeBtn();
         }
 
         /** 缩进宽度 hint 文案：Tab 模式说明显示宽度，空格模式带出当前选中的宽度 */
@@ -7914,8 +7882,6 @@ except ZeroDivisionError:
                 localStorage.setItem(THEME_KEY, pref);
             } catch (e) { }
             updateThemeButton(pref);
-            // 超精简第二行的主题按钮图标 / title 跟着走（定义在后，用 typeof 兜底）
-            if (typeof updateUltraThemeBtn === 'function') updateUltraThemeBtn();
         }
 
         function cycleTheme() {
@@ -8120,47 +8086,9 @@ except ZeroDivisionError:
             });
         }
 
-        // ---------- 第二行：界面语言按钮（中 / EN） ----------
-        const ultraUiLangBtn = document.getElementById('ultraUiLangBtn');
-
-        // 用 getElementById 取文本节点：refreshUiText 可能早于本段 const 初始化被调用
-        function updateUltraUiLangBtn() {
-            const textEl = document.getElementById('ultraUiLangText');
-            if (textEl) textEl.textContent = currentLang === 'zh' ? '中' : 'EN';
-        }
-
-        if (ultraUiLangBtn) {
-            ultraUiLangBtn.addEventListener('click', () => {
-                clearUrlLangParam();   // 主动切换后 URL 的 ?lang= 不再生效
-                setLang(currentLang === 'zh' ? 'en' : 'zh');
-            });
-        }
-
-        // ---------- 第二行：主题按钮（深 / 浅 / 跟随系统 三态循环） ----------
-        const ultraThemeBtn = document.getElementById('ultraThemeBtn');
-
-        function updateUltraThemeBtn() {
-            const btn = document.getElementById('ultraThemeBtn');
-            if (!btn) return;
-            const pref = getThemePref();
-            const map = {
-                dark: { icon: 'moon', key: 'themeTitleDark' },
-                light: { icon: 'sun', key: 'themeTitleLight' },
-                system: { icon: 'monitor', key: 'themeTitleSystem' }
-            };
-            const cfg = map[pref] || map[THEME_DEFAULT];
-            btn.innerHTML = `<svg class="icon"><use href="#icon-${cfg.icon}"/></svg>`;
-            btn.title = t('ultraThemeTitle') + ' · ' + t(cfg.key);
-        }
-
-        if (ultraThemeBtn) {
-            ultraThemeBtn.addEventListener('click', () => cycleTheme());
-        }
-
-        // 首帧把三处状态对齐（精简模式本身已在上面套好了）
+        // 界面语言 / 主题：第二行那一对按钮三档共用，绑定在「语言切换」「主题切换」两段里，
+        // 这里只把超精简的语言下拉状态对齐（精简模式本身已在上面套好）
         syncUltraLangSelect();
-        updateUltraUiLangBtn();
-        updateUltraThemeBtn();
 
         // ==================== 编辑语言切换 ====================
         const editorLangSelect = document.getElementById('editorLangSelect');
