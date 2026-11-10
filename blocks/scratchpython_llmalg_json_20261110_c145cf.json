@@ -1,5 +1,34 @@
 [
     {
+        "id": "cat-py-llm-alg-data",
+        "category": "LLM / ALG / Data",
+        "category_i18n": { "zh": "LLM / 算法 / 数据" },
+        "icon": "database",
+        "collapsed": false,
+        "subgroups": {
+            "sample": [
+                { "id": "py-llm-alg-data-smp-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-data-smp-input", "icon": "code", "label": "input_ids = ids[:-1]", "code": "input_ids = ids[:-1]", "mode": "exp" },
+                { "id": "py-llm-alg-data-smp-label", "icon": "code", "label": "labels = ids[1:]", "code": "labels = ids[1:]", "mode": "exp" }
+            ],
+            "format": [
+                { "id": "py-llm-alg-data-fmt-import", "icon": "file-import", "label": "import json", "code": "import json", "mode": "line" },
+                { "id": "py-llm-alg-data-fmt-instruct", "icon": "file-signature", "label": "row = {\"instruction\": q, \"response\": a}", "code": "row = {\"instruction\": q, \"response\": a}", "mode": "line" },
+                { "id": "py-llm-alg-data-fmt-pref", "icon": "file-signature", "label": "row = {\"prompt\": p, \"chosen\": a, \"rejected\": b}", "code": "row = {\"prompt\": p, \"chosen\": a, \"rejected\": b}", "mode": "line" }
+            ],
+            "pack": [
+                { "id": "py-llm-alg-data-pck-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-data-pck-pad", "icon": "ruler-horizontal", "label": "batch = [x + [pad] * (max_len - len(x)) for x in xs]", "code": "batch = [x + [pad] * (max_len - len(x)) for x in xs]", "mode": "line" },
+                { "id": "py-llm-alg-data-pck-cat", "icon": "link", "label": "packed = torch.cat(seqs, dim=0)", "code": "packed = torch.cat(seqs, dim=0)", "mode": "exp" }
+            ],
+            "weight": [
+                { "id": "py-llm-alg-data-wgt-import", "icon": "file-import", "label": "import numpy as np", "code": "import numpy as np", "mode": "line" },
+                { "id": "py-llm-alg-data-wgt-arr", "icon": "percent", "label": "w = np.array([0.7, 0.3])", "code": "w = np.array([0.7, 0.3])", "mode": "line" },
+                { "id": "py-llm-alg-data-wgt-choice", "icon": "sort", "label": "idx = np.random.choice(n, size=bs, p=w)", "code": "idx = np.random.choice(n, size=bs, p=w)", "mode": "line" }
+            ]
+        }
+    },
+    {
         "id": "cat-py-llm-alg-tokenize",
         "category": "LLM / ALG / Tokenize",
         "category_i18n": { "zh": "LLM / 算法 / 分词" },
@@ -54,6 +83,31 @@
         }
     },
     {
+        "id": "cat-py-llm-alg-init",
+        "category": "LLM / ALG / Init",
+        "category_i18n": { "zh": "LLM / 算法 / 初始化" },
+        "icon": "magic",
+        "collapsed": false,
+        "subgroups": {
+            "weight": [
+                { "id": "py-llm-alg-init-wgt-import", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-init-wgt-xavier", "icon": "magic", "label": "nn.init.xavier_uniform_(layer.weight)", "code": "nn.init.xavier_uniform_(layer.weight)", "mode": "line" },
+                { "id": "py-llm-alg-init-wgt-kaiming", "icon": "magic", "label": "nn.init.kaiming_normal_(layer.weight)", "code": "nn.init.kaiming_normal_(layer.weight)", "mode": "line" },
+                { "id": "py-llm-alg-init-wgt-orth", "icon": "magic", "label": "nn.init.orthogonal_(layer.weight)", "code": "nn.init.orthogonal_(layer.weight)", "mode": "line" }
+            ],
+            "special": [
+                { "id": "py-llm-alg-init-spc-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-init-spc-scale", "icon": "ruler-horizontal", "label": "x = x * 0.1", "code": "x = x * 0.1", "mode": "exp" },
+                { "id": "py-llm-alg-init-spc-layerscale", "icon": "ruler-horizontal", "label": "scale = nn.Parameter(torch.ones(d_model))", "code": "scale = nn.Parameter(torch.ones(d_model))", "mode": "line" }
+            ],
+            "resume": [
+                { "id": "py-llm-alg-init-res-import", "icon": "file-import", "label": "from transformers import AutoModelForCausalLM", "code": "from transformers import AutoModelForCausalLM", "mode": "line" },
+                { "id": "py-llm-alg-init-res-pretrained", "icon": "download", "label": "model = AutoModelForCausalLM.from_pretrained(\"ckpt\")", "code": "model = AutoModelForCausalLM.from_pretrained(\"ckpt\")", "mode": "line" },
+                { "id": "py-llm-alg-init-res-load", "icon": "upload", "label": "model.load_state_dict(torch.load(\"ckpt.pt\"))", "code": "model.load_state_dict(torch.load(\"ckpt.pt\"))", "mode": "line" }
+            ]
+        }
+    },
+    {
         "id": "cat-py-llm-alg-attention",
         "category": "LLM / ALG / Attention",
         "category_i18n": { "zh": "LLM / 算法 / 注意力" },
@@ -77,6 +131,34 @@
                 { "id": "py-llm-alg-att-ker-softmax", "icon": "percent", "label": "attn = torch.softmax(scores / scale, dim=-1)", "code": "attn = torch.softmax(scores / scale, dim=-1)", "mode": "line" },
                 { "id": "py-llm-alg-att-ker-flash-import", "icon": "file-import", "label": "from flash_attn import flash_attn_func", "code": "from flash_attn import flash_attn_func", "mode": "line" },
                 { "id": "py-llm-alg-att-ker-flash-call", "icon": "bolt", "label": "out = flash_attn_func(q, k, v, causal=True)", "code": "out = flash_attn_func(q, k, v, causal=True)", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-context",
+        "category": "LLM / ALG / Context",
+        "category_i18n": { "zh": "LLM / 算法 / 长上下文" },
+        "icon": "ruler-horizontal",
+        "collapsed": false,
+        "subgroups": {
+            "extend": [
+                { "id": "py-llm-alg-ctx-ext-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-ctx-ext-pi", "icon": "ruler-horizontal", "label": "scale = base_len / cur_len", "code": "scale = base_len / cur_len", "mode": "exp" },
+                { "id": "py-llm-alg-ctx-ext-ntk", "icon": "ruler-horizontal", "label": "theta = 10000 * scale ** (dim / (dim - 2))", "code": "theta = 10000 * scale ** (dim / (dim - 2))", "mode": "exp" }
+            ],
+            "compress": [
+                { "id": "py-llm-alg-ctx-cmp-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-ctx-cmp-gqa", "icon": "cubes", "label": "k = k.repeat_interleave(n_head // n_kv_head, dim=1)", "code": "k = k.repeat_interleave(n_head // n_kv_head, dim=1)", "mode": "line" },
+                { "id": "py-llm-alg-ctx-cmp-trunc", "icon": "cut", "label": "cache = cache[:, -window:]", "code": "cache = cache[:, -window:]", "mode": "exp" }
+            ],
+            "sparse": [
+                { "id": "py-llm-alg-ctx-spr-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-ctx-spr-window", "icon": "code-branch", "label": "mask = torch.ones(L, L).triu(diagonal=-window)", "code": "mask = torch.ones(L, L).triu(diagonal=-window)", "mode": "line" },
+                { "id": "py-llm-alg-ctx-spr-topk", "icon": "arrow-up", "label": "indices = topk(scores, k=64)", "code": "indices = topk(scores, k=64)", "mode": "exp" }
+            ],
+            "recurrence": [
+                { "id": "py-llm-alg-ctx-rec-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-ctx-rec-state", "icon": "rotate-left", "label": "state = state * decay + x", "code": "state = state * decay + x", "mode": "exp" }
             ]
         }
     },
@@ -158,6 +240,35 @@
                 { "id": "py-llm-alg-fwd-bwd-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
                 { "id": "py-llm-alg-fwd-bwd-call", "icon": "rotate-left", "label": "loss.backward()", "code": "loss.backward()", "mode": "line" },
                 { "id": "py-llm-alg-fwd-bwd-grad", "icon": "calculator", "label": "grad = torch.autograd.grad(loss, emb)[0]", "code": "grad = torch.autograd.grad(loss, emb)[0]", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-objective",
+        "category": "LLM / ALG / Objective",
+        "category_i18n": { "zh": "LLM / 算法 / 训练目标" },
+        "icon": "equals",
+        "collapsed": false,
+        "subgroups": {
+            "lm": [
+                { "id": "py-llm-alg-obj-lm-import", "icon": "file-import", "label": "import torch.nn.functional as F", "code": "import torch.nn.functional as F", "mode": "line" },
+                { "id": "py-llm-alg-obj-lm-clm", "icon": "equals", "label": "loss = F.cross_entropy(logits, labels)", "code": "loss = F.cross_entropy(logits, labels)", "mode": "line" },
+                { "id": "py-llm-alg-obj-lm-mlm", "icon": "equals", "label": "loss = F.cross_entropy(logits[mask], labels[mask])", "code": "loss = F.cross_entropy(logits[mask], labels[mask])", "mode": "line" },
+                { "id": "py-llm-alg-obj-lm-span", "icon": "equals", "label": "loss = F.cross_entropy(logits, labels, reduction=\"mean\")", "code": "loss = F.cross_entropy(logits, labels, reduction=\"mean\")", "mode": "line" }
+            ],
+            "contrast": [
+                { "id": "py-llm-alg-obj-ctr-import", "icon": "file-import", "label": "import torch.nn.functional as F", "code": "import torch.nn.functional as F", "mode": "line" },
+                { "id": "py-llm-alg-obj-ctr-infonce", "icon": "link", "label": "loss = F.cross_entropy(sim / T, targets)", "code": "loss = F.cross_entropy(sim / T, targets)", "mode": "line" },
+                { "id": "py-llm-alg-obj-ctr-simcse", "icon": "link", "label": "loss = (1 - F.cosine_similarity(z1, z2)).mean()", "code": "loss = (1 - F.cosine_similarity(z1, z2)).mean()", "mode": "line" }
+            ],
+            "rl": [
+                { "id": "py-llm-alg-obj-rl-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-obj-rl-ratio", "icon": "percent", "label": "ratio = torch.exp(logp - logp_old)", "code": "ratio = torch.exp(logp - logp_old)", "mode": "exp" },
+                { "id": "py-llm-alg-obj-rl-ppo", "icon": "bolt", "label": "loss = -torch.min(ratio * adv, torch.clamp(ratio, 0.8, 1.2) * adv).mean()", "code": "loss = -torch.min(ratio * adv, torch.clamp(ratio, 0.8, 1.2) * adv).mean()", "mode": "line" }
+            ],
+            "aux": [
+                { "id": "py-llm-alg-obj-aux-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-obj-aux-add", "icon": "plus", "label": "loss = loss + 0.1 * aux_loss", "code": "loss = loss + 0.1 * aux_loss", "mode": "exp" }
             ]
         }
     },
@@ -244,6 +355,59 @@
             "distributed": [
                 { "id": "py-llm-alg-opt-dis-import", "icon": "file-import", "label": "from torch.nn.parallel import DistributedDataParallel", "code": "from torch.nn.parallel import DistributedDataParallel", "mode": "line" },
                 { "id": "py-llm-alg-opt-dis-accum", "icon": "cubes", "label": "loss = loss / accum_steps", "code": "loss = loss / accum_steps", "mode": "exp" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-schedule",
+        "category": "LLM / ALG / Schedule",
+        "category_i18n": { "zh": "LLM / 算法 / 调度" },
+        "icon": "chart-line",
+        "collapsed": false,
+        "subgroups": {
+            "lr": [
+                { "id": "py-llm-alg-sch-lr-import", "icon": "file-import", "label": "import math", "code": "import math", "mode": "line" },
+                { "id": "py-llm-alg-sch-lr-cosine", "icon": "chart-line", "label": "lr = base_lr * 0.5 * (1 + math.cos(math.pi * step / total))", "code": "lr = base_lr * 0.5 * (1 + math.cos(math.pi * step / total))", "mode": "exp" },
+                { "id": "py-llm-alg-sch-lr-linear", "icon": "chart-line", "label": "lr = base_lr * min(step / warmup, 1.0)", "code": "lr = base_lr * min(step / warmup, 1.0)", "mode": "exp" },
+                { "id": "py-llm-alg-sch-lr-const", "icon": "chart-line", "label": "lr = base_lr", "code": "lr = base_lr", "mode": "exp" }
+            ],
+            "curriculum": [
+                { "id": "py-llm-alg-sch-cur-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-sch-cur-len", "icon": "ruler-horizontal", "label": "max_len = min(base_len + step * 128, max_len)", "code": "max_len = min(base_len + step * 128, max_len)", "mode": "exp" },
+                { "id": "py-llm-alg-sch-cur-unfreeze", "icon": "arrow-up", "label": "if step > warmup: unfreeze(layer)", "code": "if step > warmup:\n    unfreeze(layer)", "mode": "line" }
+            ],
+            "freeze": [
+                { "id": "py-llm-alg-sch-frz-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-sch-frz-all", "icon": "x", "label": "for p in model.parameters(): p.requires_grad = False", "code": "for p in model.parameters():\n    p.requires_grad = False", "mode": "line" },
+                { "id": "py-llm-alg-sch-frz-head", "icon": "check", "label": "for p in model.lm_head.parameters(): p.requires_grad = True", "code": "for p in model.lm_head.parameters():\n    p.requires_grad = True", "mode": "line" }
+            ]
+        }
+    },
+    {
+        "id": "cat-py-llm-alg-reg",
+        "category": "LLM / ALG / Reg",
+        "category_i18n": { "zh": "LLM / 算法 / 正则化" },
+        "icon": "balance-scale",
+        "collapsed": false,
+        "subgroups": {
+            "dropout": [
+                { "id": "py-llm-alg-reg-drp-import", "icon": "file-import", "label": "import torch.nn as nn", "code": "import torch.nn as nn", "mode": "line" },
+                { "id": "py-llm-alg-reg-drp-std", "icon": "x", "label": "drop = nn.Dropout(0.1)", "code": "drop = nn.Dropout(0.1)", "mode": "line" },
+                { "id": "py-llm-alg-reg-drp-attn", "icon": "x", "label": "drop = nn.Dropout2d(0.1)", "code": "drop = nn.Dropout2d(0.1)", "mode": "line" },
+                { "id": "py-llm-alg-reg-drp-path", "icon": "percent", "label": "p = 0.1", "code": "p = 0.1", "mode": "exp" }
+            ],
+            "weight_decay": [
+                { "id": "py-llm-alg-reg-wd-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-reg-wd-adamw", "icon": "tools", "label": "optimizer = torch.optim.AdamW(model.parameters(), weight_decay=0.01)", "code": "optimizer = torch.optim.AdamW(model.parameters(), weight_decay=0.01)", "mode": "line" }
+            ],
+            "grad": [
+                { "id": "py-llm-alg-reg-grd-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-reg-grd-clip", "icon": "cut", "label": "torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)", "code": "torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)", "mode": "line" },
+                { "id": "py-llm-alg-reg-grd-noise", "icon": "wave-square", "label": "p.grad += torch.randn_like(p.grad) * 0.01", "code": "p.grad += torch.randn_like(p.grad) * 0.01", "mode": "line" }
+            ],
+            "ema": [
+                { "id": "py-llm-alg-reg-ema-import", "icon": "file-import", "label": "import torch", "code": "import torch", "mode": "line" },
+                { "id": "py-llm-alg-reg-ema-update", "icon": "rotate-left", "label": "ema = 0.999 * ema + 0.001 * model.state_dict()", "code": "ema = 0.999 * ema + 0.001 * model.state_dict()", "mode": "exp" }
             ]
         }
     },

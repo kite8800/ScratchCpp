@@ -496,6 +496,8 @@
         }
 
         .toolbar button.icon-only { padding: 6px 8px; }
+        /* 语言切换按钮里的「中 / EN」小字：放 CSS 里，精简模式才能覆盖（内联样式优先级更高） */
+        #langToggleText { font-size: 0.8rem; font-weight: 600; }
         .toolbar .spacer { flex: 1; }
         .toolbar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
 
@@ -544,6 +546,14 @@
             padding: 6px 9px;
         }
         body.compact-toolbar .toolbar button:not(.icon-only) .icon { font-size: 1rem; }
+        /* 精简模式：语言切换按钮的文字缩小 + 内边距收紧，宽度接近旁边两个纯图标按钮 */
+        body.compact-toolbar #langToggleText {
+            font-size: 0.62rem;
+            font-weight: 700;
+        }
+        body.compact-toolbar #langToggleBtn {
+            padding: 6px 6px;
+        }
         /* 精简模式：下拉框缩窄，但仍保留语言文字（缩成小药丸会看不出是什么控件） */
         body.compact-toolbar .toolbar-select {
             font-size: 0.72rem;
@@ -1712,9 +1722,9 @@
             <option value="cpp">C++</option>
             <option value="python">Python</option>
         </select>
-        <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
+        <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText">中</span></button>
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
-        <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText" style="font-size:0.8rem; font-weight:600;">中</span></button>
+        <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
         <input type="file" id="openFileInput" accept=".v,.va,.vams,.sv,.svh,.vh,.txt" style="display:none">
     </div>
 
