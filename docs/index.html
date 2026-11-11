@@ -584,6 +584,13 @@
         body.ultra-compact-toolbar #replaceBtn .icon {
             font-size: 0.85rem;
         }
+        /* 超精简模式：编辑器头部「行 X, 列 Y」隐藏（空间优先让给按钮）。
+           注意这是按模式隐藏，不是按视口宽度：正常 / 精简模式任何宽度都显示 */
+        body.ultra-compact-toolbar #cursorPos { display: none; }
+        /* 超精简模式：头部按钮间距收紧一档（4px → 2px），分隔线左右也收，
+           让一排按钮更紧凑，把省下的宽度留给标题框 */
+        body.ultra-compact-toolbar .editor-header .header-actions { gap: 2px; }
+        body.ultra-compact-toolbar .editor-header .header-divider { margin: 0 2px; }
 
         /* 超精简时精简按钮变紫，提示当前是第三档（图标不变） */
         body.ultra-compact-toolbar #compactToggleBtn {
@@ -982,10 +989,9 @@
             align-items: center;
             gap: 6px;
             flex: 1;
-            /* 不设 min-width:0：标题框不允许被压缩到内容宽度以下，
-               空间不够时由 .editor-header 的 flex-wrap 把按钮换到下一行，
-               而不是让标题框溢出、压在按钮上 */
-            min-width: auto;
+            /* min-width:0：允许标题区和右侧按钮分空间时收缩，
+               文件名过长由 #titleInput 内部 ellipsis 截断，不再把按钮挤到下一行 */
+            min-width: 0;
         }
 
         .editor-header .title-area .icon {
@@ -1002,12 +1008,13 @@
             border-radius: 4px;
             outline: none;
             font-family: var(--font-mono);
-            /* 宽度由 JS 按文件名字符数测量后写入，保证完整显示 */
-            width: 96px;
-            min-width: 92px;
-            max-width: 360px;
-            flex-shrink: 0;        /* 宁可让右侧按钮换行，也不截断文件名 */
-            text-overflow: clip;
+            /* 宽度交给 flex：吃掉 title-area 里除图标、脏点之外的剩余空间。
+               短名时比文字宽（好输入），长名时被 ellipsis 截断，不再靠 JS 测量 */
+            flex: 1 1 auto;
+            min-width: 0;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
             transition: background-color 0.15s, border-color 0.15s;
         }
         /* 未保存状态点：跟标题框并排，只在内容与上次保存不一致时点亮 */
@@ -1086,18 +1093,11 @@
             color: var(--text-muted);
         }
         .header-btn:disabled:hover svg.icon { color: var(--text-secondary); }
-        /* 窄面板：先让出光标位置，保证文件名与按钮都能完整显示（不被裁切） */
-        @media (max-width: 800px) {
-            .editor-header #cursorPos { display: none; }
-        }
         /* 极窄面板（视口 < 620px 时编辑器往往只剩 200px 上下）：
-           文件名已放不下，允许标题框收缩到 60px、靠内部滚动查看，
-           但不允许压到更小（否则会溢出容器、压住右侧按钮） */
+           标题区给一个下限，避免被压到 0 后 padding 溢出压住右侧按钮 */
         @media (max-width: 620px) {
-            /* 82px = 图标 16 + 间距 6 + 标题框最小 60：保证标题区不被压到 0，
-               否则标题框的 padding 会溢出到按钮下面 */
+            /* 82px = 图标 16 + 间距 6 + 标题框最小 60 */
             .editor-header .title-area { min-width: 82px; }
-            #titleInput { flex-shrink: 1; min-width: 60px; }
         }
 
         .editor-header #cursorPos {
@@ -3946,23 +3946,10 @@ except ZeroDivisionError:
         const openFileInput = document.getElementById('openFileInput');
 
         /**
-         * 标题框宽度跟随文件名长度：用 canvas 按同样的字体量出文字宽度，
-         * 加上内边距 / 边框，让文件名完整可见（min/max-width 由 CSS 兜底）。
-         * 名字过长时被 max-width 截住，输入框内部可横向滚动查看。
+         * 标题框宽度现在完全由 flex 决定（#titleInput { flex: 1 1 auto }），
+         * 不再需要用 canvas 量文字宽度。保留空函数是为了不动各处调用点。
          */
-        const titleCtx = (() => {
-            try { return document.createElement('canvas').getContext('2d'); } catch (e) { return null; }
-        })();
-        function syncTitleWidth() {
-            if (!titleCtx || !titleInput) return;
-            const cs = getComputedStyle(titleInput);
-            titleCtx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-            const text = titleInput.value || 'M';
-            const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)
-                + (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
-            // +6：光标与字体测量的舍入余量，避免最后一个字符被切
-            titleInput.style.width = Math.ceil(titleCtx.measureText(text).width + pad + 6) + 'px';
-        }
+        function syncTitleWidth() { /* 宽度由 flex 决定，不再需要测量 */ }
 
         const blockConfigModal = document.getElementById('blockConfigModal');
         const configCode = document.getElementById('configCode');
