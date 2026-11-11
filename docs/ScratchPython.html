@@ -1582,6 +1582,62 @@
         .modal .modal-actions button.danger svg.icon { color: var(--danger-text); }
         .modal .modal-actions button.danger:hover { background: var(--danger-hover); }
 
+        /* ==================== 快照历史弹窗 ==================== */
+        .modal.modal-snapshot {
+            width: 420px;
+            max-height: 80vh;
+            max-height: 80dvh;
+        }
+        .snapshot-list {
+            max-height: 50vh;
+            max-height: 50dvh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .snapshot-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+        }
+        .snapshot-time {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-strong);
+            flex-shrink: 0;
+        }
+        .snapshot-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .snapshot-restore-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--btn-border);
+            color: var(--btn-text);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .snapshot-restore-btn:hover { background: var(--btn-bg-hover); }
+        .snapshot-empty {
+            padding: 24px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
         /* ==================== 积木选择浮层 ==================== */
         .block-picker {
             position: fixed;
@@ -1807,6 +1863,10 @@
         <symbol id="icon-chevrons-up" viewBox="0 0 24 24"><path d="m17 11-5-5-5 5M17 18l-5-5-5 5"/></symbol>
         <symbol id="icon-chevrons-down" viewBox="0 0 24 24"><path d="m7 6 5 5 5-5M7 13l5 5 5-5"/></symbol>
         <symbol id="icon-panel-left" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></symbol>
+        <symbol id="icon-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+        <symbol id="icon-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
     </svg>
 
     <div class="toolbar">
@@ -1819,6 +1879,9 @@
         <span class="divider"></span>
         <button id="clearBtn" data-i18n="btnClear" data-i18n-title="btnClearTitle" title="清空编辑器（可撤销）"><svg class="icon"><use href="#icon-trash"/></svg> 清空</button>
         <button id="exampleBtn" data-i18n="btnExample" data-i18n-title="btnExampleTitle" title="插入示例代码"><svg class="icon"><use href="#icon-lightbulb"/></svg> 示例</button>
+        <span class="divider"></span>
+        <button id="snapshotTakeBtn" data-i18n="btnSnapshotTake" data-i18n-title="btnSnapshotTakeTitle" title="立即拍摄快照"><svg class="icon"><use href="#icon-camera"/></svg> 拍摄</button>
+        <button id="snapshotBtn" data-i18n="btnSnapshot" data-i18n-title="btnSnapshotTitle" title="查看并恢复代码快照"><svg class="icon"><use href="#icon-history"/></svg> 快照</button>
         <span class="spacer"></span>
         <select id="editorLangSelect" class="toolbar-select" data-i18n-title="editorLangTitle" title="编辑语言">
             <option value="verilog">Verilog</option>
@@ -1860,15 +1923,24 @@
             <button class="ultra-menu-item" data-action="file" data-target="blockPickerBtn"><svg class="icon"><use href="#icon-cube"/></svg> <span data-i18n="menuBlockPicker">插入积木</span></button>
             <button class="ultra-menu-item" data-action="file" data-target="quickAddBtn"><svg class="icon"><use href="#icon-cube-plus"/></svg> <span data-i18n="menuQuickAdd">新增积木</span></button>
         </div>
+
+        <div class="ultra-menu" id="ultraSnapshotMenu">
+            <button class="ultra-menu-item" id="ultraSnapNowBtn"><svg class="icon"><use href="#icon-plus"/></svg> <span data-i18n="btnSnapshotNow">立即快照</span></button>
+            <button class="ultra-menu-item" id="ultraSnapRestoreBtn"><svg class="icon"><use href="#icon-history"/></svg> <span data-i18n="btnSnapRestoreLast">恢复最近一条</span></button>
+            <span class="ultra-menu-sep"></span>
+            <button class="ultra-menu-item" id="ultraSnapViewAllBtn"><svg class="icon"><use href="#icon-list"/></svg> <span data-i18n="btnSnapViewAll">查看全部快照</span></button>
+            <button class="ultra-menu-item" id="ultraSnapSettingsBtn"><svg class="icon"><use href="#icon-settings"/></svg> <span data-i18n="btnSnapshotSettings">快照设置</span></button>
+        </div>
     </div>
 
     <div class="toolbar toolbar-second">
         <!-- 积木栏显示 / 隐藏：超精简下也保留，排在三个菜单按钮之前 -->
         <button id="toggleBlocksBtn" class="icon-only" data-i18n-title="toggleBlocksTitle" title="隐藏 / 显示积木栏"><svg class="icon"><use href="#icon-panel-left"/></svg></button>
         <span class="divider" id="toggleBlocksDivider"></span>
-        <!-- 超精简模式下：文件 / 编辑 两个菜单按钮（靠左），界面语言 / 主题靠右，平时隐藏（.ultra-only） -->
+        <!-- 超精简模式下：文件 / 编辑 / 快照 三个菜单按钮（靠左），界面语言 / 主题靠右，平时隐藏（.ultra-only） -->
         <button id="ultraFileBtn" class="icon-only ultra-only" data-i18n-title="ultraFileTitle" title="文件菜单"><svg class="icon"><use href="#icon-folder-open"/></svg></button>
         <button id="ultraEditBtn" class="icon-only ultra-only" data-i18n-title="ultraEditTitle" title="编辑菜单"><svg class="icon"><use href="#icon-edit-3"/></svg></button>
+        <button id="ultraSnapshotBtn" class="icon-only ultra-only" data-i18n-title="ultraSnapshotTitle" title="快照菜单"><svg class="icon"><use href="#icon-history"/></svg></button>
         <button id="undoBtn" data-i18n="btnUndo" data-i18n-title="btnUndoTitle" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
         <button id="redoBtn" data-i18n="btnRedo" data-i18n-title="btnRedoTitle" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
         <span class="divider"></span>
@@ -2228,6 +2300,78 @@
         </div>
     </div>
 
+    <!-- 快照历史 -->
+    <div class="modal-overlay" id="snapshotModal">
+        <div class="modal modal-snapshot">
+            <h3 data-i18n="modalHistoryTitle"><svg class="icon"><use href="#icon-history"/></svg> 快照历史</h3>
+            <div class="snapshot-list" id="snapshotList"></div>
+            <div class="modal-actions">
+                <button id="snapshotNowBtn" data-i18n="btnSnapshotNow"><svg class="icon"><use href="#icon-plus"/></svg> 立即快照</button>
+                <button id="snapshotClearBtn" class="danger" data-i18n="btnSnapshotClear"><svg class="icon"><use href="#icon-trash"/></svg> 清空</button>
+                <span style="flex:1"></span>
+                <button id="snapshotSettingsBtn" data-i18n="btnSettings"><svg class="icon"><use href="#icon-settings"/></svg> 设置</button>
+                <button id="snapshotCloseBtn" data-i18n="btnCancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快照设置 -->
+    <div class="modal-overlay" id="snapshotSettingsModal">
+        <div class="modal" style="width: 400px;">
+            <h3 data-i18n="modalSnapshotSettingsTitle"><svg class="icon"><use href="#icon-settings"/></svg> 快照设置</h3>
+            <div class="field">
+                <label data-i18n="fieldSnapEnabled">自动快照</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="snapEnabled" value="1" checked> <span data-i18n="snapOn">开启</span></label>
+                    <label><input type="radio" name="snapEnabled" value="0"> <span data-i18n="snapOff">关闭</span></label>
+                </div>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldSnapInterval">快照间隔</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="snapInterval" value="30"> 30s</label>
+                    <label><input type="radio" name="snapInterval" value="60" checked> 1m</label>
+                    <label><input type="radio" name="snapInterval" value="120"> 2m</label>
+                    <label><input type="radio" name="snapInterval" value="300"> 5m</label>
+                    <label><input type="radio" name="snapInterval" value="600"> 10m</label>
+                </div>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldSnapMaxCount">最多保留</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="snapMaxCount" value="10" checked> 10</label>
+                    <label><input type="radio" name="snapMaxCount" value="20"> 20</label>
+                    <label><input type="radio" name="snapMaxCount" value="30"> 30</label>
+                    <label><input type="radio" name="snapMaxCount" value="50"> 50</label>
+                </div>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldSnapMaxSize">代码大小上限</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="snapMaxSize" value="0" checked> <span data-i18n="snapUnlimited">不限制</span></label>
+                    <label><input type="radio" name="snapMaxSize" value="50"> 50K</label>
+                    <label><input type="radio" name="snapMaxSize" value="100"> 100K</label>
+                    <label><input type="radio" name="snapMaxSize" value="500"> 500K</label>
+                    <label><input type="radio" name="snapMaxSize" value="1024"> 1M</label>
+                </div>
+                <span class="hint" data-i18n="snapSizeHint">超过此大小的代码不自动快照</span>
+            </div>
+            <div class="field">
+                <label data-i18n="fieldSnapMinChars">最少字符数</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="snapMinChars" value="0"> 0</label>
+                    <label><input type="radio" name="snapMinChars" value="10" checked> 10</label>
+                    <label><input type="radio" name="snapMinChars" value="50"> 50</label>
+                </div>
+                <span class="hint" data-i18n="snapCharsHint">内容太短不自动快照</span>
+            </div>
+            <div class="modal-actions">
+                <button id="snapSettingsCancelBtn" data-i18n="btnCancel">取消</button>
+                <button id="snapSettingsSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 粘贴代码弹窗（剪贴板导入兜底） -->
     <div class="modal-overlay" id="pasteModal">
         <div class="modal">
@@ -2360,6 +2504,36 @@
                 btnClearTitle: '清空编辑器（可撤销）',
                 btnExample: '示例',
                 btnExampleTitle: '插入示例代码',
+                // 快照
+                btnSnapshot: '快照',
+                btnSnapshotTake: '拍摄',
+                btnSnapshotTakeTitle: '立即拍摄快照',
+                btnSettings: '设置',
+                btnSnapshotTitle: '查看并恢复代码快照',
+                modalHistoryTitle: '快照历史',
+                modalSnapshotSettingsTitle: '快照设置',
+                btnSnapshotNow: '立即快照',
+                btnSnapshotSettings: '快照设置',
+                btnSnapRestoreLast: '恢复最近一条',
+                btnSnapViewAll: '查看全部快照',
+                btnSnapshotClear: '清空',
+                snapEmpty: '还没有快照',
+                snapRestore: '恢复',
+                snapRestoreConfirm: '恢复此快照？当前内容会先自动保存为一条快照。',
+                snapClearAllConfirm: '确定清空所有快照吗？',
+                snapRestored: '已恢复快照',
+                snapTaken: '已保存快照',
+                snapUnchanged: '内容没有变化',
+                snapOn: '开启',
+                snapOff: '关闭',
+                snapUnlimited: '不限制',
+                fieldSnapEnabled: '自动快照',
+                fieldSnapInterval: '快照间隔',
+                fieldSnapMaxCount: '最多保留',
+                fieldSnapMaxSize: '代码大小上限',
+                fieldSnapMinChars: '最少字符数',
+                snapSizeHint: '超过此大小的代码不自动快照',
+                snapCharsHint: '内容太短不自动快照',
                 langToggleTitle: '切换语言 / Switch language',
                 // 第二栏工具栏
                 btnUndo: '撤销',
@@ -2550,6 +2724,7 @@
                 // 超精简模式的两个菜单
                 ultraFileTitle: '文件菜单',
                 ultraEditTitle: '编辑菜单',
+                ultraSnapshotTitle: '快照菜单',
                 btnIndentSettings: '缩进设置',
                 menuAutoIndent: '自动缩进',
                 menuBlockPicker: '插入积木',
@@ -2578,6 +2753,36 @@
                 btnClearTitle: 'Clear the editor (undoable)',
                 btnExample: 'Example',
                 btnExampleTitle: 'Insert example code',
+                // Snapshots
+                btnSnapshot: 'Snapshots',
+                btnSnapshotTake: 'Shoot',
+                btnSnapshotTakeTitle: 'Take a snapshot now',
+                btnSettings: 'Settings',
+                btnSnapshotTitle: 'View and restore code snapshots',
+                modalHistoryTitle: 'Snapshot History',
+                modalSnapshotSettingsTitle: 'Snapshot Settings',
+                btnSnapshotNow: 'Snapshot Now',
+                btnSnapshotSettings: 'Snapshot settings',
+                btnSnapRestoreLast: 'Restore latest',
+                btnSnapViewAll: 'View all snapshots',
+                btnSnapshotClear: 'Clear',
+                snapEmpty: 'No snapshots yet',
+                snapRestore: 'Restore',
+                snapRestoreConfirm: 'Restore this snapshot? Current content will be saved as a snapshot first.',
+                snapClearAllConfirm: 'Clear all snapshots?',
+                snapRestored: 'Snapshot restored',
+                snapTaken: 'Snapshot saved',
+                snapUnchanged: 'Content unchanged',
+                snapOn: 'On',
+                snapOff: 'Off',
+                snapUnlimited: 'Unlimited',
+                fieldSnapEnabled: 'Auto snapshot',
+                fieldSnapInterval: 'Snapshot interval',
+                fieldSnapMaxCount: 'Keep at most',
+                fieldSnapMaxSize: 'Max code size',
+                fieldSnapMinChars: 'Min characters',
+                snapSizeHint: 'Code larger than this is not auto-snapshotted',
+                snapCharsHint: 'Content shorter than this is not auto-snapshotted',
                 langToggleTitle: '切换语言 / Switch language',
                 // Toolbar 2
                 btnUndo: 'Undo',
@@ -2768,6 +2973,7 @@
                 // Ultra compact menus
                 ultraFileTitle: 'File menu',
                 ultraEditTitle: 'Edit menu',
+                ultraSnapshotTitle: 'Snapshot menu',
                 btnIndentSettings: 'Indent settings',
                 menuAutoIndent: 'Auto indent',
                 menuBlockPicker: 'Insert block',
@@ -7716,6 +7922,260 @@ except ZeroDivisionError:
             }, 2600);
         }
 
+        // ==================== 快照（自动保存历史 + 一键恢复） ====================
+        const SNAP_KEY = 'snapshots-v1';
+        const SNAP_SETTINGS_KEY = 'snapshot-settings-v1';
+        const SNAP_DEFAULT_SETTINGS = {
+            enabled: true,
+            interval: 60,
+            maxCount: 10,
+            maxSize: 0,        // 0 = 不限制（KB）
+            minChars: 10
+        };
+
+        let snapshots = [];
+        let snapshotTimer = null;
+
+        function getSnapshotSettings() {
+            try {
+                const raw = SafeStore.get(SNAP_SETTINGS_KEY);
+                if (raw) {
+                    const s = JSON.parse(raw);
+                    return {
+                        enabled: s.enabled !== false,
+                        interval: [30, 60, 120, 300, 600].indexOf(s.interval) >= 0 ? s.interval : 60,
+                        maxCount: [10, 20, 30, 50].indexOf(s.maxCount) >= 0 ? s.maxCount : 10,
+                        maxSize: [0, 50, 100, 500, 1024].indexOf(s.maxSize) >= 0 ? s.maxSize : 0,
+                        minChars: [0, 10, 50].indexOf(s.minChars) >= 0 ? s.minChars : 10
+                    };
+                }
+            } catch (e) { }
+            return Object.assign({}, SNAP_DEFAULT_SETTINGS);
+        }
+
+        function saveSnapshotSettings(s) {
+            SafeStore.set(SNAP_SETTINGS_KEY, JSON.stringify(s));
+        }
+
+        function loadSnapshots() {
+            try {
+                const raw = SafeStore.get(SNAP_KEY);
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr)) {
+                        snapshots = arr.filter(s => s && typeof s.text === 'string');
+                    }
+                }
+            } catch (e) {
+                console.warn('[snapshot] 加载失败', e);
+            }
+        }
+
+        function saveSnapshots() {
+            // 总容量 4MB 保护：从最旧的删起（localStorage 一般 5MB）
+            const MAX_TOTAL = 4 * 1024 * 1024;
+            let total = snapshots.reduce((n, s) => n + (s.size || 0), 0);
+            while (total > MAX_TOTAL && snapshots.length > 1) {
+                const removed = snapshots.pop();
+                total -= (removed.size || 0);
+            }
+            const ok = SafeStore.set(SNAP_KEY, JSON.stringify(snapshots));
+            if (!ok) {
+                // 写入失败（配额满）：删一半再试
+                snapshots = snapshots.slice(0, Math.max(1, Math.floor(snapshots.length / 2)));
+                SafeStore.set(SNAP_KEY, JSON.stringify(snapshots));
+            }
+        }
+
+        /**
+         * 拍一条快照。
+         * manual=true 跳过 enabled / minChars / maxSize 检查（用于「立即快照」和恢复前保底），
+         * 但仍去重、仍按 maxCount 裁剪。返回是否真的新增了一条。
+         */
+        function takeSnapshot(manual) {
+            const s = getSnapshotSettings();
+            if (!manual && !s.enabled) return false;
+
+            const text = codeInput.value;
+            if (!manual && text.length < s.minChars) return false;
+
+            const size = new Blob([text]).size;
+            if (!manual && s.maxSize > 0 && size > s.maxSize * 1024) return false;
+
+            // 和最新一条内容完全相同就不重复（手动快照也去重）
+            const last = snapshots[0];
+            if (last && last.text === text) return false;
+
+            snapshots.unshift({
+                id: genId('snap'),
+                time: Date.now(),
+                text: text,
+                size: size,
+                lang: currentEditorLang,
+                fileName: (titleInput.value || '').trim() || 'untitled'
+            });
+            if (snapshots.length > s.maxCount) snapshots = snapshots.slice(0, s.maxCount);
+            saveSnapshots();
+            return true;
+        }
+
+        function startSnapshotTimer() {
+            stopSnapshotTimer();
+            const s = getSnapshotSettings();
+            if (!s.enabled) return;
+            snapshotTimer = setInterval(() => takeSnapshot(false), s.interval * 1000);
+        }
+
+        function stopSnapshotTimer() {
+            if (snapshotTimer) {
+                clearInterval(snapshotTimer);
+                snapshotTimer = null;
+            }
+        }
+
+        function formatSnapshotTime(ts) {
+            const d = new Date(ts);
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const hms = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+            const sameDay = d.toDateString() === now.toDateString();
+            return sameDay ? hms : pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + hms;
+        }
+
+        function renderSnapshotList() {
+            const list = document.getElementById('snapshotList');
+            if (!list) return;
+            list.innerHTML = '';
+            if (snapshots.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'snapshot-empty';
+                empty.textContent = t('snapEmpty');
+                list.appendChild(empty);
+                return;
+            }
+            snapshots.forEach(snap => {
+                const row = document.createElement('div');
+                row.className = 'snapshot-item';
+
+                const timeEl = document.createElement('span');
+                timeEl.className = 'snapshot-time';
+                timeEl.textContent = formatSnapshotTime(snap.time);
+
+                const nameEl = document.createElement('span');
+                nameEl.className = 'snapshot-name';
+                nameEl.textContent = snap.fileName || 'untitled';
+                nameEl.title = snap.fileName || 'untitled';
+
+                const btn = document.createElement('button');
+                btn.className = 'snapshot-restore-btn';
+                btn.textContent = t('snapRestore');
+                btn.addEventListener('click', () => restoreSnapshot(snap));
+
+                row.appendChild(timeEl);
+                row.appendChild(nameEl);
+                row.appendChild(btn);
+                list.appendChild(row);
+            });
+        }
+
+        function openSnapshotModal() {
+            renderSnapshotList();
+            document.getElementById('snapshotModal').classList.add('show');
+        }
+
+        function closeSnapshotModal() {
+            document.getElementById('snapshotModal').classList.remove('show');
+        }
+
+        function restoreSnapshot(snap) {
+            if (!confirm(t('snapRestoreConfirm'))) return;
+            // 当前内容先强制存一条，避免恢复后丢失
+            takeSnapshot(true);
+            codeInput.value = snap.text;
+            lastHighlightedText = null;
+            updateHighlight();
+            updateCursorPosition();
+            pushHistoryImmediate();
+            closeSnapshotModal();
+            flashStatus(t('snapRestored'));
+        }
+
+        function openSnapshotSettings() {
+            const s = getSnapshotSettings();
+            const setRadio = (name, val) => {
+                const r = document.querySelector('input[name="' + name + '"][value="' + val + '"]');
+                if (r) r.checked = true;
+            };
+            setRadio('snapEnabled', s.enabled ? '1' : '0');
+            setRadio('snapInterval', String(s.interval));
+            setRadio('snapMaxCount', String(s.maxCount));
+            setRadio('snapMaxSize', String(s.maxSize));
+            setRadio('snapMinChars', String(s.minChars));
+            document.getElementById('snapshotSettingsModal').classList.add('show');
+        }
+
+        function closeSnapshotSettings() {
+            document.getElementById('snapshotSettingsModal').classList.remove('show');
+        }
+
+        function saveSnapshotSettingsFromUI() {
+            const getVal = name => {
+                const r = document.querySelector('input[name="' + name + '"]:checked');
+                return r ? r.value : null;
+            };
+            const s = {
+                enabled: getVal('snapEnabled') === '1',
+                interval: parseInt(getVal('snapInterval'), 10) || 60,
+                maxCount: parseInt(getVal('snapMaxCount'), 10) || 10,
+                maxSize: parseInt(getVal('snapMaxSize'), 10) || 0,
+                minChars: parseInt(getVal('snapMinChars'), 10) || 0
+            };
+            saveSnapshotSettings(s);
+            // maxCount 改小后立即裁剪，避免「我设了 10 条怎么还有 50 条」
+            if (snapshots.length > s.maxCount) {
+                snapshots = snapshots.slice(0, s.maxCount);
+                saveSnapshots();
+            }
+            if (document.getElementById('snapshotModal').classList.contains('show')) {
+                renderSnapshotList();
+            }
+            startSnapshotTimer();   // 设置变了，重启定时器
+            closeSnapshotSettings();
+        }
+
+        document.getElementById('snapshotTakeBtn').addEventListener('click', () => {
+            const added = takeSnapshot(true);
+            flashStatus(added ? t('snapTaken') : t('snapUnchanged'));
+        });
+        document.getElementById('snapshotBtn').addEventListener('click', openSnapshotModal);
+        document.getElementById('snapshotSettingsBtn').addEventListener('click', openSnapshotSettings);
+        document.getElementById('snapshotCloseBtn').addEventListener('click', closeSnapshotModal);
+        document.getElementById('snapshotNowBtn').addEventListener('click', () => {
+            const added = takeSnapshot(true);
+            renderSnapshotList();
+            flashStatus(added ? t('snapTaken') : t('snapUnchanged'));
+        });
+        document.getElementById('snapshotClearBtn').addEventListener('click', () => {
+            if (!confirm(t('snapClearAllConfirm'))) return;
+            snapshots = [];
+            saveSnapshots();
+            renderSnapshotList();
+        });
+        document.getElementById('snapshotModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('snapshotModal')) closeSnapshotModal();
+        });
+        document.getElementById('snapSettingsCancelBtn').addEventListener('click', closeSnapshotSettings);
+        document.getElementById('snapSettingsSaveBtn').addEventListener('click', saveSnapshotSettingsFromUI);
+        document.getElementById('snapshotSettingsModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('snapshotSettingsModal')) closeSnapshotSettings();
+        });
+        // Esc 关掉快照相关弹窗（不抢其他 Esc 逻辑：只在弹窗开着时生效）
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            if (document.getElementById('snapshotModal').classList.contains('show')) closeSnapshotModal();
+            else if (document.getElementById('snapshotSettingsModal').classList.contains('show')) closeSnapshotSettings();
+        });
+
         function updateIndentWidthFieldState() {
             const checked = document.querySelector('input[name="indentStyle"]:checked');
             const isTab = !!checked && checked.value === 'tab';
@@ -8013,13 +8473,15 @@ except ZeroDivisionError:
         // 首帧就套上，避免进页面后工具栏先宽后窄地跳一下
         setCompactMode(getCompactPref(), { persist: false });
 
-        // ==================== 超精简模式：文件 / 编辑 两个菜单 ====================
+        // ==================== 超精简模式：文件 / 编辑 / 快照 三个菜单 ====================
         const ultraFileBtn = document.getElementById('ultraFileBtn');
         const ultraEditBtn = document.getElementById('ultraEditBtn');
+        const ultraSnapshotBtn = document.getElementById('ultraSnapshotBtn');
         const ultraFileMenu = document.getElementById('ultraFileMenu');
         const ultraEditMenu = document.getElementById('ultraEditMenu');
-        const ULTRA_MENUS = [ultraFileMenu, ultraEditMenu].filter(Boolean);
-        const ULTRA_BTNS = [ultraFileBtn, ultraEditBtn].filter(Boolean);
+        const ultraSnapshotMenu = document.getElementById('ultraSnapshotMenu');
+        const ULTRA_MENUS = [ultraFileMenu, ultraEditMenu, ultraSnapshotMenu].filter(Boolean);
+        const ULTRA_BTNS = [ultraFileBtn, ultraEditBtn, ultraSnapshotBtn].filter(Boolean);
 
         /**
          * 关闭所有 ultra 菜单。
@@ -8052,6 +8514,15 @@ except ZeroDivisionError:
         if (ultraEditBtn && ultraEditMenu) {
             ultraEditBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleUltraMenu(ultraEditMenu, ultraEditBtn); });
         }
+        if (ultraSnapshotBtn && ultraSnapshotMenu) {
+            ultraSnapshotBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // 打开前刷新「恢复最近一条」的禁用状态
+                const restoreItem = document.getElementById('ultraSnapRestoreBtn');
+                if (restoreItem) restoreItem.disabled = (snapshots.length === 0);
+                toggleUltraMenu(ultraSnapshotMenu, ultraSnapshotBtn);
+            });
+        }
 
         // 点菜单外部关闭
         document.addEventListener('click', (e) => {
@@ -8072,6 +8543,36 @@ except ZeroDivisionError:
                 });
             });
         });
+
+        // ==================== 超精简：快照菜单动作 ====================
+        (function initUltraSnapshotMenu() {
+            const nowBtn = document.getElementById('ultraSnapNowBtn');
+            const restoreBtn = document.getElementById('ultraSnapRestoreBtn');
+            const viewAllBtn = document.getElementById('ultraSnapViewAllBtn');
+            const settingsBtn = document.getElementById('ultraSnapSettingsBtn');
+
+            if (nowBtn) nowBtn.addEventListener('click', () => {
+                closeAllUltraMenus();
+                takeSnapshot(true);
+                flashStatus(t('snapTaken'));
+            });
+
+            if (restoreBtn) restoreBtn.addEventListener('click', () => {
+                if (snapshots.length === 0) return;
+                closeAllUltraMenus();
+                restoreSnapshot(snapshots[0]);
+            });
+
+            if (viewAllBtn) viewAllBtn.addEventListener('click', () => {
+                closeAllUltraMenus();
+                openSnapshotModal();
+            });
+
+            if (settingsBtn) settingsBtn.addEventListener('click', () => {
+                closeAllUltraMenus();
+                openSnapshotSettings();
+            });
+        })();
 
         // ---------- 第一行：超精简编程语言下拉 ----------
         const ultraLangSelect = document.getElementById('ultraLangSelect');
@@ -8285,6 +8786,10 @@ except ZeroDivisionError:
                     }
                 }, 300);
             }
+
+            // 快照：加载历史、按设置启动定时器（设置默认开启，60 秒一条）
+            loadSnapshots();
+            startSnapshotTimer();
 
             // 命令行启动（scratchverilog.cmd）通过 ?file=file:///... 传入要打开的文件。
             // 需要 --allow-file-access-from-files，否则 file:// 的 fetch 会被拦，这里走 catch。
