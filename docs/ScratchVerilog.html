@@ -603,6 +603,23 @@
         }
         body.compact-toolbar .toolbar .divider { margin: 0 2px; }
 
+        /* 精简 / 超精简（两档共用）：编辑器头部「查找 / 替换」只留图标。
+           font-size:0 吃掉文字，图标是 1em 也会归零，必须补回 0.85rem */
+        body.compact-toolbar #findBtn,
+        body.compact-toolbar #replaceBtn {
+            font-size: 0;
+            gap: 0;
+            padding: 3px 5px;
+        }
+        body.compact-toolbar #findBtn .icon,
+        body.compact-toolbar #replaceBtn .icon {
+            font-size: 0.85rem;
+        }
+        /* 精简 / 超精简：头部按钮间距收紧一档（4px → 2px），分隔线左右也收，
+           让一排按钮更紧凑，把省下的宽度留给标题框 */
+        body.compact-toolbar .editor-header .header-actions { gap: 2px; }
+        body.compact-toolbar .editor-header .header-divider { margin: 0 2px; }
+
         /* ==================== 超精简模式（第三档）==================== */
         /* 第一行：logo … [语言下拉] [精简按钮]
            第二行：[积木栏开关] [文件] [编辑] … [界面语言] [主题]
@@ -628,25 +645,9 @@
             background-position: right 6px center;
         }
 
-        /* 超精简：编辑器头部「查找 / 替换」只留图标。
-           font-size:0 吃掉文字，图标是 1em 也会归零，必须补回 0.85rem */
-        body.ultra-compact-toolbar #findBtn,
-        body.ultra-compact-toolbar #replaceBtn {
-            font-size: 0;
-            gap: 0;
-            padding: 3px 5px;
-        }
-        body.ultra-compact-toolbar #findBtn .icon,
-        body.ultra-compact-toolbar #replaceBtn .icon {
-            font-size: 0.85rem;
-        }
-        /* 超精简模式：编辑器头部「行 X, 列 Y」隐藏（空间优先让给按钮）。
-           注意这是按模式隐藏，不是按视口宽度：正常 / 精简模式任何宽度都显示 */
+        /* 只有超精简隐藏「行 X, 列 Y」：空间优先让给按钮。
+           精简模式保留（两档都按模式生效，不按视口宽度） */
         body.ultra-compact-toolbar #cursorPos { display: none; }
-        /* 超精简模式：头部按钮间距收紧一档（4px → 2px），分隔线左右也收，
-           让一排按钮更紧凑，把省下的宽度留给标题框 */
-        body.ultra-compact-toolbar .editor-header .header-actions { gap: 2px; }
-        body.ultra-compact-toolbar .editor-header .header-divider { margin: 0 2px; }
 
         /* 超精简时精简按钮变紫，提示当前是第三档（图标不变） */
         body.ultra-compact-toolbar #compactToggleBtn {
