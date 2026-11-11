@@ -1704,6 +1704,18 @@
             color: var(--text-muted);
             font-size: 0.75rem;
         }
+
+        /* dabbrev 词补全：复用积木浮层样式，宽度收窄，词用等宽字体 */
+        .dabbrev-picker { width: 300px; }
+        .dabbrev-word {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--text-strong);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .block-picker-item.active .dabbrev-word { color: #fff; }
     </style>
     <script>
         /* 首帧防闪烁：在 body 渲染前同步设置 data-theme */
@@ -1835,8 +1847,8 @@
         <button id="clearBtn" data-i18n="btnClear" data-i18n-title="btnClearTitle" title="清空编辑器（可撤销）"><svg class="icon"><use href="#icon-trash"/></svg> 清空</button>
         <button id="exampleBtn" data-i18n="btnExample" data-i18n-title="btnExampleTitle" title="插入示例代码"><svg class="icon"><use href="#icon-lightbulb"/></svg> 示例</button>
         <span class="divider"></span>
-        <button id="snapshotTakeBtn" data-i18n="btnSnapshotTake" data-i18n-title="btnSnapshotTakeTitle" title="立即拍摄快照"><svg class="icon"><use href="#icon-camera"/></svg> 拍摄</button>
         <button id="snapshotBtn" data-i18n="btnSnapshot" data-i18n-title="btnSnapshotTitle" title="查看并恢复代码快照"><svg class="icon"><use href="#icon-history"/></svg> 快照</button>
+        <button id="snapshotTakeBtn" class="icon-only" data-i18n-title="btnSnapshotTakeTitle" title="立即拍摄快照"><svg class="icon"><use href="#icon-camera"/></svg></button>
         <span class="spacer"></span>
         <select id="editorLangSelect" class="toolbar-select" data-i18n-title="editorLangTitle" title="编辑语言">
             <option value="verilog">Verilog</option>
@@ -2012,7 +2024,7 @@
 
     <div class="status-bar">
         <span data-i18n="statusReady"><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
-        <span data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Ctrl+F 查找 / Ctrl+H 替换</span>
+        <span data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Alt+/ 补全 · Ctrl+F 查找 / Ctrl+H 替换</span>
         <span id="execTime"></span>
     </div>
 
@@ -2396,6 +2408,25 @@
         </div>
     </div>
 
+    <!-- ===== dabbrev 词补全浮层（Ctrl+Shift+/）===== -->
+    <div class="block-picker dabbrev-picker" id="dabbrevPicker">
+        <div class="block-picker-header">
+            <svg class="icon"><use href="#icon-magic"/></svg>
+            <input type="text" id="dabbrevInput"
+                   data-i18n-placeholder="dabbrevPlaceholder"
+                   placeholder="补全词...（↑↓ 选择，Enter 替换，Esc 关闭）"
+                   spellcheck="false" autocomplete="off">
+        </div>
+        <div class="block-picker-list" id="dabbrevList"></div>
+        <div class="block-picker-footer">
+            <span data-i18n="pickerFooterNav">↑↓ 选择</span>
+            <span data-i18n="dabbrevFooterInsert">Enter 替换</span>
+            <span data-i18n="pickerFooterEsc">Esc 关闭</span>
+            <span style="flex:1"></span>
+            <span id="dabbrevCount">0 项</span>
+        </div>
+    </div>
+
     <script>
         // ==================== 安全存储 ====================
         // 部分环境（无痕模式、禁用站点数据、受限的 file://、企业策略）访问 localStorage 会直接抛
@@ -2461,7 +2492,6 @@
                 btnExampleTitle: '插入示例代码',
                 // 快照
                 btnSnapshot: '快照',
-                btnSnapshotTake: '拍摄',
                 btnSnapshotTakeTitle: '立即拍摄快照',
                 btnSettings: '设置',
                 btnSnapshotTitle: '查看并恢复代码快照',
@@ -2575,10 +2605,16 @@
                 btnCloseTitle: '关闭 (Esc)',
                 // 状态栏
                 statusReady: '就绪',
-                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Ctrl+F 查找 / Ctrl+H 替换',
+                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Alt+/ 补全 · Ctrl+F 查找 / Ctrl+H 替换',
                 // 积木选择浮层
                 pickerPlaceholder: '筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）',
                 pickerEmpty: '没有匹配的积木',
+                // dabbrev 词补全
+                dabbrevPlaceholder: '补全词...（↑↓ 选择，Enter 替换，Esc 关闭）',
+                dabbrevFooterInsert: 'Enter 替换',
+                dabbrevEmpty: '没有匹配的词',
+                dabbrevNoWord: '光标不在词上',
+                dabbrevNoMatch: '附近没有可补全的词',
                 pickerNoBlocks: '暂无积木，请在左侧面板添加',
                 pickerFooterNav: '↑↓ 选择',
                 pickerFooterInsert: 'Enter 插入',
@@ -2710,7 +2746,6 @@
                 btnExampleTitle: 'Insert example code',
                 // Snapshots
                 btnSnapshot: 'Snapshots',
-                btnSnapshotTake: 'Shoot',
                 btnSnapshotTakeTitle: 'Take a snapshot now',
                 btnSettings: 'Settings',
                 btnSnapshotTitle: 'View and restore code snapshots',
@@ -2824,10 +2859,16 @@
                 btnCloseTitle: 'Close (Esc)',
                 // Status bar
                 statusReady: 'Ready',
-                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+Shift+/ quick add · Ctrl+F find / Ctrl+H replace',
+                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+Shift+/ quick add · Alt+/ complete · Ctrl+F find / Ctrl+H replace',
                 // Block picker
                 pickerPlaceholder: 'Filter blocks... (↑↓ select, Enter insert, Esc close)',
                 pickerEmpty: 'No matching blocks',
+                // dabbrev completion
+                dabbrevPlaceholder: 'Complete word... (↑↓ select, Enter replace, Esc close)',
+                dabbrevFooterInsert: 'Enter replace',
+                dabbrevEmpty: 'No matching words',
+                dabbrevNoWord: 'Caret is not on a word',
+                dabbrevNoMatch: 'Nothing to complete nearby',
                 pickerNoBlocks: 'No blocks yet. Add them in the left panel',
                 pickerFooterNav: '↑↓ select',
                 pickerFooterInsert: 'Enter insert',
@@ -7193,6 +7234,306 @@ except ZeroDivisionError:
             hideBlockPicker(false);
         });
 
+        // ==================== dabbrev 词补全（Ctrl+Shift+/） ====================
+        // 只扫光标前后各 DABBREV_RADIUS 个字符（边界再对齐到词），大文件也只扫附近 2 万字符，耗时恒定
+        const DABBREV_RADIUS = 10000;
+        const DABBREV_MAX_ITEMS = 20;
+
+        const dabbrevPicker = document.getElementById('dabbrevPicker');
+        const dabbrevInput = document.getElementById('dabbrevInput');
+        const dabbrevList = document.getElementById('dabbrevList');
+        const dabbrevCount = document.getElementById('dabbrevCount');
+
+        const dabbrevState = {
+            visible: false,
+            items: [],          // [{ word, count }]
+            activeIndex: 0,
+            prefixStart: 0,     // 光标处词在文本里的起点
+            prefixEnd: 0        // 光标处词在文本里的终点（含光标右侧，用于整词替换）
+        };
+
+        /** 光标向左连续取标识符字符，返回前缀（不在词上返回空串） */
+        function getWordBeforeCaret(text, caret) {
+            let start = caret;
+            while (start > 0 && /[A-Za-z0-9_]/.test(text.charAt(start - 1))) start--;
+            return text.substring(start, caret);
+        }
+
+        /** 光标所在词的完整范围（含光标右侧字符），用于扫描时跳过「自己」 */
+        function getWordRangeAtCaret(text, caret) {
+            let start = caret;
+            while (start > 0 && /[A-Za-z0-9_]/.test(text.charAt(start - 1))) start--;
+            let end = caret;
+            while (end < text.length && /[A-Za-z0-9_]/.test(text.charAt(end))) end++;
+            return { start, end };
+        }
+
+        /**
+         * 取以光标为中心的扫描区间：前后各 DABBREV_RADIUS 字符，边界向外扩到词边界，不切半个词。
+         * 不 split 全文、不做全文定位，耗时与文件大小无关。
+         */
+        function getDabbrevScanRange(text, caret) {
+            let startPos = Math.max(0, caret - DABBREV_RADIUS);
+            if (startPos > 0) {
+                while (startPos > 0 && /[A-Za-z0-9_]/.test(text.charAt(startPos))) startPos--;
+                if (startPos > 0) startPos++;   // 跳过那个非词字符，从词的起点开始
+            }
+
+            let endPos = Math.min(text.length, caret + DABBREV_RADIUS);
+            if (endPos < text.length) {
+                while (endPos < text.length && /[A-Za-z0-9_]/.test(text.charAt(endPos))) endPos++;
+            }
+
+            return { startPos, endPos };
+        }
+
+        /** 收集候选词：前缀匹配（不区分大小写）、去重、按出现次数降序 */
+        function collectDabbrevCandidates(prefix, text) {
+            const src = text === undefined ? codeInput.value : text;
+            const caret = codeInput.selectionStart || 0;
+            if (!prefix) return [];
+
+            const { startPos, endPos } = getDabbrevScanRange(src, caret);
+            const wordRange = getWordRangeAtCaret(src, caret);
+            const region = src.substring(startPos, endPos);
+            const lowerPrefix = prefix.toLowerCase();
+
+            const freq = new Map();
+            const re = /[A-Za-z_]\w*/g;
+            let m;
+            while ((m = re.exec(region)) !== null) {
+                const w = m[0];
+                const absPos = startPos + m.index;
+                // 跳过光标处那一个实例（否则 pri|nt 会拿自己补自己）
+                if (absPos >= wordRange.start && absPos + w.length <= wordRange.end) continue;
+                if (w.length < prefix.length) continue;
+                if (w === prefix) continue;                              // 与原词相同，替换了也没变化
+                if (!w.toLowerCase().startsWith(lowerPrefix)) continue;   // 前缀匹配
+                freq.set(w, (freq.get(w) || 0) + 1);
+            }
+
+            const arr = Array.from(freq.entries()).map(([word, count]) => ({ word, count }));
+            arr.sort((a, b) => {
+                if (b.count !== a.count) return b.count - a.count;
+                return a.word.localeCompare(b.word);
+            });
+            return arr.slice(0, DABBREV_MAX_ITEMS);
+        }
+
+        // ---- 渲染 ----
+        function renderDabbrevList() {
+            const items = dabbrevState.items;
+            dabbrevList.innerHTML = '';
+
+            if (items.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'block-picker-empty';
+                empty.textContent = dabbrevInput.value.trim() ? t('dabbrevEmpty') : t('dabbrevNoWord');
+                dabbrevList.appendChild(empty);
+                dabbrevCount.textContent = t('pickerCount', { n: 0 });
+                return;
+            }
+
+            items.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'block-picker-item' + (idx === dabbrevState.activeIndex ? ' active' : '');
+                row.dataset.index = String(idx);
+
+                const labelEl = document.createElement('span');
+                labelEl.className = 'dabbrev-word';
+                labelEl.textContent = item.word;     // 只显示词，不显示频次
+                row.appendChild(labelEl);
+
+                row.addEventListener('mouseenter', () => {
+                    dabbrevState.activeIndex = idx;
+                    updateDabbrevActive();
+                });
+                row.addEventListener('mousedown', (e) => e.preventDefault());   // 防止输入框失焦
+                row.addEventListener('click', () => applyDabbrev(item.word));
+
+                dabbrevList.appendChild(row);
+            });
+
+            dabbrevCount.textContent = t('pickerCount', { n: items.length });
+            scrollDabbrevActiveIntoView();
+        }
+
+        function updateDabbrevActive() {
+            const rows = dabbrevList.querySelectorAll('.block-picker-item');
+            rows.forEach((row, i) => row.classList.toggle('active', i === dabbrevState.activeIndex));
+            scrollDabbrevActiveIntoView();
+        }
+
+        function scrollDabbrevActiveIntoView() {
+            const active = dabbrevList.querySelector('.block-picker-item.active');
+            if (!active) return;
+            const listRect = dabbrevList.getBoundingClientRect();
+            const itemRect = active.getBoundingClientRect();
+            if (itemRect.top < listRect.top) {
+                dabbrevList.scrollTop -= (listRect.top - itemRect.top);
+            } else if (itemRect.bottom > listRect.bottom) {
+                dabbrevList.scrollTop += (itemRect.bottom - listRect.bottom);
+            }
+        }
+
+        // ---- 定位：贴着光标，超出视口就翻到上方 / 左收 ----
+        // 不用 getCaretPixelPos()：那个会 substring + split 全文，10 万行文件要几十毫秒。
+        // 这里只顺序数光标前的换行符，跳过整段文本分配。
+        function positionDabbrev(text) {
+            const src = text === undefined ? codeInput.value : text;
+            const pos = codeInput.selectionStart || 0;
+            let line = 0;
+            let lastNl = -1;
+            for (let i = src.indexOf('\n'); i >= 0 && i < pos; i = src.indexOf('\n', i + 1)) {
+                line++;
+                lastNl = i;
+            }
+            const col = pos - lastNl - 1;
+            const lineHeight = editorLineHeight();
+            const charWidth = editorCharWidth();
+            const rect = codeInput.getBoundingClientRect();
+            const padTop = 16;
+            const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
+
+            // 不读 offsetWidth/offsetHeight：那会在写 DOM 后强制一次全量 layout，
+            // 3MB 文本的 textarea 重排要十几毫秒。这里用已知的固定宽度 + 估算高度。
+            const rows = Math.min(Math.max(dabbrevState.items.length, 1), DABBREV_MAX_ITEMS);
+            const pw = 300;
+            const ph = 64 + Math.min(320, rows * 29 + 8);
+            const margin = 8;
+            let left = Math.max(margin, rect.left + padLeft + col * charWidth - codeInput.scrollLeft);
+            let top = rect.top + padTop + (line + 1) * lineHeight - codeInput.scrollTop;
+
+            if (top + ph > window.innerHeight - margin) {
+                top = Math.max(margin, top - ph - 24);
+            }
+            if (left + pw > window.innerWidth - margin) {
+                left = Math.max(margin, window.innerWidth - pw - margin);
+            }
+
+            dabbrevPicker.style.left = Math.round(left) + 'px';
+            dabbrevPicker.style.top = Math.round(top) + 'px';
+        }
+
+        // ---- 打开 / 关闭 / 接受 ----
+        function openDabbrev() {
+            const text = codeInput.value;
+            const caret = codeInput.selectionStart || 0;
+            if (caret !== codeInput.selectionEnd) return;      // 有选区不触发
+
+            const prefix = getWordBeforeCaret(text, caret);
+            if (!prefix) { flashStatus(t('dabbrevNoWord')); return; }
+
+            const items = collectDabbrevCandidates(prefix, text);
+            if (items.length === 0) { flashStatus(t('dabbrevNoMatch')); return; }
+
+            if (blockPickerState.visible) hideBlockPicker(false);
+            if (searchState.visible) closeSearch();
+
+            dabbrevState.visible = true;
+            dabbrevState.items = items;
+            dabbrevState.activeIndex = 0;
+            dabbrevState.prefixStart = caret - prefix.length;
+            dabbrevState.prefixEnd = getWordRangeAtCaret(text, caret).end;   // 整词替换，光标在词中间也不残留尾巴
+
+            dabbrevInput.value = prefix;
+            renderDabbrevList();
+            positionDabbrev(text);           // 先定位（display:none，不触发 layout）
+            dabbrevPicker.classList.add('show');
+            dabbrevInput.focus();
+            dabbrevInput.select();
+        }
+
+        function closeDabbrev(restoreFocus) {
+            if (!dabbrevState.visible) return;
+            if (restoreFocus === undefined) restoreFocus = true;
+            dabbrevState.visible = false;
+            dabbrevPicker.classList.remove('show');
+            dabbrevList.innerHTML = '';
+            if (restoreFocus) {
+                const caret = dabbrevState.prefixEnd;
+                codeInput.focus();
+                codeInput.setSelectionRange(caret, caret);
+                updateCursorPosition();
+            }
+        }
+
+        /** 用候选词替换光标处的整个词（左边 prefix + 右边残留，都归入替换范围） */
+        function applyDabbrev(word) {
+            const text = codeInput.value;
+            const start = dabbrevState.prefixStart;
+            const end = dabbrevState.prefixEnd;
+            codeInput.value = text.substring(0, start) + word + text.substring(end);
+            const caret = start + word.length;
+            closeDabbrev(false);
+            codeInput.focus();
+            codeInput.setSelectionRange(caret, caret);
+            lastHighlightedText = null;
+            updateHighlight();
+            updateCursorPosition();
+            pushHistoryImmediate();
+        }
+
+        // ---- 浮层内交互 ----
+        let dabbrevComposing = false;
+        dabbrevInput.addEventListener('compositionstart', () => { dabbrevComposing = true; });
+        dabbrevInput.addEventListener('compositionend', () => { dabbrevComposing = false; });
+
+        dabbrevInput.addEventListener('input', () => {
+            const q = dabbrevInput.value.trim();
+            dabbrevState.items = q ? collectDabbrevCandidates(q) : [];
+            dabbrevState.activeIndex = 0;
+            renderDabbrevList();
+        });
+
+        dabbrevInput.addEventListener('keydown', (e) => {
+            if (dabbrevComposing) return;      // 输入法组合期间不拦截
+            const len = dabbrevState.items.length;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (len) {
+                    dabbrevState.activeIndex = (dabbrevState.activeIndex + 1) % len;
+                    updateDabbrevActive();
+                }
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (len) {
+                    dabbrevState.activeIndex = (dabbrevState.activeIndex - 1 + len) % len;
+                    updateDabbrevActive();
+                }
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                if (len) applyDabbrev(dabbrevState.items[dabbrevState.activeIndex].word);
+                else closeDabbrev();
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeDabbrev();
+                return;
+            }
+        });
+
+        // 点浮层外部关闭（焦点交还编辑器）
+        document.addEventListener('mousedown', (e) => {
+            if (!dabbrevState.visible) return;
+            if (dabbrevPicker.contains(e.target)) return;
+            closeDabbrev(false);
+        });
+
+        // 编辑器滚动 / 窗口缩放时重新贴住光标
+        codeInput.addEventListener('scroll', () => {
+            if (dabbrevState.visible) positionDabbrev();
+        });
+        window.addEventListener('resize', () => {
+            if (dabbrevState.visible) positionDabbrev();
+        });
+
         // ==================== 编辑器事件 ====================
         codeInput.addEventListener('input', () => {
             // 敲完 end / endmodule / endcase / join 等闭合关键字时自动反缩进（仅 Verilog）
@@ -7233,18 +7574,17 @@ except ZeroDivisionError:
         codeInput.addEventListener('focus', syncScroll);
 
         codeInput.addEventListener('keydown', (e) => {
-            // Ctrl+/ 唤起积木选择器（兼容 Slash 与小键盘除号，避免键盘布局差异导致 e.key 不同）
-            const isSlashKey = e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide';
-            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && isSlashKey) {
+            // Ctrl+/ 唤起积木选择器（同时看 e.code，兼容小键盘/不同键盘布局）
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
+                (e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '/')) {
                 e.preventDefault();
                 e.stopPropagation();
                 openBlockPicker('keyboard');
                 return;
             }
-            // Ctrl+Shift+/ 快速生成积木：有选中就把选中内容预填进去，没选中就空着
-            // 注意按住 Shift 后 e.key 会变成 '?'，所以同时看 e.code
-            const isSlashWithShift = e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '?' || e.key === '/';
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && isSlashWithShift) {
+            // Ctrl+Shift+/ 快速生成积木：Shift+/ 后 e.key 多半是 '?'，以 e.code 为准
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey &&
+                (e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '?' || e.key === '/')) {
                 e.preventDefault();
                 e.stopPropagation();
                 if (quickAddBlockModal.classList.contains('show')) return;   // 已经开着就别再弹一层
@@ -7252,6 +7592,14 @@ except ZeroDivisionError:
                 const selEnd = codeInput.selectionEnd;
                 const selected = selStart !== selEnd ? codeInput.value.substring(selStart, selEnd) : null;
                 openQuickAddBlockModal(selected);
+                return;
+            }
+            // Alt+/ 词补全（dabbrev）：macOS Option+/ 的 e.key 是 '÷'，只能看 e.code
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+                (e.code === 'Slash' || e.code === 'NumpadDivide')) {
+                e.preventDefault();
+                e.stopPropagation();
+                openDabbrev();
                 return;
             }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -7312,25 +7660,33 @@ except ZeroDivisionError:
 
         document.addEventListener('keydown', (e) => {
             if (blockPickerState.visible) return;   // 浮层优先，屏蔽全局 Ctrl+F/H
-            // Ctrl+/ 全局兜底：按钮在顶部工具栏，焦点不在任何输入框时也应能唤起
-            const isSlashKey = e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide';
-            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && isSlashKey) {
-                const ae = document.activeElement;
-                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
-                if (!typing) {
+            // 焦点在输入框（标题框、搜索框、弹窗输入框）时不抢快捷键，让输入框正常输入
+            const ae = document.activeElement;
+            const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+
+            if (!typing) {
+                // Ctrl+/ 积木选择器（浮层居中，插入到上次光标位置）
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
+                    (e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '/')) {
                     e.preventDefault();
                     openBlockPicker('toolbar');
+                    return;
                 }
-            }
-            // Ctrl+Shift+/ 全局兜底：与 Ctrl+/ 保持一致，焦点不在编辑器时也能唤起快速生成弹窗。
-            // 此时拿不到「用户看得见的选中」，所以不预填代码（编辑器内按下时由 codeInput 处理，会预填）。
-            const isSlashWithShift = e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '?' || e.key === '/';
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && isSlashWithShift) {
-                const ae = document.activeElement;
-                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
-                if (!typing && !quickAddBlockModal.classList.contains('show')) {
+                // Ctrl+Shift+/ 快速生成积木：焦点不在编辑器时拿不到「用户看得见的选中」，不预填
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey &&
+                    (e.code === 'Slash' || e.code === 'NumpadDivide' || e.key === '?' || e.key === '/')) {
                     e.preventDefault();
-                    openQuickAddBlockModal(null);
+                    if (!quickAddBlockModal.classList.contains('show')) {
+                        openQuickAddBlockModal(null);
+                    }
+                    return;
+                }
+                // Alt+/ 词补全：用 codeInput 上次的光标位置取前缀
+                if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+                    (e.code === 'Slash' || e.code === 'NumpadDivide')) {
+                    e.preventDefault();
+                    openDabbrev();
+                    return;
                 }
             }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -7347,8 +7703,6 @@ except ZeroDivisionError:
             }
             // Ctrl+G 全局兜底：焦点不在任何输入框时也能唤起（在输入框里不抢，避免和输入内容冲突）
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'g') {
-                const ae = document.activeElement;
-                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
                 if (!typing && !gotoLineModal.classList.contains('show')) {
                     e.preventDefault();
                     openGotoLine();
