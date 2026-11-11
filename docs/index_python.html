@@ -165,10 +165,13 @@
         /* ==================== 主题变量 ==================== */
         :root {
             /* 等宽字体栈：各平台系统自带优质字体，Courier New 兜底。
-               SF Mono / Menlo（macOS）→ Consolas / Cascadia（Windows）→ DejaVu / Liberation（Linux）→ Courier New。
+               SF Mono / Menlo（macOS）→ Consolas / Cascadia（Windows）
+               → Roboto Mono / Droid Sans Mono（Android，避免 WebView 回落到非等宽）
+               → DejaVu / Liberation（Linux）→ Courier New。
                不装任何字体，每个系统自动用自带的最佳等宽。 */
-            --font-mono: 'SF Mono', Menlo, Consolas, 'Cascadia Mono', 'DejaVu Sans Mono',
-                         'Liberation Mono', 'Courier New', monospace;
+            --font-mono: 'SF Mono', Menlo, Consolas, 'Cascadia Mono',
+                         'Roboto Mono', 'Droid Sans Mono',
+                         'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
 
             /* 背景层 */
             --bg-root: #1e1e2f;
@@ -378,6 +381,14 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* 移动端（尤其 Android WebView）：禁止浏览器自动调整字号。
+           否则 textarea 的实际行高会比 CSS 的 --editor-line-height 大 0.5~2px，
+           代码行高亮层 / 行号列三层就对不齐，且越往下偏移越大 */
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
 
         body {
             background: var(--bg-root);
@@ -1268,6 +1279,9 @@
             width: 100%; height: 100%;
             margin: 0;
             padding: 16px;
+            /* 明确块级：textarea 默认 inline-block 会带入行内基线上下留白，
+               移动端 WebView 上这段留白还会跟字体度量联动，导致行高与高亮层不一致 */
+            display: block;
             font-family: var(--font-mono);
             font-size: var(--editor-font-size);
             line-height: var(--editor-line-height);
