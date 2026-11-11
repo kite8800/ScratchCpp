@@ -2408,13 +2408,13 @@
         </div>
     </div>
 
-    <!-- ===== dabbrev 词补全浮层（Ctrl+Shift+/）===== -->
+    <!-- ===== dabbrev 词补全浮层（Alt+/）===== -->
     <div class="block-picker dabbrev-picker" id="dabbrevPicker">
         <div class="block-picker-header">
             <svg class="icon"><use href="#icon-magic"/></svg>
             <input type="text" id="dabbrevInput"
                    data-i18n-placeholder="dabbrevPlaceholder"
-                   placeholder="补全词...（↑↓ 选择，Enter 替换，Esc 关闭）"
+                   placeholder="筛选…"
                    spellcheck="false" autocomplete="off">
         </div>
         <div class="block-picker-list" id="dabbrevList"></div>
@@ -2610,11 +2610,11 @@
                 pickerPlaceholder: '筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）',
                 pickerEmpty: '没有匹配的积木',
                 // dabbrev 词补全
-                dabbrevPlaceholder: '补全词...（↑↓ 选择，Enter 替换，Esc 关闭）',
+                dabbrevPlaceholder: '筛选…',
                 dabbrevFooterInsert: 'Enter 替换',
-                dabbrevEmpty: '没有匹配的词',
-                dabbrevNoWord: '光标不在词上',
-                dabbrevNoMatch: '附近没有可补全的词',
+                dabbrevNoMatch: '没有匹配的词',
+                dabbrevNoWords: '附近没有可补全的词',
+                dabbrevCount: '{n} 项',
                 pickerNoBlocks: '暂无积木，请在左侧面板添加',
                 pickerFooterNav: '↑↓ 选择',
                 pickerFooterInsert: 'Enter 插入',
@@ -2864,11 +2864,11 @@
                 pickerPlaceholder: 'Filter blocks... (↑↓ select, Enter insert, Esc close)',
                 pickerEmpty: 'No matching blocks',
                 // dabbrev completion
-                dabbrevPlaceholder: 'Complete word... (↑↓ select, Enter replace, Esc close)',
+                dabbrevPlaceholder: 'Filter…',
                 dabbrevFooterInsert: 'Enter replace',
-                dabbrevEmpty: 'No matching words',
-                dabbrevNoWord: 'Caret is not on a word',
-                dabbrevNoMatch: 'Nothing to complete nearby',
+                dabbrevNoMatch: 'No matching words',
+                dabbrevNoWords: 'No words nearby to complete',
+                dabbrevCount: '{n} items',
                 pickerNoBlocks: 'No blocks yet. Add them in the left panel',
                 pickerFooterNav: '↑↓ select',
                 pickerFooterInsert: 'Enter insert',
@@ -7234,7 +7234,7 @@ except ZeroDivisionError:
             hideBlockPicker(false);
         });
 
-        // ==================== dabbrev 词补全（Ctrl+Shift+/） ====================
+        // ==================== dabbrev 词补全（Alt+/） ====================
         // 只扫光标前后各 DABBREV_RADIUS 个字符（边界再对齐到词），大文件也只扫附近 2 万字符，耗时恒定
         const DABBREV_RADIUS = 10000;
         const DABBREV_MAX_ITEMS = 20;
@@ -7246,7 +7246,7 @@ except ZeroDivisionError:
 
         const dabbrevState = {
             visible: false,
-            items: [],          // [{ word, count }]
+            items: [],          // [{ word, minDist }]  按离光标的距离升序
             activeIndex: 0,
             prefixStart: 0,     // 光标处词在文本里的起点
             prefixEnd: 0        // 光标处词在文本里的终点（含光标右侧，用于整词替换）
@@ -7287,36 +7287,39 @@ except ZeroDivisionError:
             return { startPos, endPos };
         }
 
-        /** 收集候选词：前缀匹配（不区分大小写）、去重、按出现次数降序 */
+        /**
+         * 收集候选词：前缀匹配（不区分大小写）、去重，**仅按离光标的距离升序**（Emacs 风格）。
+         * 空前缀（光标不在词上）时不过滤，附近所有词都参选。
+         */
         function collectDabbrevCandidates(prefix, text) {
             const src = text === undefined ? codeInput.value : text;
             const caret = codeInput.selectionStart || 0;
-            if (!prefix) return [];
 
             const { startPos, endPos } = getDabbrevScanRange(src, caret);
             const wordRange = getWordRangeAtCaret(src, caret);
             const region = src.substring(startPos, endPos);
-            const lowerPrefix = prefix.toLowerCase();
+            const lowerPrefix = (prefix || '').toLowerCase();
 
-            const freq = new Map();
+            // word -> 该词离光标最近那一次出现的距离
+            const stats = new Map();
             const re = /[A-Za-z_]\w*/g;
             let m;
             while ((m = re.exec(region)) !== null) {
                 const w = m[0];
                 const absPos = startPos + m.index;
-                // 跳过光标处那一个实例（否则 pri|nt 会拿自己补自己）
+
+                // 跳过光标处那一个实例（否则 pri|nt 会拿自己补自己）；空前缀时词范围为空，不跳过任何词
                 if (absPos >= wordRange.start && absPos + w.length <= wordRange.end) continue;
-                if (w.length < prefix.length) continue;
-                if (w === prefix) continue;                              // 与原词相同，替换了也没变化
-                if (!w.toLowerCase().startsWith(lowerPrefix)) continue;   // 前缀匹配
-                freq.set(w, (freq.get(w) || 0) + 1);
+                if (w === prefix) continue;                                // 与原词相同，替换了也没变化
+                if (lowerPrefix && w.toLowerCase().indexOf(lowerPrefix) !== 0) continue;   // 空前缀不过滤
+
+                const dist = Math.abs(absPos - caret);
+                const prev = stats.get(w);
+                if (prev === undefined || dist < prev) stats.set(w, dist);
             }
 
-            const arr = Array.from(freq.entries()).map(([word, count]) => ({ word, count }));
-            arr.sort((a, b) => {
-                if (b.count !== a.count) return b.count - a.count;
-                return a.word.localeCompare(b.word);
-            });
+            const arr = Array.from(stats.entries()).map(([word, minDist]) => ({ word, minDist }));
+            arr.sort((a, b) => a.minDist - b.minDist);   // 只按距离，不掺频率/字母序
             return arr.slice(0, DABBREV_MAX_ITEMS);
         }
 
@@ -7328,9 +7331,9 @@ except ZeroDivisionError:
             if (items.length === 0) {
                 const empty = document.createElement('div');
                 empty.className = 'block-picker-empty';
-                empty.textContent = dabbrevInput.value.trim() ? t('dabbrevEmpty') : t('dabbrevNoWord');
+                empty.textContent = dabbrevInput.value.trim() ? t('dabbrevNoMatch') : t('dabbrevNoWords');
                 dabbrevList.appendChild(empty);
-                dabbrevCount.textContent = t('pickerCount', { n: 0 });
+                dabbrevCount.textContent = t('dabbrevCount', { n: 0 });
                 return;
             }
 
@@ -7354,7 +7357,7 @@ except ZeroDivisionError:
                 dabbrevList.appendChild(row);
             });
 
-            dabbrevCount.textContent = t('pickerCount', { n: items.length });
+            dabbrevCount.textContent = t('dabbrevCount', { n: items.length });
             scrollDabbrevActiveIntoView();
         }
 
@@ -7421,11 +7424,10 @@ except ZeroDivisionError:
             const caret = codeInput.selectionStart || 0;
             if (caret !== codeInput.selectionEnd) return;      // 有选区不触发
 
+            // 空前缀也继续：光标在空白/行首/中文后时列出附近所有词，选中后在光标处插入
             const prefix = getWordBeforeCaret(text, caret);
-            if (!prefix) { flashStatus(t('dabbrevNoWord')); return; }
-
+            const wordRange = getWordRangeAtCaret(text, caret);
             const items = collectDabbrevCandidates(prefix, text);
-            if (items.length === 0) { flashStatus(t('dabbrevNoMatch')); return; }
 
             if (blockPickerState.visible) hideBlockPicker(false);
             if (searchState.visible) closeSearch();
@@ -7433,8 +7435,8 @@ except ZeroDivisionError:
             dabbrevState.visible = true;
             dabbrevState.items = items;
             dabbrevState.activeIndex = 0;
-            dabbrevState.prefixStart = caret - prefix.length;
-            dabbrevState.prefixEnd = getWordRangeAtCaret(text, caret).end;   // 整词替换，光标在词中间也不残留尾巴
+            dabbrevState.prefixStart = wordRange.start;
+            dabbrevState.prefixEnd = wordRange.end;   // 整词替换，光标在词中间也不残留尾巴
 
             dabbrevInput.value = prefix;
             renderDabbrevList();
@@ -7481,7 +7483,8 @@ except ZeroDivisionError:
 
         dabbrevInput.addEventListener('input', () => {
             const q = dabbrevInput.value.trim();
-            dabbrevState.items = q ? collectDabbrevCandidates(q) : [];
+            // 清空输入框 = 空前缀，重新列出所有词（不是空列表）
+            dabbrevState.items = collectDabbrevCandidates(q);
             dabbrevState.activeIndex = 0;
             renderDabbrevList();
         });
