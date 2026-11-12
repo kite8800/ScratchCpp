@@ -4291,6 +4291,7 @@ except ZeroDivisionError:
             showReplace: false,
             matches: [],
             currentIndex: -1,
+            anchor: 0            // 上次选中匹配的起点（文本 offset）：重建匹配后据此保持位置
         };
 
         // ==================== 高亮与滚动同步 ====================
@@ -5345,12 +5346,18 @@ except ZeroDivisionError:
                     if (m.index === regex.lastIndex) regex.lastIndex++;
                 }
             }
-            if (searchState.matches.length === 0) {
+            const total = searchState.matches.length;
+            if (total === 0) {
                 searchState.currentIndex = -1;
             } else {
-                if (searchState.currentIndex < 0 || searchState.currentIndex >= searchState.matches.length) {
-                    searchState.currentIndex = 0;
+                // 以锚点为起点：找第一个 start >= anchor 的匹配，找不到就绕回第一个
+                const anchor = searchState.anchor;
+                let idx = -1;
+                for (let i = 0; i < total; i++) {
+                    if (searchState.matches[i].start >= anchor) { idx = i; break; }
                 }
+                if (idx < 0) idx = 0;
+                searchState.currentIndex = idx;
             }
             renderSearchLayer();
             updateSearchUI();
@@ -5360,6 +5367,7 @@ except ZeroDivisionError:
         function scrollToMatch() {
             const m = searchState.matches[searchState.currentIndex];
             if (!m) return;
+            searchState.anchor = m.start;   // 锚点跟着选中项走，连续输入时不会跳回开头
             codeInput.focus();
             codeInput.setSelectionRange(m.start, m.end);
             updateCursorPosition();
@@ -5426,6 +5434,8 @@ except ZeroDivisionError:
             }
             // 打开查找时若编辑器里有可用的选中文本，先填进查找框（VS Code 习惯）
             fillSearchFromEditorSelection();
+            // 新打开：以编辑器光标位置为锚点，从当前位置往后找第一个匹配
+            searchState.anchor = codeInput.selectionStart || 0;
             searchInput.focus();
             searchInput.select();
             if (searchInput.value) performSearch();
@@ -5436,6 +5446,8 @@ except ZeroDivisionError:
             searchBar.classList.remove('show');
             searchState.matches = [];
             searchState.currentIndex = -1;
+            // 关闭时把锚点留在当前光标处：下次打开从当前位置往后找
+            searchState.anchor = codeInput.selectionStart || 0;
             searchCode.innerHTML = '';
             codeInput.focus();
         }
