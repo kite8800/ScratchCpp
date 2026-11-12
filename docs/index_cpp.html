@@ -7701,19 +7701,26 @@ TODO: replace this sample with your own notes.
             const pw = blockPicker.offsetWidth || 460;
             const ph = blockPicker.offsetHeight || 300;
             const margin = 8;
+            let left, top;
 
-            // 三个入口统一贴光标：keyboard（Ctrl+/）、ctrl-click（Ctrl+点编辑器）、toolbar（工具栏按钮）。
-            // toolbar 以前是「窗口居中」，但点按钮时用户的心理预期也是「插到光标处」；
-            // 光标不在视口内时由 openBlockPicker 先把编辑器滚回光标。
-            const pt = point || getCaretPixelPos();
-            let left = pt.left;
-            let top = pt.top;
-
-            // 下方放不下就翻到上方（24 = 光标行高 + 间距，避免盖住当前行）
-            if (top + ph > window.innerHeight - margin) {
-                top = top - ph - 24;
+            if (source === 'toolbar') {
+                // 工具栏按钮触发：窗口居中。此时焦点在按钮上，用户没有「贴光标」的预期，
+                // 居中也不会因为光标在视口外而被顶出屏幕。
+                left = (window.innerWidth - pw) / 2;
+                top = (window.innerHeight - ph) / 2;
+            } else {
+                // keyboard（Ctrl+/）/ ctrl-click（Ctrl+点编辑器）：贴光标
+                const pt = point || getCaretPixelPos();
+                left = pt.left;
+                top = pt.top;
+                // 下方放不下就翻到上方（24 = 光标行高 + 间距，避免盖住当前行）
+                if (top + ph > window.innerHeight - margin) {
+                    top = top - ph - 24;
+                }
             }
-            // 四向最终钳制：无论翻没翻、光标在不在视口内，浮层都留在视口内
+
+            // 四向最终钳制：无论翻没翻、光标在不在视口内（含居中值在极小窗口下为负），
+            // 浮层都留在视口内
             if (top < margin) top = margin;
             if (top > window.innerHeight - ph - margin) {
                 top = Math.max(margin, window.innerHeight - ph - margin);
@@ -7739,11 +7746,11 @@ TODO: replace this sample with your own notes.
             blockPickerState.activeIndex = 0;
             blockPickerState.visible = true;
 
-            // 1) 光标不在视口内就先滚到光标处（上 1/3），否则贴光标定位会把浮层顶出视口。
-            //    光标在视口内时这段是 no-op，三个入口统一走。
+            // 1) 贴光标的入口（Ctrl+/ / Ctrl+点编辑器）在光标不在视口内时先滚到光标处（上 1/3），
+            //    否则贴光标定位会把浮层顶出视口。工具栏按钮是居中弹，不动用户当前视口。
             let targetTop = codeInput.scrollTop;
             let targetLeft = codeInput.scrollLeft;
-            if (!isCaretInViewport()) {
+            if (source !== 'toolbar' && !isCaretInViewport()) {
                 targetTop = caretScrollTopForView();
                 codeInput.scrollTop = targetTop;
                 syncScroll();
@@ -7867,7 +7874,8 @@ TODO: replace this sample with your own notes.
             prefixStart: 0,     // 光标处词在「目标框」里的起点
             prefixEnd: 0,       // 光标处词在「目标框」里的终点（含光标右侧，用于整词替换）
             target: 'code',     // 'code' | 'search' | 'replace'
-            targetEl: null      // 触发补全的那个输入框
+            targetEl: null,     // 触发补全的那个输入框
+            source: 'caret'     // 'caret'（Alt+/、Ctrl+点击）贴光标 | 'toolbar'（工具栏「补全」按钮）窗口居中
         };
 
         /** 光标向左连续取标识符字符，返回前缀（不在词上返回空串） */
@@ -8020,7 +8028,12 @@ TODO: replace this sample with your own notes.
 
             let left, top;
 
-            if (el === codeInput) {
+            if (dabbrevState.source === 'toolbar') {
+                // 工具栏「补全」按钮触发：窗口居中。此时焦点在按钮上，没有「贴光标」的预期，
+                // 光标在视口外时也不会把浮层顶出屏幕。
+                left = (window.innerWidth - pw) / 2;
+                top = (window.innerHeight - ph) / 2;
+            } else if (el === codeInput) {
                 // 编辑器：贴着光标
                 const p = caretScreenPoint(caretLine);
                 left = Math.max(margin, p.left);
@@ -8031,11 +8044,12 @@ TODO: replace this sample with your own notes.
                 top = rect.bottom + 4;
             }
 
-            // 上方放不下就翻到光标上方；上方也放不下（或光标本来就在视口外）时
-            // 钳到视口内，保证浮层永远可见，不会跑到几千 px 外
-            if (top + ph > window.innerHeight - margin) {
+            // 贴光标的入口：下方放不下就翻到上方（24 = 光标行高 + 间距）。
+            // 居中入口不需要翻，直接进后面的视口钳制。
+            if (dabbrevState.source !== 'toolbar' && top + ph > window.innerHeight - margin) {
                 top = Math.max(margin, top - ph - 24);
             }
+            // 无论翻没翻、居中值在极窄窗口下是否为负，都钳到视口内，保证浮层永远可见
             if (top < margin) top = margin;
             const maxTop = window.innerHeight - ph - margin;
             if (top > maxTop) top = Math.max(margin, maxTop);
@@ -8155,7 +8169,12 @@ TODO: replace this sample with your own notes.
          * 无论从哪个框触发，候选词都从「编辑器全文」收集；
          * 替换范围（prefixStart / prefixEnd）始终相对目标框自身计算。
          */
-        function openDabbrevFor(el, target) {
+        /**
+         * @param {HTMLElement} el 目标框
+         * @param {string} target 'code' | 'search' | 'replace'
+         * @param {string} [source] 'toolbar' = 工具栏按钮触发（窗口居中、不动视口）；默认贴光标
+         */
+        function openDabbrevFor(el, target, source) {
             if (!el) return;
 
             const text = el.value;
@@ -8175,14 +8194,16 @@ TODO: replace this sample with your own notes.
 
             if (blockPickerState.visible) hideBlockPicker(false);
 
-            // 1) 决定打开后编辑器停在哪：光标在视口内就不动，在视口外才滚回去。
-            //    光标和浮层同框，用户才看得出候选和什么相关。
+            const src = source === 'toolbar' ? 'toolbar' : 'caret';
+
+            // 1) 贴光标的入口：光标在视口内就不动，在视口外才滚回去（浮层要贴光标，必须同框）。
+            //    工具栏按钮是居中浮层，不猜用户想看哪儿，保持当前视口不动。
             //    行号只数一次（4MB 文档 indexOf 数法约 3.5ms），判断和定位共用。
             const isCode = el === codeInput;
-            const caretLine = isCode ? caretLineIndex() : undefined;
+            const caretLine = isCode && src === 'caret' ? caretLineIndex() : undefined;
             let targetTop = codeInput.scrollTop;
             const targetLeft = codeInput.scrollLeft;
-            if (isCode && !isCaretInViewport(caretLine)) {
+            if (isCode && src === 'caret' && !isCaretInViewport(caretLine)) {
                 targetTop = caretScrollTopForView(caretLine);
                 codeInput.scrollTop = targetTop;
                 syncScroll();
@@ -8195,6 +8216,7 @@ TODO: replace this sample with your own notes.
             dabbrevState.prefixEnd = wordRange.end;       // 整词替换，光标在词中间也不残留尾巴
             dabbrevState.target = target;
             dabbrevState.targetEl = el;
+            dabbrevState.source = src;
 
             dabbrevInput.value = prefix;
             renderDabbrevList();
@@ -8234,6 +8256,7 @@ TODO: replace this sample with your own notes.
             }
             dabbrevState.targetEl = null;
             dabbrevState.target = 'code';
+            dabbrevState.source = 'caret';
         }
 
         /** 用候选词替换目标框里光标处的整个词（左边 prefix + 右边残留，都归入替换范围） */
@@ -8332,9 +8355,13 @@ TODO: replace this sample with your own notes.
             });
         });
 
-        // 编辑器滚动 / 窗口缩放时重新贴住光标
+        // 编辑器滚动 / 窗口缩放时重新贴住光标。
+        // 滚动：居中的浮层不该跟着动，只重定位贴光标的；缩放：居中要按新窗口重算，全部重定位。
         codeInput.addEventListener('scroll', () => {
-            if (dabbrevState.visible && dabbrevState.target === 'code') positionDabbrevFor(codeInput);
+            if (dabbrevState.visible && dabbrevState.source !== 'toolbar' &&
+                dabbrevState.target === 'code') {
+                positionDabbrevFor(codeInput);
+            }
         });
         window.addEventListener('resize', () => {
             if (dabbrevState.visible) positionDabbrevFor(dabbrevState.targetEl || codeInput);
@@ -8353,9 +8380,9 @@ TODO: replace this sample with your own notes.
 
         codeInput.addEventListener('scroll', () => {
             syncScroll();
-            if (blockPickerState.visible) {
-                // 三个入口都是贴光标的，滚动后都要跟着光标走；
-                // 不传 point：ctrl-click 的鼠标坐标滚动后已失效，统一按当前光标算。
+            // toolbar 打开的是居中弹，滚编辑器时不该跟着动；贴光标的入口才重定位。
+            // 重定位不传 point：ctrl-click 的鼠标坐标滚动后已失效，统一按当前光标算。
+            if (blockPickerState.visible && blockPickerState.source !== 'toolbar') {
                 positionBlockPicker(blockPickerState.source);
             }
         });
@@ -8374,6 +8401,7 @@ TODO: replace this sample with your own notes.
         window.addEventListener('resize', () => {
             syncScrollbarWidth();
             syncScroll();
+            // 缩放后全部重定位：toolbar 要按新窗口重新居中，贴光标的要按新视口重算。
             if (blockPickerState.visible) {
                 positionBlockPicker(blockPickerState.source);
             }
@@ -9011,12 +9039,12 @@ TODO: replace this sample with your own notes.
             return !!tgt.el.offsetParent;
         }
 
-        // 工具栏「补全」入口：与 Alt+/ 同一个浮层（触屏兜底）
+        // 工具栏「补全」入口：与 Alt+/ 同一个浮层（触屏兜底），但定位改为窗口居中
         document.getElementById('dabbrevBtn').addEventListener('click', () => {
             if (isCompletionTargetUsable(lastCompletionTarget)) {
-                openDabbrevFor(lastCompletionTarget.el, lastCompletionTarget.target);
+                openDabbrevFor(lastCompletionTarget.el, lastCompletionTarget.target, 'toolbar');
             } else {
-                openDabbrevFor(codeInput, 'code');
+                openDabbrevFor(codeInput, 'code', 'toolbar');
             }
         });
 
