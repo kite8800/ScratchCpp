@@ -544,6 +544,20 @@
         body.ultra-compact-toolbar #themeToggleBtn .icon {
             font-size: 0.85rem;
         }
+        /* 帮助按钮（图标按钮）：精简档跟主题按钮同尺寸；超精简只缩图标，
+           外框高度保持不变（padding 补回来），否则会比邻按钮矮一截、看着错位 */
+        body.compact-toolbar #helpBtn {
+            padding: 6px 6px;
+        }
+        body.compact-toolbar #helpBtn .icon {
+            font-size: 0.85rem;
+        }
+        body.ultra-compact-toolbar #helpBtn {
+            padding: 7px 6px;
+        }
+        body.ultra-compact-toolbar #helpBtn .icon {
+            font-size: 0.72rem;
+        }
         /* 精简模式：下拉框缩窄，但仍保留语言文字（缩成小药丸会看不出是什么控件） */
         body.compact-toolbar .toolbar-select {
             font-size: 0.72rem;
@@ -586,7 +600,7 @@
         body.ultra-compact-toolbar .toolbar:not(.toolbar-second) > :not(.ultra-only):not(#compactToggleBtn):not(#ultraLangSelect):not(.logo):not(.ultra-menu):not(.spacer) { display: none; }
         /* 第二行：积木栏开关 + 文件 / 编辑 靠左；语言 / 主题靠右（三档共用这一对按钮） */
         body.ultra-compact-toolbar .toolbar-second { display: flex; }
-        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn):not(.spacer):not(#langToggleBtn):not(#themeToggleBtn) { display: none; }
+        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn):not(.spacer):not(#langToggleBtn):not(#themeToggleBtn):not(#helpBtn) { display: none; }
         /* 语言下拉用 id 控制显隐：select 被 inline-flex 接管会挤掉箭头 */
         #ultraLangSelect { display: none; }
         body.ultra-compact-toolbar #ultraLangSelect { display: inline-block; }
@@ -1412,6 +1426,71 @@
         }
         .status-bar .icon { color: var(--success); }
 
+        /* ==================== 帮助弹窗（快捷键与功能）====================
+           居中 / 遮罩 / 宽度上限全交给 .modal-overlay + .modal，这里只写内容样式 */
+        .modal.modal-help {
+            width: 420px;
+            max-height: 80vh;
+            max-height: 80dvh;
+        }
+        /* 高度交给 .modal 的 max-height（80dvh）：body 用 flex:1 + min-height:0 吃掉剩余空间，
+           这样窄屏时弹窗能长到 80dvh，内容在内部滚动，而不是被 55dvh 卡住只露出半截 */
+        .modal-help .help-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;   /* 给滚动条留一点空间 */
+        }
+
+        .help-group-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .help-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;         /* 窄屏放不下时，说明文字整段换到第二行 */
+            gap: 8px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            padding: 2px 0;
+        }
+        .help-row kbd {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            padding: 1px 5px;
+            color: var(--text-strong);
+            white-space: nowrap;
+        }
+        .help-row > span { flex: 1; }
+        /* 「Tab / Shift+Tab」这类二选一的斜杠分隔：不参与 flex:1，两头各收 4px */
+        .help-row > .help-or {
+            flex: 0 0 auto;
+            margin: 0 -4px;
+            color: var(--text-dim);
+        }
+
+        .help-footer {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+            margin-top: 2px;
+        }
+
         /* 文件拖放：容器加 .drop-active，压暗 + 居中虚线卡片，全部穿透指针事件 */
         .code-editor.drop-active::after {
             content: '';
@@ -1825,7 +1904,7 @@
         <symbol id="icon-star" viewBox="0 0 24 24"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></symbol>
         <symbol id="icon-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4l-6 6a2 2 0 0 0 2.8 2.8l6-6a4 4 0 0 0 5.4-5.4l-2.8 2.8-2.8-2.8z"/></symbol>
         <symbol id="icon-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
-        <symbol id="icon-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+        <symbol id="icon-keyboard" viewBox="0 0 24 24"><rect x="2" y="4.8" width="20" height="14.4" rx="2.6"/><path d="M6.2 9.4h.01M10 9.4h.01M13.8 9.4h.01M17.6 9.4h.01M7.4 14.4h9.2"/></symbol>
 
         <symbol id="icon-file-code" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M10 13l-2 2 2 2M14 13l2 2-2 2"/></symbol>
         <symbol id="icon-indent" viewBox="0 0 24 24"><path d="M3 8h18M3 12h10M3 16h18M21 12l-3-3v6z"/></symbol>
@@ -1845,6 +1924,7 @@
         <symbol id="icon-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
         <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
         <symbol id="icon-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+        <symbol id="icon-help" viewBox="0 0 24 24"><path d="M8.4 8.1a3.9 3.9 0 0 1 7.5 1.3c0 2.6-3.9 3.3-3.9 5.9"/><path d="M12 19.1h.01"/></symbol>
     </svg>
 
     <div class="toolbar">
@@ -1937,6 +2017,7 @@
         <span class="spacer"></span>
         <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText">中</span></button>
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
+        <button id="helpBtn" class="icon-only" data-i18n-title="helpBtnTitle" title="快捷键与功能说明"><svg class="icon"><use href="#icon-help"/></svg></button>
     </div>
 
     <div class="main-container">
@@ -2039,7 +2120,6 @@
 
     <div class="status-bar">
         <span data-i18n="statusReady"><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
-        <span data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Alt+/ 补全 · Ctrl+F 查找 / Ctrl+H 替换</span>
         <span id="execTime"></span>
     </div>
 
@@ -2442,6 +2522,44 @@
         </div>
     </div>
 
+    <!-- ===== 帮助弹窗（快捷键与功能）===== -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal modal-help">
+            <h3 data-i18n="helpPanelTitle"><svg class="icon"><use href="#icon-help"/></svg> 快捷键与功能</h3>
+            <div class="help-body">
+                <div class="help-group">
+                    <div class="help-group-title" data-i18n="helpGroupEdit">编辑</div>
+                    <div class="help-row"><kbd>Ctrl+/</kbd><span data-i18n="helpInsertBlock">插入积木</span></div>
+                    <div class="help-row"><kbd>Ctrl+Shift+/</kbd><span data-i18n="helpQuickAdd">快速生成积木</span></div>
+                    <div class="help-row"><kbd>Alt+/</kbd><span data-i18n="helpDabbrev">词补全</span></div>
+                    <div class="help-row"><kbd>Alt+(</kbd><span data-i18n="helpPairParen">插入成对括号</span></div>
+                    <div class="help-row"><kbd>Tab</kbd><span class="help-or">/</span><kbd>Shift+Tab</kbd><span data-i18n="helpIndent">缩进 / 反缩进</span></div>
+                </div>
+                <div class="help-group">
+                    <div class="help-group-title" data-i18n="helpGroupSearch">查找</div>
+                    <div class="help-row"><kbd>Ctrl+F</kbd><span data-i18n="helpFind">查找</span></div>
+                    <div class="help-row"><kbd>Ctrl+H</kbd><span data-i18n="helpReplace">替换</span></div>
+                    <div class="help-row"><kbd>Ctrl+G</kbd><span data-i18n="helpGotoLine">跳转到行</span></div>
+                    <div class="help-row"><kbd>Enter</kbd><span class="help-or">/</span><kbd>Shift+Enter</kbd><span data-i18n="helpNextPrev">下一个 / 上一个匹配</span></div>
+                </div>
+                <div class="help-group">
+                    <div class="help-group-title" data-i18n="helpGroupFile">文件</div>
+                    <div class="help-row"><kbd>Ctrl+S</kbd><span data-i18n="helpSave">保存</span></div>
+                    <div class="help-row"><kbd>Ctrl+Shift+S</kbd><span data-i18n="helpSaveAs">另存为</span></div>
+                </div>
+                <div class="help-group">
+                    <div class="help-group-title" data-i18n="helpGroupView">显示</div>
+                    <div class="help-row"><kbd>Ctrl+=</kbd><span class="help-or">/</span><kbd>Ctrl+-</kbd><span data-i18n="helpFontSize">放大 / 缩小字号</span></div>
+                    <div class="help-row"><kbd>Ctrl+0</kbd><span data-i18n="helpFontReset">重置字号</span></div>
+                </div>
+                <p class="help-footer" data-i18n="statusDesc">积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Alt+/ 补全 · Alt+( 成对括号 · Ctrl+F 查找 / Ctrl+H 替换</p>
+            </div>
+            <div class="modal-actions">
+                <button id="helpCloseBtn" class="primary" data-i18n="btnClose">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== 安全存储 ====================
         // 部分环境（无痕模式、禁用站点数据、受限的 file://、企业策略）访问 localStorage 会直接抛
@@ -2622,7 +2740,27 @@
                 btnCloseTitle: '关闭 (Esc)',
                 // 状态栏
                 statusReady: '就绪',
-                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Alt+/ 补全 · Ctrl+F 查找 / Ctrl+H 替换',
+                statusDesc: '积木可增删改序 · 配置本地保存 · 打开/保存/剪贴板 · Ctrl+/ 插入积木 · Ctrl+Shift+/ 生成积木 · Alt+/ 补全 · Alt+( 成对括号 · Ctrl+F 查找 / Ctrl+H 替换',
+                // 帮助浮层（原状态栏长文案改由浮层底部承载）
+                helpBtnTitle: '快捷键与功能说明',
+                helpPanelTitle: '快捷键与功能',
+                helpGroupEdit: '编辑',
+                helpGroupSearch: '查找',
+                helpGroupFile: '文件',
+                helpGroupView: '显示',
+                helpInsertBlock: '插入积木',
+                helpQuickAdd: '快速生成积木',
+                helpDabbrev: '词补全',
+                helpPairParen: '插入成对括号',
+                helpIndent: '缩进 / 反缩进',
+                helpFind: '查找',
+                helpReplace: '替换',
+                helpGotoLine: '跳转到行',
+                helpNextPrev: '下一个 / 上一个匹配',
+                helpSave: '保存',
+                helpSaveAs: '另存为',
+                helpFontSize: '放大 / 缩小字号',
+                helpFontReset: '重置字号',
                 // 积木选择浮层
                 pickerPlaceholder: '筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）',
                 pickerEmpty: '没有匹配的积木',
@@ -2654,6 +2792,7 @@
                 fieldCode: '代码内容',
                 btnDelete: '删除',
                 btnCancel: '取消',
+                btnClose: '关闭',
                 btnSave: '保存',
                 // 新增积木弹窗
                 modalAddBlockTitle: '新增积木',
@@ -2880,7 +3019,27 @@
                 btnCloseTitle: 'Close (Esc)',
                 // Status bar
                 statusReady: 'Ready',
-                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+Shift+/ quick add · Alt+/ complete · Ctrl+F find / Ctrl+H replace',
+                statusDesc: 'Blocks editable · Saved locally · Open/Save/Clipboard · Ctrl+/ insert block · Ctrl+Shift+/ quick add · Alt+/ complete · Alt+( parens · Ctrl+F find / Ctrl+H replace',
+                // Help panel (status bar blurb now lives at its footer)
+                helpBtnTitle: 'Shortcuts & features',
+                helpPanelTitle: 'Shortcuts & Features',
+                helpGroupEdit: 'Edit',
+                helpGroupSearch: 'Search',
+                helpGroupFile: 'File',
+                helpGroupView: 'View',
+                helpInsertBlock: 'Insert block',
+                helpQuickAdd: 'Quick add block',
+                helpDabbrev: 'Word complete',
+                helpPairParen: 'Insert paired parentheses',
+                helpIndent: 'Indent / outdent',
+                helpFind: 'Find',
+                helpReplace: 'Replace',
+                helpGotoLine: 'Go to line',
+                helpNextPrev: 'Next / previous match',
+                helpSave: 'Save',
+                helpSaveAs: 'Save as',
+                helpFontSize: 'Increase / decrease font size',
+                helpFontReset: 'Reset font size',
                 // Block picker
                 pickerPlaceholder: 'Filter blocks... (↑↓ select, Enter insert, Esc close)',
                 pickerEmpty: 'No matching blocks',
@@ -2912,6 +3071,7 @@
                 fieldCode: 'Code content',
                 btnDelete: 'Delete',
                 btnCancel: 'Cancel',
+                btnClose: 'Close',
                 btnSave: 'Save',
                 // Add block modal
                 modalAddBlockTitle: 'Add Block',
@@ -5176,6 +5336,29 @@ except ZeroDivisionError:
             codeInput.value = newText;
             const newCaret = start + str.length;
             codeInput.setSelectionRange(newCaret, newCaret);
+            updateHighlight();
+            updateCursorPosition();
+            schedulePushHistory();
+        }
+
+        /**
+         * 插入一对成对符号：无选区时插入开闭符号、光标落在两者之间；
+         * 有选区时把选中文本包起来、光标落到闭符号之后（不保留选区）。
+         * 不保留选区是有意的：紧跟的输入若替换选区，会把刚包好的原文吃掉。
+         */
+        function insertPaired(open, close) {
+            const text = codeInput.value;
+            const start = codeInput.selectionStart;
+            const end = codeInput.selectionEnd;
+            const selected = text.substring(start, end);
+
+            codeInput.value = text.substring(0, start) + open + selected + close + text.substring(end);
+
+            const caret = start !== end
+                ? start + open.length + selected.length + close.length
+                : start + open.length;
+            codeInput.setSelectionRange(caret, caret);
+
             updateHighlight();
             updateCursorPosition();
             schedulePushHistory();
@@ -7705,6 +7888,16 @@ except ZeroDivisionError:
                 openDabbrev();
                 return;
             }
+            // Alt+( 插入成对括号：Alt 组合下 e.key 不可靠（macOS 是 'º'、部分布局是 '9'），只看 e.code；
+            // 不要求 shiftKey —— '(' 在多数布局要 Shift，但按住 Alt 时 Digit9 / Numpad9 都该生效。
+            // IME 组合期间放行，Alt 组合可能是输入法自己的前缀。
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.isComposing &&
+                (e.code === 'Digit9' || e.code === 'Numpad9')) {
+                e.preventDefault();
+                e.stopPropagation();
+                insertPaired('(', ')');
+                return;
+            }
             if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
                 openSearch(false);
@@ -8832,6 +9025,36 @@ except ZeroDivisionError:
                 clearUrlLangParam();   // 用户主动切换，URL 参数不再生效
                 setLang(currentLang === 'zh' ? 'en' : 'zh');
             });
+        })();
+
+        // ==================== 帮助弹窗（快捷键与功能）====================
+        // 状态栏那行长文案收在这里；按钮在第二行最右、主题按钮之后，三档精简模式都可见
+        (function initHelpModal() {
+            const btn = document.getElementById('helpBtn');
+            const modal = document.getElementById('helpModal');
+            const closeBtn = document.getElementById('helpCloseBtn');
+            if (!btn || !modal) return;
+
+            const isOpen = () => modal.classList.contains('show');
+            const openHelp = () => modal.classList.add('show');
+            const closeHelp = () => modal.classList.remove('show');
+
+            btn.addEventListener('click', openHelp);
+            if (closeBtn) closeBtn.addEventListener('click', closeHelp);
+
+            // 点遮罩空白处关闭（与现有各弹窗一致）
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeHelp();
+            });
+
+            // Esc 关闭：捕获阶段截断，弹窗开着时 Esc 只关弹窗，
+            // 不连带触发编辑器那套「关查找栏 / 清选区」逻辑
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape' || !isOpen()) return;
+                e.preventDefault();
+                e.stopPropagation();
+                closeHelp();
+            }, true);
         })();
 
         // 系统主题变化时，仅在「跟随系统」模式下实时响应
