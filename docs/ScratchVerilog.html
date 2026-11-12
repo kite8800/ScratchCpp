@@ -1620,6 +1620,15 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .snapshot-size {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            flex-shrink: 0;
+            min-width: 56px;          /* 容纳 "1023 B" / "10.5 KB" 这类最长值 */
+            text-align: right;
+            white-space: nowrap;
+        }
         .snapshot-restore-btn {
             background: var(--btn-bg);
             border: 1px solid var(--btn-border);
@@ -2036,7 +2045,7 @@
             </div>
 
             <div class="search-bar" id="searchBar">
-                <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="查找...">
+                <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="查找..." data-i18n-title="dabbrevFieldTitle" title="Alt+/ 词补全（候选词来自编辑器代码）">
                 <button class="opt-btn active" id="caseBtn" data-i18n-title="optCaseTitle" title="区分大小写 (Aa)">Aa</button>
                 <button class="opt-btn active" id="wordBtn" data-i18n-title="optWordTitle" title="整词匹配 (\b)">W</button>
                 <span class="search-count" id="searchCount">0 / 0</span>
@@ -2044,7 +2053,7 @@
                 <button class="nav-btn" id="nextBtn" data-i18n-title="btnNextTitle" title="下一个 (Enter)"><svg class="icon"><use href="#icon-arrow-down"/></svg></button>
                 <span class="sep"></span>
                 <div class="replace-group" id="replaceGroup">
-                    <input type="text" id="replaceInput" data-i18n-placeholder="replacePlaceholder" placeholder="替换为...">
+                    <input type="text" id="replaceInput" data-i18n-placeholder="replacePlaceholder" placeholder="替换为..." data-i18n-title="dabbrevFieldTitle" title="Alt+/ 词补全（候选词来自编辑器代码）">
                     <button class="replace-btn" id="replaceOneBtn" data-i18n="btnReplaceOne" data-i18n-title="btnReplaceOneTitle" title="替换当前">替换</button>
                     <button class="replace-btn" id="replaceAllBtn" data-i18n="btnReplaceAll" data-i18n-title="btnReplaceAllTitle" title="全部替换">全部</button>
                 </div>
@@ -2366,9 +2375,9 @@
             <div class="field">
                 <label data-i18n="fieldSnapMaxSize">代码大小上限</label>
                 <div class="radio-group">
-                    <label><input type="radio" name="snapMaxSize" value="0" checked> <span data-i18n="snapUnlimited">不限制</span></label>
+                    <label><input type="radio" name="snapMaxSize" value="0"> <span data-i18n="snapUnlimited">不限制</span></label>
                     <label><input type="radio" name="snapMaxSize" value="50"> 50K</label>
-                    <label><input type="radio" name="snapMaxSize" value="100"> 100K</label>
+                    <label><input type="radio" name="snapMaxSize" value="100" checked> 100K</label>
                     <label><input type="radio" name="snapMaxSize" value="500"> 500K</label>
                     <label><input type="radio" name="snapMaxSize" value="1024"> 1M</label>
                 </div>
@@ -2668,6 +2677,7 @@
                 dabbrevNoMatch: '没有匹配的词',
                 dabbrevNoWords: '附近没有可补全的词',
                 dabbrevCount: '{n} 项',
+                dabbrevFieldTitle: 'Alt+/ 词补全（候选词来自编辑器代码）',
                 pickerNoBlocks: '暂无积木，请在左侧面板添加',
                 pickerFooterNav: '↑↓ 选择',
                 pickerFooterInsert: 'Enter 插入',
@@ -2925,6 +2935,7 @@
                 dabbrevNoMatch: 'No matching words',
                 dabbrevNoWords: 'No words nearby to complete',
                 dabbrevCount: '{n} items',
+                dabbrevFieldTitle: 'Alt+/ word complete (words come from editor code)',
                 pickerNoBlocks: 'No blocks yet. Add them in the left panel',
                 pickerFooterNav: '↑↓ select',
                 pickerFooterInsert: 'Enter insert',
@@ -7305,8 +7316,10 @@ except ZeroDivisionError:
             visible: false,
             items: [],          // [{ word, minDist }]  按离光标的距离升序
             activeIndex: 0,
-            prefixStart: 0,     // 光标处词在文本里的起点
-            prefixEnd: 0        // 光标处词在文本里的终点（含光标右侧，用于整词替换）
+            prefixStart: 0,     // 光标处词在「目标框」里的起点
+            prefixEnd: 0,       // 光标处词在「目标框」里的终点（含光标右侧，用于整词替换）
+            target: 'code',     // 'code' | 'search' | 'replace'
+            targetEl: null      // 触发补全的那个输入框
         };
 
         /** 光标向左连续取标识符字符，返回前缀（不在词上返回空串） */
@@ -7348,9 +7361,11 @@ except ZeroDivisionError:
          * 收集候选词：前缀匹配（不区分大小写）、去重，**仅按离光标的距离升序**（Emacs 风格）。
          * 空前缀（光标不在词上）时不过滤，附近所有词都参选。
          */
-        function collectDabbrevCandidates(prefix, text) {
+        function collectDabbrevCandidates(prefix, text, caretOverride) {
             const src = text === undefined ? codeInput.value : text;
-            const caret = codeInput.selectionStart || 0;
+            const caret = (typeof caretOverride === 'number')
+                ? caretOverride
+                : (codeInput.selectionStart || 0);
 
             const { startPos, endPos } = getDabbrevScanRange(src, caret);
             const wordRange = getWordRangeAtCaret(src, caret);
@@ -7439,30 +7454,41 @@ except ZeroDivisionError:
         // ---- 定位：贴着光标，超出视口就翻到上方 / 左收 ----
         // 不用 getCaretPixelPos()：那个会 substring + split 全文，10 万行文件要几十毫秒。
         // 这里只顺序数光标前的换行符，跳过整段文本分配。
-        function positionDabbrev(text) {
-            const src = text === undefined ? codeInput.value : text;
-            const pos = codeInput.selectionStart || 0;
-            let line = 0;
-            let lastNl = -1;
-            for (let i = src.indexOf('\n'); i >= 0 && i < pos; i = src.indexOf('\n', i + 1)) {
-                line++;
-                lastNl = i;
-            }
-            const col = pos - lastNl - 1;
-            const lineHeight = editorLineHeight();
-            const charWidth = editorCharWidth();
-            const rect = codeInput.getBoundingClientRect();
-            const padTop = 16;
-            const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
+        function positionDabbrevFor(el) {
+            const rect = el.getBoundingClientRect();
+            const margin = 8;
 
             // 不读 offsetWidth/offsetHeight：那会在写 DOM 后强制一次全量 layout，
             // 3MB 文本的 textarea 重排要十几毫秒。这里用已知的固定宽度 + 估算高度。
-            const rows = Math.min(Math.max(dabbrevState.items.length, 1), DABBREV_MAX_ITEMS);
             const pw = 300;
+            const rows = Math.min(Math.max(dabbrevState.items.length, 1), DABBREV_MAX_ITEMS);
             const ph = 64 + Math.min(320, rows * 29 + 8);
-            const margin = 8;
-            let left = Math.max(margin, rect.left + padLeft + col * charWidth - codeInput.scrollLeft);
-            let top = rect.top + padTop + (line + 1) * lineHeight - codeInput.scrollTop;
+
+            let left, top;
+
+            if (el === codeInput) {
+                // 编辑器：贴着光标（顺序数换行符，不做全文分配）
+                const src = codeInput.value;
+                const pos = codeInput.selectionStart || 0;
+                let line = 0;
+                let lastNl = -1;
+                for (let i = src.indexOf('\n'); i >= 0 && i < pos; i = src.indexOf('\n', i + 1)) {
+                    line++;
+                    lastNl = i;
+                }
+                const col = pos - lastNl - 1;
+                const lineHeight = editorLineHeight();
+                const charWidth = editorCharWidth();
+                const padTop = 16;
+                const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
+
+                left = Math.max(margin, rect.left + padLeft + col * charWidth - codeInput.scrollLeft);
+                top = rect.top + padTop + (line + 1) * lineHeight - codeInput.scrollTop;
+            } else {
+                // 单行 input（查找 / 替换）：贴在输入框下方
+                left = Math.max(margin, rect.left);
+                top = rect.bottom + 4;
+            }
 
             if (top + ph > window.innerHeight - margin) {
                 top = Math.max(margin, top - ph - 24);
@@ -7475,62 +7501,97 @@ except ZeroDivisionError:
             dabbrevPicker.style.top = Math.round(top) + 'px';
         }
 
+        /** 兼容旧调用：默认贴编辑器光标 */
+        function positionDabbrev() {
+            positionDabbrevFor(codeInput);
+        }
+
         // ---- 打开 / 关闭 / 接受 ----
-        function openDabbrev() {
-            const text = codeInput.value;
-            const caret = codeInput.selectionStart || 0;
-            if (caret !== codeInput.selectionEnd) return;      // 有选区不触发
+        /**
+         * 打开 dabbrev 浮层。
+         * 无论从哪个框触发，候选词都从「编辑器全文」收集；
+         * 替换范围（prefixStart / prefixEnd）始终相对目标框自身计算。
+         */
+        function openDabbrevFor(el, target) {
+            if (!el) return;
+
+            const text = el.value;
+            const caret = el.selectionStart || 0;
+            if (caret !== el.selectionEnd) return;    // 目标框有选区不触发
 
             // 空前缀也继续：光标在空白/行首/中文后时列出附近所有词，选中后在光标处插入
             const prefix = getWordBeforeCaret(text, caret);
             const wordRange = getWordRangeAtCaret(text, caret);
-            const items = collectDabbrevCandidates(prefix, text);
+
+            // 词源固定取编辑器全文，距离中心用编辑器自己的光标（保持「附近优先」）
+            const items = collectDabbrevCandidates(
+                prefix,
+                codeInput.value,
+                codeInput.selectionStart || 0
+            );
 
             if (blockPickerState.visible) hideBlockPicker(false);
-            if (searchState.visible) closeSearch();
 
             dabbrevState.visible = true;
             dabbrevState.items = items;
             dabbrevState.activeIndex = 0;
-            dabbrevState.prefixStart = wordRange.start;
-            dabbrevState.prefixEnd = wordRange.end;   // 整词替换，光标在词中间也不残留尾巴
+            dabbrevState.prefixStart = wordRange.start;   // 相对目标框
+            dabbrevState.prefixEnd = wordRange.end;       // 整词替换，光标在词中间也不残留尾巴
+            dabbrevState.target = target;
+            dabbrevState.targetEl = el;
 
             dabbrevInput.value = prefix;
             renderDabbrevList();
-            positionDabbrev(text);           // 先定位（display:none，不触发 layout）
+            positionDabbrevFor(el);          // 先定位（display:none，不触发 layout）
             dabbrevPicker.classList.add('show');
             dabbrevInput.focus();
             dabbrevInput.select();
         }
 
+        /** 原入口：编辑器内 Alt+/ */
+        function openDabbrev() {
+            openDabbrevFor(codeInput, 'code');
+        }
+
         function closeDabbrev(restoreFocus) {
             if (!dabbrevState.visible) return;
             if (restoreFocus === undefined) restoreFocus = true;
+            const el = dabbrevState.targetEl || codeInput;
+            const caret = dabbrevState.prefixEnd;
             dabbrevState.visible = false;
             dabbrevPicker.classList.remove('show');
             dabbrevList.innerHTML = '';
             if (restoreFocus) {
-                const caret = dabbrevState.prefixEnd;
-                codeInput.focus();
-                codeInput.setSelectionRange(caret, caret);
-                updateCursorPosition();
+                el.focus();
+                el.setSelectionRange(caret, caret);
+                if (el === codeInput) updateCursorPosition();
             }
+            dabbrevState.targetEl = null;
+            dabbrevState.target = 'code';
         }
 
-        /** 用候选词替换光标处的整个词（左边 prefix + 右边残留，都归入替换范围） */
+        /** 用候选词替换目标框里光标处的整个词（左边 prefix + 右边残留，都归入替换范围） */
         function applyDabbrev(word) {
-            const text = codeInput.value;
+            const el = dabbrevState.targetEl || codeInput;
+            const isCode = el === codeInput;
+            const text = el.value;
             const start = dabbrevState.prefixStart;
             const end = dabbrevState.prefixEnd;
-            codeInput.value = text.substring(0, start) + word + text.substring(end);
+            el.value = text.substring(0, start) + word + text.substring(end);
             const caret = start + word.length;
+
             closeDabbrev(false);
-            codeInput.focus();
-            codeInput.setSelectionRange(caret, caret);
-            lastHighlightedText = null;
-            updateHighlight();
-            updateCursorPosition();
-            pushHistoryImmediate();
+            el.focus();
+            el.setSelectionRange(caret, caret);
+
+            if (isCode) {
+                lastHighlightedText = null;
+                updateHighlight();
+                updateCursorPosition();
+                pushHistoryImmediate();
+            } else if (el === searchInput) {
+                performSearch();     // 查找词变了，立刻重跑搜索
+            }
         }
 
         // ---- 浮层内交互 ----
@@ -7583,15 +7644,30 @@ except ZeroDivisionError:
         document.addEventListener('mousedown', (e) => {
             if (!dabbrevState.visible) return;
             if (dabbrevPicker.contains(e.target)) return;
+            // 从查找 / 替换框触发时，点回该框是为了改前缀，不关闭
+            if (e.target === searchInput || e.target === replaceInput) return;
             closeDabbrev(false);
+        });
+
+        // 查找框 / 替换框也支持 Alt+/：候选词仍来自编辑器全文，替换落在本框
+        [searchInput, replaceInput].forEach((el) => {
+            el.addEventListener('keydown', (e) => {
+                // macOS 上 Option+/ 的 e.key 是 '÷'，只能看 e.code
+                if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+                    (e.code === 'Slash' || e.code === 'NumpadDivide')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openDabbrevFor(el, el === searchInput ? 'search' : 'replace');
+                }
+            });
         });
 
         // 编辑器滚动 / 窗口缩放时重新贴住光标
         codeInput.addEventListener('scroll', () => {
-            if (dabbrevState.visible) positionDabbrev();
+            if (dabbrevState.visible && dabbrevState.target === 'code') positionDabbrevFor(codeInput);
         });
         window.addEventListener('resize', () => {
-            if (dabbrevState.visible) positionDabbrev();
+            if (dabbrevState.visible) positionDabbrevFor(dabbrevState.targetEl || codeInput);
         });
 
         // ==================== 编辑器事件 ====================
@@ -8227,9 +8303,38 @@ except ZeroDivisionError:
             openQuickAddBlockModal(selected);
         });
 
+        // ---- 工具栏「补全」按钮：补到「最近一次聚焦的可补全输入框」----
+        // 点 button 会先把焦点抢走，click 里读 document.activeElement 只会读到按钮本身，
+        // 所以用 focusin 记住最近一次落在哪个可补全的框（编辑器 / 查找 / 替换）。
+        let lastCompletionTarget = null;   // { el, target }
+        const COMPLETION_TARGETS = [
+            { el: codeInput, target: 'code' },
+            { el: searchInput, target: 'search' },
+            { el: replaceInput, target: 'replace' }
+        ];
+
+        document.addEventListener('focusin', (e) => {
+            for (let i = 0; i < COMPLETION_TARGETS.length; i++) {
+                const tgt = COMPLETION_TARGETS[i];
+                if (e.target === tgt.el) { lastCompletionTarget = tgt; return; }
+            }
+        });
+
+        /** 查找 / 替换框必须在可见状态下才算有效目标（搜索栏关了就回退到编辑器） */
+        function isCompletionTargetUsable(tgt) {
+            if (!tgt || !tgt.el) return false;
+            if (tgt.target === 'code') return true;
+            if (!searchState.visible) return false;
+            return !!tgt.el.offsetParent;
+        }
+
         // 工具栏「补全」入口：与 Alt+/ 同一个浮层（触屏兜底）
         document.getElementById('dabbrevBtn').addEventListener('click', () => {
-            openDabbrev();
+            if (isCompletionTargetUsable(lastCompletionTarget)) {
+                openDabbrevFor(lastCompletionTarget.el, lastCompletionTarget.target);
+            } else {
+                openDabbrevFor(codeInput, 'code');
+            }
         });
 
         document.getElementById('autoIndentBtn').addEventListener('click', () => {
@@ -8303,7 +8408,7 @@ except ZeroDivisionError:
             enabled: true,
             interval: 60,
             maxCount: 10,
-            maxSize: 0,        // 0 = 不限制（KB）
+            maxSize: 100,      // 0 = 不限制（KB）；默认 100K
             minChars: 10
         };
 
@@ -8319,7 +8424,7 @@ except ZeroDivisionError:
                         enabled: s.enabled !== false,
                         interval: [30, 60, 120, 300, 600].indexOf(s.interval) >= 0 ? s.interval : 60,
                         maxCount: [10, 20, 30, 50].indexOf(s.maxCount) >= 0 ? s.maxCount : 10,
-                        maxSize: [0, 50, 100, 500, 1024].indexOf(s.maxSize) >= 0 ? s.maxSize : 0,
+                        maxSize: [0, 50, 100, 500, 1024].indexOf(s.maxSize) >= 0 ? s.maxSize : SNAP_DEFAULT_SETTINGS.maxSize,
                         minChars: [0, 10, 50].indexOf(s.minChars) >= 0 ? s.minChars : 10
                     };
                 }
@@ -8416,6 +8521,18 @@ except ZeroDivisionError:
             return sameDay ? hms : pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + hms;
         }
 
+        /** 字节数格式化为易读大小：B / KB / MB，<10 保留 1 位小数，≥10 取整（1024 进制） */
+        function formatSnapshotSize(bytes) {
+            const n = Number(bytes) || 0;
+            if (n < 1024) return n + ' B';
+            if (n < 1024 * 1024) {
+                const kb = n / 1024;
+                return (kb < 10 ? kb.toFixed(1) : Math.round(kb)) + ' KB';
+            }
+            const mb = n / (1024 * 1024);
+            return (mb < 10 ? mb.toFixed(1) : Math.round(mb)) + ' MB';
+        }
+
         function renderSnapshotList() {
             const list = document.getElementById('snapshotList');
             if (!list) return;
@@ -8440,6 +8557,11 @@ except ZeroDivisionError:
                 nameEl.textContent = snap.fileName || 'untitled';
                 nameEl.title = snap.fileName || 'untitled';
 
+                const sizeEl = document.createElement('span');
+                sizeEl.className = 'snapshot-size';
+                sizeEl.textContent = formatSnapshotSize(snap.size);
+                sizeEl.title = String(snap.size || 0) + ' bytes';
+
                 const btn = document.createElement('button');
                 btn.className = 'snapshot-restore-btn';
                 btn.textContent = t('snapRestore');
@@ -8447,6 +8569,7 @@ except ZeroDivisionError:
 
                 row.appendChild(timeEl);
                 row.appendChild(nameEl);
+                row.appendChild(sizeEl);   // 放在「恢复」前面
                 row.appendChild(btn);
                 list.appendChild(row);
             });
@@ -8501,7 +8624,11 @@ except ZeroDivisionError:
                 enabled: getVal('snapEnabled') === '1',
                 interval: parseInt(getVal('snapInterval'), 10) || 60,
                 maxCount: parseInt(getVal('snapMaxCount'), 10) || 10,
-                maxSize: parseInt(getVal('snapMaxSize'), 10) || 0,
+                // 0 是合法值（不限制），只有读不到时才回退默认值
+                maxSize: (function () {
+                    const v = parseInt(getVal('snapMaxSize'), 10);
+                    return isNaN(v) ? SNAP_DEFAULT_SETTINGS.maxSize : v;
+                })(),
                 minChars: parseInt(getVal('snapMinChars'), 10) || 0
             };
             saveSnapshotSettings(s);
