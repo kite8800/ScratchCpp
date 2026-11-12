@@ -43,6 +43,8 @@
                 if (i >= ROOT.length) { window.__prismState = 'failed'; return; }
                 var root = ROOT[i], main = MAIN[i];
                 i++;
+                // 高亮 Worker 的 importScripts 用同一个根，避免主线程与 Worker 取到两套源
+                window.__PRISM_ROOT__ = root;
                 inject(root + main, function () {
                     var pending = CHAINS.length, allOk = true;
                     CHAINS.forEach(function (chain) {
@@ -97,6 +99,12 @@
         };
 
         /**
+         * 主线程是 window，Worker 里是 self。下面三个补丁函数会 toString() 进 Worker，
+         * 所以不能写死 window —— 统一通过它取全局对象。
+         */
+        const HL_GLOBAL = (typeof window !== 'undefined') ? window : self;
+
+        /**
          * 重排某语言的 token 优先级（对象键顺序 = Prism 的匹配优先级）。
          * 声明了 tokenOrder 就按它排；没声明的语言把 user-function 插到
          * punctuation（没有则 operator / number）之前：必须在「会吃掉 ( 的字符级 token」之前，
@@ -104,7 +112,7 @@
          * 幂等；Prism 未就绪时返回 false。
          */
         function rebuildTokenOrder(langName) {
-            const P = window.Prism;
+            const P = HL_GLOBAL.Prism;
             if (!P || !P.languages || !P.languages[langName]) return false;
             const g = P.languages[langName];
 
@@ -132,15 +140,15 @@
          * 数据驱动，函数体不含语言名。幂等。
          */
         function applyLangPatch(langName) {
-            const P = window.Prism;
+            const P = HL_GLOBAL.Prism;
             if (!P || !P.languages || !P.languages[langName]) return false;
 
             const patch = LANG_PATCHES[langName];
             if (!patch) return false;
 
             const flag = '__langPatchApplied_' + langName;
-            if (window[flag]) return true;
-            window[flag] = true;
+            if (HL_GLOBAL[flag]) return true;
+            HL_GLOBAL[flag] = true;
 
             const g = P.languages[langName];
 
@@ -180,12 +188,12 @@
          * 幂等。
          */
         function applyUserFunctionRule(langName) {
-            const P = window.Prism;
+            const P = HL_GLOBAL.Prism;
             if (!P || !P.languages || !P.languages[langName]) return false;
 
             const flag = '__userFunctionPatched_' + langName;
-            if (window[flag]) return true;
-            window[flag] = true;
+            if (HL_GLOBAL[flag]) return true;
+            HL_GLOBAL[flag] = true;
 
             const g = P.languages[langName];
 
@@ -205,6 +213,219 @@
 
         applyAllLangPatches();
         applyUserFunctionRules();
+
+        // ==================== 高亮 Worker ====================
+        // Prism 分词搬到 Worker：主线程只把结果写进高亮层，大文档连续输入时不再每键阻塞 100ms+。
+        // 任何一步失败（离线、file:// 的 importScripts 限制、浏览器不支持 Worker）
+        // 都降级回主线程同步高亮，功能不受影响。
+        const HL_WORKER_TIMEOUT = 5000;
+        let hlWorker = null;
+        let hlWorkerBroken = false;
+        let hlSeq = 0;
+        let hlPending = null;          // { id, resolve, timer }
+        let hlWorkerObjectUrl = null;
+
+        /** Prism 资源根：在线版由 CDN 加载器写 window.__PRISM_ROOT__；本地版取同级的 vendor/prism/ */
+        function prismAssetRoot() {
+            if (window.__PRISM_ROOT__) return window.__PRISM_ROOT__;
+            try {
+                return new URL('vendor/prism/', document.baseURI).href;
+            } catch (e) {
+                return 'vendor/prism/';
+            }
+        }
+
+        /** Worker 要 importScripts 的文件：CDN 的语法包在 components/ 下，本地 vendor 是平铺的 */
+        function prismWorkerFiles() {
+            const root = prismAssetRoot();
+            const base = /\/$/.test(root) ? root : root + '/';
+            const grammarBase = /^https?:/i.test(base) ? base + 'components/' : base;
+            return [
+                base + 'prism.min.js',
+                grammarBase + 'prism-verilog.min.js',
+                grammarBase + 'prism-c.min.js',
+                grammarBase + 'prism-cpp.min.js',
+                grammarBase + 'prism-python.min.js'
+            ];
+        }
+
+        /** LANG_PATCHES 里有 RegExp（extraTokens.pattern），JSON 会丢，用标记位保住 */
+        const HL_RE_MARK = '__hlRegExp__';
+        function langPatchesJson() {
+            return JSON.stringify(LANG_PATCHES, (key, value) => {
+                if (value instanceof RegExp) {
+                    return { [HL_RE_MARK]: value.source, flags: value.flags };
+                }
+                return value;
+            });
+        }
+
+        /**
+         * Worker 源码：同一套 Prism + grammar + 同一份补丁函数（toString 带过去），
+         * 收到请求就分词。用 Blob URL 是为了不新增分发文件。
+         */
+        function buildPrismWorkerSource() {
+            const filesJson = JSON.stringify(prismWorkerFiles());
+            const patchesJson = JSON.stringify(langPatchesJson());   // 二次编码，模板串里不会出现反引号 / ${
+            const langsJson = JSON.stringify(USER_FUNCTION_LANGS);
+            return `
+var HL_GLOBAL = self;
+var HL_RE_MARK = ${JSON.stringify(HL_RE_MARK)};
+
+function __hlRevive(key, value) {
+    if (value && typeof value === 'object' && value[HL_RE_MARK] !== undefined) {
+        return new RegExp(value[HL_RE_MARK], value.flags || '');
+    }
+    return value;
+}
+
+var LANG_PATCHES = JSON.parse(${patchesJson}, __hlRevive);
+var USER_FUNCTION_LANGS = ${langsJson};
+
+${rebuildTokenOrder.toString()}
+${applyLangPatch.toString()}
+${applyAllLangPatches.toString()}
+${applyUserFunctionRule.toString()}
+${applyUserFunctionRules.toString()}
+
+// Prism 一进 Worker 就会给自己挂一个「消息体必须是 JSON 字符串」的 listener
+// （见 prism 源码里的 disableWorkerMessageHandler 分支），和我们的 postMessage 协议冲突：
+// 它会对我们发的对象做 JSON.parse，抛 SyntaxError，进而把整个 Worker 判死。
+// importScripts 期间临时屏蔽 message 监听注册，加载完再还原。
+var __addListener = self.addEventListener.bind(self);
+self.addEventListener = function (type, fn, opts) {
+    if (type === 'message') return;
+    return __addListener(type, fn, opts);
+};
+var __bootError = null;
+try {
+    importScripts.apply(null, ${filesJson});
+} catch (err) {
+    __bootError = String(err);
+}
+self.addEventListener = __addListener;
+
+if (__bootError) {
+    self.postMessage({ type: 'bootfail', error: __bootError });
+} else {
+    try {
+        if (typeof Prism !== 'undefined') Prism.disableWorkerMessageHandler = true;
+        applyAllLangPatches();
+        applyUserFunctionRules();
+        self.postMessage({ type: 'ready' });
+    } catch (err2) {
+        self.postMessage({ type: 'bootfail', error: String(err2) });
+    }
+}
+
+self.onmessage = function (e) {
+    var id = e.data && e.data.id;
+    var text = e.data && e.data.text;
+    var lang = e.data && e.data.lang;
+    var html = null;
+    try {
+        if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages[lang]) {
+            html = Prism.highlight(text, Prism.languages[lang], lang);
+        }
+    } catch (err) {
+        html = null;
+    }
+    self.postMessage({ id: id, html: html });
+};
+`;
+        }
+
+        /** Worker 报废：终止、归还挂起请求、按需提示主线程缺 grammar */
+        function markWorkerBroken(reason) {
+            if (hlWorkerBroken) return;
+            hlWorkerBroken = true;
+            if (reason) console.warn('[highlight] Worker 不可用，降级为主线程高亮', reason);
+            const w = hlWorker;
+            hlWorker = null;
+            if (hlWorkerObjectUrl) {
+                try { URL.revokeObjectURL(hlWorkerObjectUrl); } catch (e) { }
+                hlWorkerObjectUrl = null;
+            }
+            if (hlPending) {
+                const pending = hlPending;
+                hlPending = null;
+                clearTimeout(pending.timer);
+                pending.resolve(null);
+            }
+            if (w) { try { w.terminate(); } catch (e) { } }
+            // Worker 与主线程都没有 grammar，才是真的没有高亮能力，照旧提示
+            const langName = prismLangName();
+            if (langName && !(typeof Prism !== 'undefined' && Prism.languages && Prism.languages[langName])) {
+                showPrismWarn();
+            }
+        }
+
+        function createHighlightWorker() {
+            try {
+                const blob = new Blob([buildPrismWorkerSource()], { type: 'application/javascript' });
+                const url = URL.createObjectURL(blob);
+                hlWorkerObjectUrl = url;
+                const w = new Worker(url);
+                w.onmessage = (e) => {
+                    const data = e.data || {};
+                    if (data.type === 'ready') {
+                        if (hlWorkerObjectUrl) {
+                            try { URL.revokeObjectURL(hlWorkerObjectUrl); } catch (err) { }
+                            hlWorkerObjectUrl = null;
+                        }
+                        return;
+                    }
+                    if (data.type === 'bootfail') {
+                        markWorkerBroken(data.error);
+                        return;
+                    }
+                    if (hlPending && data.id === hlPending.id) {
+                        const pending = hlPending;
+                        hlPending = null;
+                        clearTimeout(pending.timer);
+                        pending.resolve(data.html === undefined ? null : data.html);
+                    }
+                };
+                w.onerror = (err) => markWorkerBroken(err && err.message
+                    ? (err.message + (err.lineno ? ' @' + err.lineno + ':' + err.colno : ''))
+                    : err);
+                return w;
+            } catch (e) {
+                console.warn('[highlight] Worker 创建失败，降级为主线程高亮', e);
+                hlWorkerBroken = true;
+                return null;
+            }
+        }
+
+        function ensureHighlightWorker() {
+            if (hlWorker || hlWorkerBroken) return hlWorker;
+            hlWorker = createHighlightWorker();
+            return hlWorker;
+        }
+
+        /** Promise<string|null>：null = Worker 不可用 / 出错 / 超时，调用方降级为主线程 */
+        function highlightInWorker(text, lang) {
+            const w = ensureHighlightWorker();
+            if (!w) return Promise.resolve(null);
+            return new Promise((resolve) => {
+                const id = ++hlSeq;
+                if (hlPending) {
+                    // 只保留最新请求：旧请求直接放弃（Worker 里仍会算完，结果丢弃）
+                    const old = hlPending;
+                    hlPending = null;
+                    clearTimeout(old.timer);
+                    old.resolve(null);
+                }
+                const timer = setTimeout(() => {
+                    if (hlPending && hlPending.id === id) {
+                        hlPending = null;
+                        resolve(null);
+                    }
+                }, HL_WORKER_TIMEOUT);
+                hlPending = { id, resolve, timer };
+                w.postMessage({ id, text, lang });
+            });
+        }
     </script>
     <style>
         /* ==================== 主题变量 ==================== */
@@ -1990,6 +2211,7 @@
             <option value="verilog">Verilog</option>
             <option value="cpp">C++</option>
             <option value="python">Python</option>
+            <option value="txt">Text</option>
         </select>
         <!-- 超精简第一行专用：编程语言下拉。用 id 而不是 .ultra-only，
              因为 select 被 .ultra-only 的 display:inline-flex 接管会挤压箭头 -->
@@ -1997,6 +2219,7 @@
             <option value="verilog">Verilog</option>
             <option value="cpp">C++</option>
             <option value="python">Python</option>
+            <option value="txt">Text</option>
         </select>
         <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
         <input type="file" id="openFileInput" accept=".v,.va,.vams,.sv,.svh,.vh,.txt" style="display:none">
@@ -2293,7 +2516,7 @@
         </div>
     </div>
 
-    <!-- 快速生成积木弹窗（Ctrl+Shift+/ 触发；有选中则预填，无选中则空） -->
+    <!-- 快速生成积木（Ctrl+Shift+/ 触发；有选中则预填，无选中则空） -->
     <div class="modal-overlay" id="quickAddBlockModal">
         <div class="modal">
             <h3 data-i18n="modalQuickAddBlockTitle"><svg class="icon"><use href="#icon-cube"/></svg> 快速生成积木</h3>
@@ -2903,6 +3126,7 @@
                 editorPlaceholder: '// 点击左侧积木或直接编写 Verilog...',
                 editorPlaceholderCpp: '// 点击左侧积木或直接编写 C++...',
                 editorPlaceholderPython: '# 点击左侧积木或直接编写 Python...',
+                editorPlaceholderTxt: '// 纯文本，无语法高亮',
                 themeTitleDark: '当前：深色（点击切换为浅色）',
                 themeTitleLight: '当前：浅色（点击切换为跟随系统）',
                 themeTitleSystem: '当前：跟随系统（点击切换为深色）',
@@ -3182,6 +3406,7 @@
                 editorPlaceholder: '// Click a block on the left, or just start typing Verilog...',
                 editorPlaceholderCpp: '// Click a block on the left, or just start typing C++...',
                 editorPlaceholderPython: '# Click a block on the left, or just start typing Python...',
+                editorPlaceholderTxt: '// Plain text, no syntax highlighting',
                 themeTitleDark: 'Current: dark (click for light)',
                 themeTitleLight: 'Current: light (click to follow system)',
                 themeTitleSystem: 'Current: follow system (click for dark)',
@@ -3349,7 +3574,8 @@
                 codeInput.dataset.i18nPlaceholder =
                     currentEditorLang === 'cpp' ? 'editorPlaceholderCpp'
                         : currentEditorLang === 'python' ? 'editorPlaceholderPython'
-                            : 'editorPlaceholder';
+                            : currentEditorLang === 'txt' ? 'editorPlaceholderTxt'
+                                : 'editorPlaceholder';
                 codeInput.placeholder = t(codeInput.dataset.i18nPlaceholder);
             }
         }
@@ -4151,10 +4377,50 @@
             }
         ];
 
+        // ==================== 纯文本积木（最小可用集合）====================
+        // txt 不追求「语法积木」，只给一份打开就能用的文本积木：
+        // 注释 / 分隔线 / 标题 / TODO / Note，加日期 / 列表 / 任务 / 代码块。
+        // 用户照常增删改序、建自定义分类与子类别；「恢复默认积木」重置为这一份，不是空。
+        const DEFAULT_BLOCKS_TXT = [
+            {
+                id: 'cat-txt-comment',
+                category: 'Text / Comments',
+                category_i18n: { zh: '文本 / 注释' },
+                icon: 'comment',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'txt-comment', icon: 'comment', label: '# comment', code: '# ', mode: 'line' },
+                        { id: 'txt-sep', icon: 'minus', label: '--- separator ---', code: '------------------------------', mode: 'line' },
+                        { id: 'txt-title', icon: 'font', label: 'Title', code: '# Title\n', mode: 'line' },
+                        { id: 'txt-todo', icon: 'exclamation-triangle', label: 'TODO:', code: 'TODO: ', mode: 'line' },
+                        { id: 'txt-note', icon: 'quote-left', label: 'Note:', code: 'Note: ', mode: 'line' }
+                    ]
+                }
+            },
+            {
+                id: 'cat-txt-snippet',
+                category: 'Snippets',
+                category_i18n: { zh: '片段' },
+                icon: 'list',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'txt-date', icon: 'history', label: 'YYYY-MM-DD', code: 'YYYY-MM-DD', mode: 'exp' },
+                        { id: 'txt-bullet', icon: 'list', label: '- item', code: '- ', mode: 'line' },
+                        { id: 'txt-number', icon: 'sort', label: '1. item', code: '1. ', mode: 'line' },
+                        { id: 'txt-task', icon: 'check', label: '[ ] task', code: '- [ ] ', mode: 'line' },
+                        { id: 'txt-code', icon: 'code', label: '``` code ```', code: '```\n\n``` ', mode: 'line' }
+                    ]
+                }
+            }
+        ];
+
         const DEFAULT_BLOCKS_BY_LANG = {
             verilog: DEFAULT_BLOCKS_VERILOG,
             cpp: DEFAULT_BLOCKS_CPP,
-            python: DEFAULT_BLOCKS_PYTHON
+            python: DEFAULT_BLOCKS_PYTHON,
+            txt: DEFAULT_BLOCKS_TXT
         };
 
         // ==================== 示例代码（按语言）====================
@@ -4215,11 +4481,14 @@ def main():
 
 if __name__ == "__main__":
     main()
-`
+`,
+            // 纯文本：首屏留空（txt 的默认内容就是「什么都没有」）
+            txt: ''
         };
 
         function getDefaultCode(lang) {
-            return DEFAULT_CODE_BY_LANG[lang] || DEFAULT_CODE_BY_LANG.verilog;
+            // 用 in 判断而不是 || ：txt 的默认值是空字符串，|| 会把它当成缺失而回落到 Verilog
+            return (lang in DEFAULT_CODE_BY_LANG) ? DEFAULT_CODE_BY_LANG[lang] : DEFAULT_CODE_BY_LANG.verilog;
         }
 
         // 点「示例」插入的完整样例（带注释，比默认内容更全）
@@ -4361,6 +4630,18 @@ try:
     result = 10 / 0
 except ZeroDivisionError:
     print("Cannot divide by zero")
+`,
+            txt: `Text mode — plain text, no syntax highlighting.
+
+Everything here is literal: what you type is what you see.
+The editor keeps the same buffers as the code modes:
+  - blocks on the left: Text / Comments, Snippets
+  - Ctrl+/ insert block, Ctrl+Shift+/ quick add, Alt+/ word complete
+  - Ctrl+F find, Ctrl+H replace, Ctrl+G go to line
+  - indentation is 4 spaces; Enter never adds or removes a level
+  - Tab / Shift+Tab still indent and outdent by one level
+
+TODO: replace this sample with your own notes.
 `
         };
 
@@ -4390,10 +4671,11 @@ except ZeroDivisionError:
         const TOUCH_DRAG_ANGLE = 30;      // 横向 ±30° 内算拖拽，其余算纵向滚动
         const LONG_PRESS_MS = 500;        // 长按打开编辑弹窗
 
-        // ==================== 编辑语言（Verilog / C++ / Python）====================
+        // ==================== 编辑语言（Verilog / C++ / Python / Text）====================
         // 与界面语言（app-lang-v1：zh/en）无关，这里只决定编辑器处理哪种代码。
+        // txt 是「纯文本模式」：没有语法高亮，但积木 / 缩进 / 查找替换 / 保存打开一样不少。
         const EDITOR_LANG_KEY = 'editor-language-v1';
-        const EDITOR_LANGS = ['verilog', 'cpp', 'python'];
+        const EDITOR_LANGS = ['verilog', 'cpp', 'python', 'txt'];
         let currentEditorLang = 'verilog';   // 由 init() 从存储恢复
 
         // 语言相关存储键统一用 `{base}.{lang}` 形式
@@ -4510,15 +4792,23 @@ except ZeroDivisionError:
             if (lnVisible) lineNumbers.style.height = codeInput.clientHeight + 'px';
         }
 
-        /** 当前语言对应的 Prism grammar 名（切换语言时更新） */
+        /** 当前语言对应的 Prism grammar 名（切换语言时更新）；纯文本没有 grammar，返回 null */
         function prismLangName() {
+            if (currentEditorLang === 'txt') return null;
             if (currentEditorLang === 'cpp') return 'cpp';
             if (currentEditorLang === 'python') return 'python';
             return 'verilog';
         }
 
-        /** Prism 是否已加载指定 grammar */
+        /**
+         * Prism 是否可用：
+         *  - name === null（纯文本模式）→ 无需 grammar，视为就绪；
+         *  - Worker 活着 → 分词在 Worker 里做，主线程即使没有 grammar 也算就绪（否则会误报 warnPrism）；
+         *  - 其余按主线程 grammar 判断。
+         */
         function hasPrismGrammar(name) {
+            if (name === null) return true;
+            if (hlWorker && !hlWorkerBroken) return true;
             return typeof Prism !== 'undefined' && !!Prism.languages && !!Prism.languages[name];
         }
 
@@ -4547,28 +4837,73 @@ except ZeroDivisionError:
             if (span && span.parentNode) span.parentNode.removeChild(span);
         }
 
-        function updateHighlight() {
+        /** 主线程同步高亮（Worker 不可用时的降级路径） */
+        function highlightSync(text, langName) {
+            if (langName && typeof Prism !== 'undefined' && Prism.languages && Prism.languages[langName]) {
+                try {
+                    highlightCode.className = 'language-' + langName;
+                    highlightCode.innerHTML = Prism.highlight(text, Prism.languages[langName], langName);
+                    return;
+                } catch (err) {
+                    // 高亮出问题也不能影响编辑：退回纯文本
+                    console.warn('[highlight] 主线程 Prism 失败，退回纯文本', err);
+                }
+            }
+            highlightCode.className = '';
+            highlightCode.textContent = text;
+        }
+
+        let hlApplySeq = 0;
+        /** 超过这个字符数就不再写「纯文本占位」，避免多一次整篇排版 */
+        const HL_PLACEHOLDER_MAX = 30000;
+
+        /**
+         * 刷新行号 / 脏标记，并把分词交给 Worker。
+         * 异步：调用方不需要 await（各处都是「发出去不用管」）。
+         * Worker 不可用时自动降级为主线程同步高亮，行为与以前一致。
+         */
+        async function updateHighlight() {
             // 内容也可能被程序化改写（撤销/清空/缩进/插入积木），统一在这里刷新未保存状态
             updateDirtyState();
             const text = codeInput.value;
             renderLineNumbers(text);
             if (text === lastHighlightedText) return;
+            lastHighlightedText = text;
+
+            const mySeq = ++hlApplySeq;
 
             const langName = prismLangName();
-            if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages[langName]) {
-                try {
-                    highlightCode.className = 'language-' + langName;
-                    highlightCode.innerHTML = Prism.highlight(text, Prism.languages[langName], langName);
-                } catch (err) {
-                    // 高亮出问题也不能影响编辑：退回纯文本
-                    console.warn('[highlight] Prism 高亮失败，退回纯文本', err);
-                    highlightCode.textContent = text;
-                }
-            } else {
+            if (!langName) {
+                // 纯文本模式：高亮层只放原文，不挂 language-* 类。
+                // 序号已在上面 +1，任何还没回来的 Worker 结果都作废（否则会覆盖成上一门语言的高亮）
+                highlightCode.className = '';
+                highlightCode.textContent = text;
+                syncScrollbarWidth();
+                syncScroll();
+                return;
+            }
+
+            // 小文档先放纯文本占位：等待期间是「新文本 + 无色」，不会出现「旧高亮 + 新文本」错位。
+            // 大文档跳过占位：占位与随后的 innerHTML 各会触发一次整篇排版（10k 行约 2×70ms），
+            // 比「短暂保留旧高亮」贵得多——Worker 一般 30ms 内就回来了。
+            if (text.length <= HL_PLACEHOLDER_MAX) {
+                highlightCode.className = '';
                 highlightCode.textContent = text;
             }
 
-            lastHighlightedText = text;
+            const html = await highlightInWorker(text, langName);
+
+            // 等待期间文本又变了 / 又发起了新请求：这次结果作废
+            if (mySeq !== hlApplySeq) return;
+            if (codeInput.value !== text) return;
+
+            if (html === null) {
+                highlightSync(text, langName);
+            } else {
+                highlightCode.className = 'language-' + langName;
+                highlightCode.innerHTML = html;
+            }
+
             syncScrollbarWidth();
             syncScroll();
         }
@@ -4932,10 +5267,17 @@ except ZeroDivisionError:
                     // 行尾冒号（可跟注释）→ 下一行进一级；dict / 切片 / lambda 结尾不是冒号，不会误命中
                     { matchPrev: /:[ \t]*(#.*)?$/, delta: 1 }
                 ]
+            },
+            // 纯文本：rules 为空 → ruleDelta 恒为 0，Enter 保持当前行缩进，不增不减。
+            // Tab / Shift+Tab 仍按 indentUnit 机械增删一级，缩进完全由用户手动控制。
+            // 默认 4 空格：loadIndentConfig() 会按这里的 indentUnit 长度回落（全局兜底是 3）。
+            txt: {
+                indentUnit: '    ',
+                rules: []
             }
         };
         // 编辑语言 → LANG_RULES 里的键。C++ 复用 C 的缩进规则（大括号语义相同）
-        const LANG_RULE_KEY = { verilog: 'verilog', cpp: 'c', python: 'python' };
+        const LANG_RULE_KEY = { verilog: 'verilog', cpp: 'c', python: 'python', txt: 'txt' };
 
         function getLangRules() {
             const key = LANG_RULE_KEY[currentEditorLang] || 'verilog';
@@ -5890,7 +6232,8 @@ except ZeroDivisionError:
         const FILE_EXTS_BY_LANG = {
             verilog: '.v,.va,.vams,.sv,.svh,.vh,.txt',
             cpp: '.cpp,.cc,.cxx,.c,.h,.hpp,.hxx,.txt',
-            python: '.py,.pyw,.pyi,.txt'
+            python: '.py,.pyw,.pyi,.txt',
+            txt: '.txt,.log,.md,.csv,.json,.xml,.yml,.yaml,.ini,.conf,.cfg,.text'
         };
 
         function updateFileAccept() {
@@ -6043,11 +6386,13 @@ except ZeroDivisionError:
             if (!ok) console.warn('[blocks] 配置未能写入 localStorage（存储不可用或已满），本次改动仅保留在内存中');
         }
 
-        // 子类别固定顺序：Verilog 用 none/v/va，C++ 用 none/c/cpp，Python 用 none/py
+        // 子类别固定顺序：Verilog 用 none/v/va，C++ 用 none/c/cpp，Python 用 none/py，
+        // 纯文本只有「通用」。但这里只是「预置键」，用户自定义的子组照常通过 subKeysForCat 列出。
         const BLOCK_SUBS_BY_LANG = {
             verilog: ['none', 'v', 'va'],
             cpp: ['none', 'c', 'cpp'],
-            python: ['none', 'py']
+            python: ['none', 'py'],
+            txt: ['none']
         };
         function blockSubs() {
             return BLOCK_SUBS_BY_LANG[currentEditorLang] || BLOCK_SUBS_BY_LANG.verilog;
@@ -6916,6 +7261,16 @@ except ZeroDivisionError:
             if (blockPickerState.visible) hideBlockPicker(false);
             if (!BLOCKS.length) { flashStatus(t('noCategoryToAdd')); return; }
 
+            // 1) 光标不在视口内时先滚到光标处（上 1/3）。弹窗本身是居中的、不贴光标，
+            //    但打开前让光标可见，用户才能看清「要插到哪儿」。光标在视口内时是 no-op。
+            let targetTop = codeInput.scrollTop;
+            let targetLeft = codeInput.scrollLeft;
+            if (!isCaretInViewport()) {
+                targetTop = caretScrollTopForView();
+                codeInput.scrollTop = targetTop;
+                syncScroll();
+            }
+
             quickAddCode.value = text || '';
             quickAddLabel.value = '';          // 描述留空，保存时自动取代码第一行
             quickAddCustomSub.value = '';
@@ -6926,8 +7281,17 @@ except ZeroDivisionError:
             document.querySelector('input[name="quickAddMode"][value="line"]').checked = true;
 
             quickAddBlockModal.classList.add('show');
-            quickAddCode.focus();
-            if (text) quickAddCode.setSelectionRange(text.length, text.length);
+
+            // 2) focus 弹窗输入框时锁住编辑器滚动（失焦可能把编辑器滚到光标处）
+            withEditorScrollLock(() => {
+                quickAddCode.focus();
+                if (text) quickAddCode.setSelectionRange(text.length, text.length);
+            });
+
+            // 3) 写回目标滚动位置（焦点切换期间可能被浏览器改过）
+            if (codeInput.scrollTop !== targetTop) codeInput.scrollTop = targetTop;
+            if (codeInput.scrollLeft !== targetLeft) codeInput.scrollLeft = targetLeft;
+            syncScroll();
         }
 
         function closeQuickAddBlockModal() {
@@ -6956,7 +7320,8 @@ except ZeroDivisionError:
         quickAddSaveBtn.addEventListener('click', () => {
             if (!commitNewBlock(getQuickAddFormValues())) return;
             closeQuickAddBlockModal();
-            codeInput.focus();
+            // 焦点交还编辑器时可能被滚到光标处（光标在视口外时最明显），锁住
+            withEditorScrollLock(() => codeInput.focus({ preventScroll: true }));
         });
 
         // 「快速生成积木」弹窗：Ctrl+Enter / Cmd+Enter 提交（和代码编辑器习惯一致）
@@ -6978,6 +7343,7 @@ except ZeroDivisionError:
             });
         }
 
+        // 点遮罩空白处关闭（居中弹窗有遮罩，能正常接收点击）
         quickAddBlockModal.addEventListener('click', (e) => {
             if (e.target === quickAddBlockModal) closeQuickAddBlockModal();
         });
@@ -6998,7 +7364,7 @@ except ZeroDivisionError:
             if (quickAddBlockModal.classList.contains('show')) {
                 e.preventDefault();
                 closeQuickAddBlockModal();
-                codeInput.focus();
+                withEditorScrollLock(() => codeInput.focus({ preventScroll: true }));
                 return;
             }
         });
@@ -7360,10 +7726,11 @@ except ZeroDivisionError:
         // ---- 定位 ----
         function getCaretPixelPos() {
             const pos = codeInput.selectionStart || 0;
-            const textBefore = codeInput.value.substring(0, pos);
-            const lines = textBefore.split('\n');
-            const lineIdx = lines.length - 1;
-            const col = lines[lineIdx].length;
+            // 行号用 indexOf 跳着数、列号用 lastIndexOf，都不做全文 split：
+            // 大文档下 substring + split 要分配上千个字符串，滚动重定位时太贵。
+            const lineIdx = caretLineIndex();
+            const lastNl = pos > 0 ? codeInput.value.lastIndexOf('\n', pos - 1) : -1;
+            const col = pos - lastNl - 1;
             const lineHeight = editorLineHeight();
             const charWidth = editorCharWidth();
             const padTop = 16;
@@ -7379,21 +7746,26 @@ except ZeroDivisionError:
             const pw = blockPicker.offsetWidth || 460;
             const ph = blockPicker.offsetHeight || 300;
             const margin = 8;
-            let left, top;
 
-            if (source === 'toolbar') {
-                left = (window.innerWidth - pw) / 2;
-                top = (window.innerHeight - ph) / 2;
-            } else {
-                const pt = point || getCaretPixelPos();
-                left = Math.max(margin, pt.left);
-                top = pt.top;
-                if (top + ph > window.innerHeight - margin) {
-                    top = Math.max(margin, top - ph - 24);
-                }
-                if (left + pw > window.innerWidth - margin) {
-                    left = Math.max(margin, window.innerWidth - pw - margin);
-                }
+            // 三个入口统一贴光标：keyboard（Ctrl+/）、ctrl-click（Ctrl+点编辑器）、toolbar（工具栏按钮）。
+            // toolbar 以前是「窗口居中」，但点按钮时用户的心理预期也是「插到光标处」；
+            // 光标不在视口内时由 openBlockPicker 先把编辑器滚回光标。
+            const pt = point || getCaretPixelPos();
+            let left = pt.left;
+            let top = pt.top;
+
+            // 下方放不下就翻到上方（24 = 光标行高 + 间距，避免盖住当前行）
+            if (top + ph > window.innerHeight - margin) {
+                top = top - ph - 24;
+            }
+            // 四向最终钳制：无论翻没翻、光标在不在视口内，浮层都留在视口内
+            if (top < margin) top = margin;
+            if (top > window.innerHeight - ph - margin) {
+                top = Math.max(margin, window.innerHeight - ph - margin);
+            }
+            if (left < margin) left = margin;
+            if (left > window.innerWidth - pw - margin) {
+                left = Math.max(margin, window.innerWidth - pw - margin);
             }
 
             blockPicker.style.left = Math.round(left) + 'px';
@@ -7412,13 +7784,35 @@ except ZeroDivisionError:
             blockPickerState.activeIndex = 0;
             blockPickerState.visible = true;
 
+            // 1) 光标不在视口内就先滚到光标处（上 1/3），否则贴光标定位会把浮层顶出视口。
+            //    光标在视口内时这段是 no-op，三个入口统一走。
+            let targetTop = codeInput.scrollTop;
+            let targetLeft = codeInput.scrollLeft;
+            if (!isCaretInViewport()) {
+                targetTop = caretScrollTopForView();
+                codeInput.scrollTop = targetTop;
+                syncScroll();
+            }
+
             blockPickerInput.value = '';
             blockPickerState.items = searchCompletions('');
             blockPicker.classList.add('show');
             renderBlockPickerList();
+
+            // 2) focus 筛选框会让编辑器失焦，浏览器可能把光标位置滚进视口：锁住
+            withEditorScrollLock(() => {
+                blockPickerInput.focus();
+                blockPickerInput.select();
+            });
+
+            // 3) focus 之后强制写回决策好的滚动位置（withEditorScrollLock 恢复的是 focus 前的值，
+            //    这里再对齐一次，防止 select() 等后续动作又动滚动）
+            if (codeInput.scrollTop !== targetTop) codeInput.scrollTop = targetTop;
+            if (codeInput.scrollLeft !== targetLeft) codeInput.scrollLeft = targetLeft;
+            syncScroll();
+
+            // 4) 滚动位置定了才定位：getCaretPixelPos 读的是 codeInput.scrollTop
             positionBlockPicker(source, point);
-            blockPickerInput.focus();
-            blockPickerInput.select();
         }
 
         function hideBlockPicker(restoreFocus) {
@@ -7429,8 +7823,12 @@ except ZeroDivisionError:
             blockPickerList.innerHTML = '';
             if (restoreFocus) {
                 const off = blockPickerState.insertOffset;
-                codeInput.focus();
-                codeInput.setSelectionRange(off, off);
+                // 焦点交还编辑器时，若光标不在视口内浏览器会滚过去（表现为整篇跳到最后）：
+                // 关闭浮层不主动跳，只锁住当前滚动位置。
+                withEditorScrollLock(() => {
+                    codeInput.focus({ preventScroll: true });
+                    codeInput.setSelectionRange(off, off);
+                });
                 updateCursorPosition();
             }
         }
@@ -7649,56 +8047,151 @@ except ZeroDivisionError:
         // ---- 定位：贴着光标，超出视口就翻到上方 / 左收 ----
         // 不用 getCaretPixelPos()：那个会 substring + split 全文，10 万行文件要几十毫秒。
         // 这里只顺序数光标前的换行符，跳过整段文本分配。
-        function positionDabbrevFor(el) {
+        /**
+         * @param {HTMLElement} el 目标框（编辑器或查找/替换输入框）
+         * @param {number} [caretLine] 已算好的光标行号（0 起）；省略则自己数一次
+         */
+        function positionDabbrevFor(el, caretLine) {
             const rect = el.getBoundingClientRect();
             const margin = 8;
 
             // 不读 offsetWidth/offsetHeight：那会在写 DOM 后强制一次全量 layout，
             // 3MB 文本的 textarea 重排要十几毫秒。这里用已知的固定宽度 + 估算高度。
+            // 高度 = header 46 + footer 27 + 列表（8px 内边距 + 每行 29px，最高 320px）；
+            // 空态列表实测 67px（一行提示 + 22px 上下内边距）。
             const pw = 300;
-            const rows = Math.min(Math.max(dabbrevState.items.length, 1), DABBREV_MAX_ITEMS);
-            const ph = 64 + Math.min(320, rows * 29 + 8);
+            const rows = Math.min(dabbrevState.items.length, DABBREV_MAX_ITEMS);
+            const ph = 73 + (rows ? Math.min(320, 8 + rows * 29) : 67);
 
             let left, top;
 
             if (el === codeInput) {
-                // 编辑器：贴着光标（顺序数换行符，不做全文分配）
-                const src = codeInput.value;
-                const pos = codeInput.selectionStart || 0;
-                let line = 0;
-                let lastNl = -1;
-                for (let i = src.indexOf('\n'); i >= 0 && i < pos; i = src.indexOf('\n', i + 1)) {
-                    line++;
-                    lastNl = i;
-                }
-                const col = pos - lastNl - 1;
-                const lineHeight = editorLineHeight();
-                const charWidth = editorCharWidth();
-                const padTop = 16;
-                const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
-
-                left = Math.max(margin, rect.left + padLeft + col * charWidth - codeInput.scrollLeft);
-                top = rect.top + padTop + (line + 1) * lineHeight - codeInput.scrollTop;
+                // 编辑器：贴着光标
+                const p = caretScreenPoint(caretLine);
+                left = Math.max(margin, p.left);
+                top = p.top;
             } else {
                 // 单行 input（查找 / 替换）：贴在输入框下方
                 left = Math.max(margin, rect.left);
                 top = rect.bottom + 4;
             }
 
+            // 上方放不下就翻到光标上方；上方也放不下（或光标本来就在视口外）时
+            // 钳到视口内，保证浮层永远可见，不会跑到几千 px 外
             if (top + ph > window.innerHeight - margin) {
                 top = Math.max(margin, top - ph - 24);
             }
-            if (left + pw > window.innerWidth - margin) {
-                left = Math.max(margin, window.innerWidth - pw - margin);
-            }
+            if (top < margin) top = margin;
+            const maxTop = window.innerHeight - ph - margin;
+            if (top > maxTop) top = Math.max(margin, maxTop);
+
+            // 左右对称钳制（窄屏时贴右边缘也不会出界）
+            if (left < margin) left = margin;
+            const maxLeft = window.innerWidth - pw - margin;
+            if (left > maxLeft) left = Math.max(margin, maxLeft);
 
             dabbrevPicker.style.left = Math.round(left) + 'px';
             dabbrevPicker.style.top = Math.round(top) + 'px';
         }
 
+        /**
+         * 光标在屏幕上的像素位置（视口坐标），用于「贴光标」的浮层。
+         * 只数换行 + 原生 lastIndexOf 取列，不做 substring/split 全文分配。
+         * @param {number} [caretLine] 已算好的光标行号（0 起），省略则自己数一次
+         */
+        function caretScreenPoint(caretLine) {
+            const src = codeInput.value;
+            const pos = codeInput.selectionStart || 0;
+            const line = caretLine === undefined ? caretLineIndex() : caretLine;
+            const lastNl = pos > 0 ? src.lastIndexOf('\n', pos - 1) : -1;
+            const col = pos - lastNl - 1;
+            const rect = codeInput.getBoundingClientRect();
+            const padLeft = lnVisible ? (24 + lnGutterWidth) : 16;
+            return {
+                left: rect.left + padLeft + col * editorCharWidth() - codeInput.scrollLeft,
+                top: rect.top + 16 + (line + 1) * editorLineHeight() - codeInput.scrollTop
+            };
+        }
+
         /** 兼容旧调用：默认贴编辑器光标 */
         function positionDabbrev() {
             positionDabbrevFor(codeInput);
+        }
+
+        /**
+         * 写回滚动位置。
+         * 实测（Chrome）：textarea 单纯失焦不会改 scrollTop，但只要 focus() 回来、
+         * 光标又不在视口内，浏览器就会把光标 scrollIntoView —— 光标在文末时表现为
+         * 整篇跳到最后一屏。所以在「焦点交还」之后把 scrollTop/scrollLeft 写回原值，
+         * 编辑器顺带再对齐一次高亮层，避免三层错位。
+         */
+        function restoreEditorScroll(el, top, left) {
+            let changed = false;
+            if (el.scrollTop !== top) { el.scrollTop = top; changed = true; }
+            if (el.scrollLeft !== left) { el.scrollLeft = left; changed = true; }
+            if (changed && el === codeInput) syncScroll();
+            return changed;
+        }
+
+        /**
+         * 在 fn 执行期间锁住编辑器滚动位置。
+         * 用于「从 codeInput 失焦到别的输入框」的场景：focus/blur 时浏览器会把光标
+         * 滚进视口，光标在文末时就是整篇跳到最后。包一层，把这段滚动写回原位。
+         * 与 openDabbrevFor 的区别：那边需要「主动跳回光标」以便浮层贴光标，这边只锁不跳。
+         */
+        function withEditorScrollLock(fn) {
+            const savedTop = codeInput.scrollTop;
+            const savedLeft = codeInput.scrollLeft;
+            try {
+                return fn();
+            } finally {
+                if (codeInput.scrollTop !== savedTop) codeInput.scrollTop = savedTop;
+                if (codeInput.scrollLeft !== savedLeft) codeInput.scrollLeft = savedLeft;
+                // 写回后三层 transform 要重新对齐，否则高亮层会错位一帧
+                syncScroll();
+            }
+        }
+
+        /**
+         * 光标前有多少个换行（0 起，等价「光标行号 - 1」）。
+         * 用 indexOf 跳着数：4MB 文档 3.5ms；charCodeAt 逐字符要 78ms，别用。
+         */
+        function caretLineIndex() {
+            const src = codeInput.value;
+            const pos = codeInput.selectionStart || 0;
+            let line = 0;
+            for (let i = src.indexOf('\n'); i >= 0 && i < pos; i = src.indexOf('\n', i + 1)) line++;
+            return line;
+        }
+
+        /**
+         * 光标是否在编辑器视口内。
+         * 只用「行号 × 行高」算，不读 getBoundingClientRect，避免强制布局。
+         * @param {number} [line0] 已算好的光标行号（0 起），省略则自己数一次
+         */
+        function isCaretInViewport(line0) {
+            const lineH = editorLineHeight();
+            const line = line0 === undefined ? caretLineIndex() : line0;
+            const caretTop = 16 + line * lineH;      // 16 = #codeInput 的 padding-top
+            const viewTop = codeInput.scrollTop;
+            const viewBottom = viewTop + codeInput.clientHeight;
+            return caretTop + lineH > viewTop && caretTop < viewBottom;
+        }
+
+        /**
+         * 光标不在视口内时，把它放进视口上 1/3 处（浮层在光标下方还有空间）。
+         * 只算不写：调用方统一写 scrollTop 再 syncScroll，避免多处写互相覆盖。
+         * 读 scrollHeight/clientHeight 会触发一次布局，只发生在低频的「打开浮层」路径上。
+         * @param {number} [line0] 已算好的光标行号（0 起），省略则自己数一次
+         */
+        function caretScrollTopForView(line0) {
+            const lineH = editorLineHeight();
+            const line = line0 === undefined ? caretLineIndex() : line0;
+            const caretTop = 16 + line * lineH;
+            const viewH = codeInput.clientHeight;
+            const maxTop = Math.max(0, codeInput.scrollHeight - viewH);
+            const want = caretTop - Math.max(0, (viewH - lineH) / 3);
+            return Math.min(Math.max(0, want), maxTop);
         }
 
         // ---- 打开 / 关闭 / 接受 ----
@@ -7727,6 +8220,19 @@ except ZeroDivisionError:
 
             if (blockPickerState.visible) hideBlockPicker(false);
 
+            // 1) 决定打开后编辑器停在哪：光标在视口内就不动，在视口外才滚回去。
+            //    光标和浮层同框，用户才看得出候选和什么相关。
+            //    行号只数一次（4MB 文档 indexOf 数法约 3.5ms），判断和定位共用。
+            const isCode = el === codeInput;
+            const caretLine = isCode ? caretLineIndex() : undefined;
+            let targetTop = codeInput.scrollTop;
+            const targetLeft = codeInput.scrollLeft;
+            if (isCode && !isCaretInViewport(caretLine)) {
+                targetTop = caretScrollTopForView(caretLine);
+                codeInput.scrollTop = targetTop;
+                syncScroll();
+            }
+
             dabbrevState.visible = true;
             dabbrevState.items = items;
             dabbrevState.activeIndex = 0;
@@ -7737,10 +8243,16 @@ except ZeroDivisionError:
 
             dabbrevInput.value = prefix;
             renderDabbrevList();
-            positionDabbrevFor(el);          // 先定位（display:none，不触发 layout）
             dabbrevPicker.classList.add('show');
-            dabbrevInput.focus();
+            // 光标已在视口内的常规路径，焦点样式更稳；防止输入框自己被滚进视口
+            dabbrevInput.focus({ preventScroll: true });
             dabbrevInput.select();
+
+            // 2) focus 可能又让浏览器动滚动（光标在视口外时）：强制写回上面定好的位置
+            restoreEditorScroll(codeInput, targetTop, targetLeft);
+
+            // 3) 滚动位置定下来之后才定位：positionDabbrevFor 要读 scrollTop 算光标像素坐标
+            positionDabbrevFor(el, caretLine);
         }
 
         /** 原入口：编辑器内 Alt+/ */
@@ -7757,9 +8269,13 @@ except ZeroDivisionError:
             dabbrevPicker.classList.remove('show');
             dabbrevList.innerHTML = '';
             if (restoreFocus) {
-                el.focus();
+                const savedTop = el.scrollTop;
+                const savedLeft = el.scrollLeft;
+                el.focus({ preventScroll: true });
                 el.setSelectionRange(caret, caret);
                 if (el === codeInput) updateCursorPosition();
+                // setSelectionRange 也可能让浏览器把光标滚进视口（光标在文末时最明显）
+                restoreEditorScroll(el, savedTop, savedLeft);
             }
             dabbrevState.targetEl = null;
             dabbrevState.target = 'code';
@@ -7772,12 +8288,16 @@ except ZeroDivisionError:
             const text = el.value;
             const start = dabbrevState.prefixStart;
             const end = dabbrevState.prefixEnd;
+            const savedTop = el.scrollTop;
+            const savedLeft = el.scrollLeft;
             el.value = text.substring(0, start) + word + text.substring(end);
             const caret = start + word.length;
 
             closeDabbrev(false);
-            el.focus();
+            el.focus({ preventScroll: true });
             el.setSelectionRange(caret, caret);
+            // 光标落在文末时，focus / setSelectionRange 会把文档滚到最后；写回原位
+            restoreEditorScroll(el, savedTop, savedLeft);
 
             if (isCode) {
                 lastHighlightedText = null;
@@ -7878,8 +8398,10 @@ except ZeroDivisionError:
 
         codeInput.addEventListener('scroll', () => {
             syncScroll();
-            if (blockPickerState.visible && blockPickerState.source === 'keyboard') {
-                positionBlockPicker('keyboard');
+            if (blockPickerState.visible) {
+                // 三个入口都是贴光标的，滚动后都要跟着光标走；
+                // 不传 point：ctrl-click 的鼠标坐标滚动后已失效，统一按当前光标算。
+                positionBlockPicker(blockPickerState.source);
             }
         });
         codeInput.addEventListener('click', (e) => {
@@ -7897,8 +8419,8 @@ except ZeroDivisionError:
         window.addEventListener('resize', () => {
             syncScrollbarWidth();
             syncScroll();
-            if (blockPickerState.visible && blockPickerState.source === 'keyboard') {
-                positionBlockPicker('keyboard');
+            if (blockPickerState.visible) {
+                positionBlockPicker(blockPickerState.source);
             }
         });
 
@@ -8127,7 +8649,8 @@ except ZeroDivisionError:
         const SAVE_EXTS_BY_LANG = {
             verilog: ['.v', '.va', '.vams', '.sv', '.svh', '.vh', '.txt'],
             cpp: ['.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.hxx', '.txt'],
-            python: ['.py', '.pyw', '.pyi', '.txt']
+            python: ['.py', '.pyw', '.pyi', '.txt'],
+            txt: ['.txt', '.log', '.md', '.csv', '.json', '.xml', '.yml', '.yaml', '.ini', '.conf', '.cfg']
         };
         function getSaveExts() {
             return SAVE_EXTS_BY_LANG[currentEditorLang] || SAVE_EXTS_BY_LANG.verilog;
