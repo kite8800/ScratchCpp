@@ -856,17 +856,17 @@ self.onmessage = function (e) {
         body.compact-toolbar .editor-header .header-divider { margin: 0 2px; }
 
         /* ==================== 超精简模式（第三档）==================== */
-        /* 第一行：logo … [语言下拉] [精简按钮]
-           第二行：[积木栏开关] [文件] [编辑] … [界面语言] [主题]
+        /* 第一行：logo … [语言下拉]
+           第二行：[积木栏开关] [文件] [编辑] … [界面语言] [主题] [帮助] [精简]
            `.toolbar .ultra-only` 是为了权重压过 .toolbar button 的 display:inline-flex */
         .toolbar .ultra-only { display: none; }
         body.ultra-compact-toolbar .toolbar .ultra-only { display: inline-flex; }
-        /* 第一行（:not(.toolbar-second)）只留 logo / 语言下拉 / 精简 / 菜单挂载点 / spacer。
+        /* 第一行（:not(.toolbar-second)）只留 logo / 语言下拉 / 菜单挂载点 / spacer。
            必须排除 .ultra-only，否则同一条规则会把第二行的菜单按钮也吃掉。 */
-        body.ultra-compact-toolbar .toolbar:not(.toolbar-second) > :not(.ultra-only):not(#compactToggleBtn):not(#ultraLangSelect):not(.logo):not(.ultra-menu):not(.spacer) { display: none; }
-        /* 第二行：积木栏开关 + 文件 / 编辑 靠左；语言 / 主题靠右（三档共用这一对按钮） */
+        body.ultra-compact-toolbar .toolbar:not(.toolbar-second) > :not(.ultra-only):not(#ultraLangSelect):not(.logo):not(.ultra-menu):not(.spacer) { display: none; }
+        /* 第二行：积木栏开关 + 文件 / 编辑 靠左；语言 / 主题 / 帮助 / 精简 靠右（三档共用这一组按钮） */
         body.ultra-compact-toolbar .toolbar-second { display: flex; }
-        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn):not(.spacer):not(#langToggleBtn):not(#themeToggleBtn):not(#helpBtn) { display: none; }
+        body.ultra-compact-toolbar .toolbar-second > :not(.ultra-only):not(#toggleBlocksBtn):not(.spacer):not(#langToggleBtn):not(#themeToggleBtn):not(#helpBtn):not(#compactToggleBtn) { display: none; }
         /* 语言下拉用 id 控制显隐：select 被 inline-flex 接管会挤掉箭头 */
         #ultraLangSelect { display: none; }
         body.ultra-compact-toolbar #ultraLangSelect { display: inline-block; }
@@ -2221,7 +2221,7 @@ self.onmessage = function (e) {
             <option value="python">Python</option>
             <option value="txt">Text</option>
         </select>
-        <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
+        <!-- 精简模式按钮已移到第二行最右（第一行右侧太挤：语言下拉 + 下拉箭头已经占满） -->
         <input type="file" id="openFileInput" accept=".v,.va,.vams,.sv,.svh,.vh,.txt" style="display:none">
 
         <!-- 超精简模式：文件 / 编辑 / 设置 三个下拉菜单（position:fixed，JS 按按钮视口坐标定位） -->
@@ -2281,11 +2281,13 @@ self.onmessage = function (e) {
         <button id="quickAddBtn" data-i18n="btnQuickAdd" data-i18n-title="btnQuickAddTitle" title="新增积木 (Ctrl+Shift+/)"><svg class="icon"><use href="#icon-cube-plus"/></svg> 新增</button>
         <span class="divider"></span>
         <button id="dabbrevBtn" data-i18n="btnDabbrev" data-i18n-title="btnDabbrevTitle" title="词补全 (Alt+/)"><svg class="icon"><use href="#icon-wand-sparkles"/></svg> 补全</button>
-        <!-- 界面语言 / 主题：三档共用同一对按钮，spacer 把它们推到第二行最右 -->
+        <!-- 界面语言 / 主题 / 帮助 / 精简：三档共用同一组按钮，spacer 把它们推到第二行最右 -->
         <span class="spacer"></span>
         <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText">中</span></button>
         <button id="themeToggleBtn" class="icon-only" title="当前：深色（点击切换为浅色）"><svg class="icon"><use href="#icon-moon"/></svg></button>
         <button id="helpBtn" class="icon-only" data-i18n-title="helpBtnTitle" title="快捷键与功能说明"><svg class="icon"><use href="#icon-help"/></svg></button>
+        <!-- 精简模式按钮：第二行最右（三档都在这里，超精简下也要靠它退回上一档） -->
+        <button id="compactToggleBtn" class="icon-only" data-i18n-title="compactToggleOffTitle" title="精简模式（已关闭，点击开启）"><svg class="icon"><use href="#icon-compact"/></svg></button>
     </div>
 
     <div class="main-container">
