@@ -6,16 +6,17 @@
     <title>Scratch Verilog AMS</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpath d='M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'/%3E%3C/svg%3E">
 <!-- 在线版：Prism 由 CDN 异步加载，不阻塞 HTML 解析。
-         cdnjs 不可用时自动切 jsdelivr / unpkg；全部失败则退化为纯文本编辑（编辑、积木、保存照常）。
+         优先级 jsdelivr → unpkg → cdnjs：cdnjs 在国内经常整段时间不可达，放第一会白等一轮超时；
+         jsdelivr 有国内节点、响应最快，作为首选。全部失败则退化为纯文本编辑（编辑、积木、保存照常）。
          组件按依赖链顺序加载：verilog 独立一条，cpp 依赖 c（clike 已包含在 prism 主包里），python 独立一条。 -->
     <script>
         (function () {
             var ROOT = [
-                'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/',
                 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/',
-                'https://unpkg.com/prismjs@1.29.0/'
+                'https://unpkg.com/prismjs@1.29.0/',
+                'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/'
             ];
-            var MAIN = ['prism.min.js', 'prism.min.js', 'prism.js'];
+            var MAIN = ['prism.min.js', 'prism.js', 'prism.min.js'];
             // 每条链内部按顺序加载，链之间并行
             var CHAINS = [
                 ['components/prism-verilog.min.js'],
@@ -24,6 +25,10 @@
             ];
             var i = 0;
             window.__prismState = 'loading';
+            // 高亮由页面自己控制（Worker 分词 + 按行写 DOM），关掉 Prism 的自动高亮：
+            // 否则 prism.min.js 加载完会在 DOMContentLoaded 时 highlightAllUnder，把行 div 换成整篇 HTML。
+            // 必须在 prism 主文件执行前设置（core 里 manual 取的是 _self.Prism && _self.Prism.manual）。
+            window.Prism = { manual: true };
             function inject(src, ok, fail) {
                 var el = document.createElement('script');
                 el.src = src;
@@ -43,8 +48,10 @@
                 if (i >= ROOT.length) { window.__prismState = 'failed'; return; }
                 var root = ROOT[i], main = MAIN[i];
                 i++;
-                // 高亮 Worker 的 importScripts 用同一个根，避免主线程与 Worker 取到两套源
+                // 高亮 Worker 的 importScripts 用同一个根，避免主线程与 Worker 取到两套源。
+                // main 也要带过去：unpkg 上没有 prism.min.js，只有 prism.js，Worker 照写死会 404。
                 window.__PRISM_ROOT__ = root;
+                window.__PRISM_MAIN__ = main;
                 inject(root + main, function () {
                     var pending = CHAINS.length, allOk = true;
                     CHAINS.forEach(function (chain) {
@@ -219,11 +226,16 @@
         // 任何一步失败（离线、file:// 的 importScripts 限制、浏览器不支持 Worker）
         // 都降级回主线程同步高亮，功能不受影响。
         const HL_WORKER_TIMEOUT = 5000;
+        const HL_WORKER_READY_TIMEOUT = 8000;   // 握手超时：超时没 ready 就判死，转主线程兜底并提示
         let hlWorker = null;
         let hlWorkerBroken = false;
         let hlSeq = 0;
         let hlPending = null;          // { id, resolve, timer }
         let hlWorkerObjectUrl = null;
+        let hlWorkerLangs = null;      // Worker 里实际可用的 grammar 名（ready 时回报，null = 未知）
+        let hlWorkerReady = false;     // 收到 ready 才算真能分词（刚 new 出来不算）
+        let hlWorkerRoot = null;       // 建当前 Worker 时用的资源根，用来发现「CDN 换源了」
+        let hlWorkerTries = 0;         // 已建过几个 Worker（封顶，防换源时死循环）
 
         /** Prism 资源根：在线版由 CDN 加载器写 window.__PRISM_ROOT__；本地版取同级的 vendor/prism/ */
         function prismAssetRoot() {
@@ -240,8 +252,11 @@
             const root = prismAssetRoot();
             const base = /\/$/.test(root) ? root : root + '/';
             const grammarBase = /^https?:/i.test(base) ? base + 'components/' : base;
+            // 主文件各源命名不一致：jsdelivr/cdnjs 有 prism.min.js，unpkg 只有 prism.js。
+            // CDN 加载器把当前用的名字写进 __PRISM_MAIN__，Worker 跟着用，别写死。
+            const main = window.__PRISM_MAIN__ || 'prism.min.js';
             return [
-                base + 'prism.min.js',
+                base + main,
                 grammarBase + 'prism-verilog.min.js',
                 grammarBase + 'prism-c.min.js',
                 grammarBase + 'prism-cpp.min.js',
@@ -261,14 +276,24 @@
         }
 
         /**
-         * Worker 源码：同一套 Prism + grammar + 同一份补丁函数（toString 带过去），
-         * 收到请求就分词。用 Blob URL 是为了不新增分发文件。
+         * Worker 源码：同一套 Prism + grammar + 同一份补丁函数（toString 带过去）。
+         * 用 Blob URL 是为了不新增分发文件。
+         *
+         * 消息协议：主线程发 JSON 字符串 { id, code, language }，
+         * Worker 回 { id, lines }（按行切好、每行自包含的 HTML 数组），主线程按行 diff 只写变化的行。
+         * Prism 自己在 Worker 里会挂 message 监听（回整篇 html 字符串），这里在 importScripts
+         * 期间临时屏蔽它，之后由我们自己的 onmessage 处理，两套协议不打架。
          */
         function buildPrismWorkerSource() {
-            const filesJson = JSON.stringify(prismWorkerFiles());
+            const filesArgs = prismWorkerFiles().map(u => JSON.stringify(u)).join(', ');
             const patchesJson = JSON.stringify(langPatchesJson());   // 二次编码，模板串里不会出现反引号 / ${
             const langsJson = JSON.stringify(USER_FUNCTION_LANGS);
-            return `
+            // 本地版的 Prism 源码构建时内联成字符串（vendor/prism/prism-worker-inline.js）：
+            // file:// 页面里的 blob Worker origin 是 null，Chromium 不允许它 importScripts('file://…')，
+            // 直开本地 html 时 Worker 就永远起不来（Chrome / Edge 157 都是这行为）。
+            // 内联后 blob 里就是同源代码，不碰文件读取，也就不需要任何启动参数。
+            const inlineSrc = (typeof window.__PRISM_WORKER_SRC__ === 'string') ? window.__PRISM_WORKER_SRC__ : '';
+            const prologue = `
 var HL_GLOBAL = self;
 var HL_RE_MARK = ${JSON.stringify(HL_RE_MARK)};
 
@@ -287,59 +312,113 @@ ${applyLangPatch.toString()}
 ${applyAllLangPatches.toString()}
 ${applyUserFunctionRule.toString()}
 ${applyUserFunctionRules.toString()}
-
-// Prism 一进 Worker 就会给自己挂一个「消息体必须是 JSON 字符串」的 listener
-// （见 prism 源码里的 disableWorkerMessageHandler 分支），和我们的 postMessage 协议冲突：
-// 它会对我们发的对象做 JSON.parse，抛 SyntaxError，进而把整个 Worker 判死。
-// importScripts 期间临时屏蔽 message 监听注册，加载完再还原。
-var __addListener = self.addEventListener.bind(self);
+`;
+            // Prism 一进 Worker 就给自己挂 message 监听（官方协议，只回整篇 html 字符串）。
+            // 我们要按行返回，所以加载期间临时屏蔽 message 监听注册，加载完再还原。
+            const patchAdd = `
+var __add = self.addEventListener.bind(self);
 self.addEventListener = function (type, fn, opts) {
     if (type === 'message') return;
-    return __addListener(type, fn, opts);
+    return __add(type, fn, opts);
 };
-var __bootError = null;
-try {
-    importScripts.apply(null, ${filesJson});
-} catch (err) {
-    __bootError = String(err);
+`;
+            const boot = inlineSrc
+                // 内联源：直接展开，Prism 在 worker 全局定义自己
+                ? patchAdd + inlineSrc + '\nself.addEventListener = __add;\nvar __bootError = null;\n'
+                // 没有内联源（在线版 CDN / 只拷了 html 没带 vendor）：老路，靠 importScripts
+                : patchAdd + 'var __bootError = null;\ntry {\n    importScripts(' + filesArgs +
+                ');\n} catch (err) {\n    __bootError = String(err);\n}\nself.addEventListener = __add;\n';
+            const epilogue = `
+/**
+ * 把整篇高亮 HTML 按换行切成行，每行自包含：
+ * 行尾补齐所有未闭合标签，下一行行首按原顺序重开，保证
+ * lines.length === 文本行数、每行单独塞进 DOM 也样式正确。
+ */
+function __splitLines(html) {
+    var lines = [];
+    var stack = [];          // [{ name, open }]
+    var cur = '';
+    var i = 0;
+    while (i < html.length) {
+        var ch = html[i];
+        if (ch === '\\n') {
+            var tail = '';
+            for (var k = stack.length - 1; k >= 0; k--) tail += '</' + stack[k].name + '>';
+            lines.push(cur + tail);
+            cur = '';
+            for (var k2 = 0; k2 < stack.length; k2++) cur += stack[k2].open;
+            i++;
+            continue;
+        }
+        if (ch === '<') {
+            var end = html.indexOf('>', i);
+            if (end < 0) { cur += ch; i++; continue; }
+            var tag = html.slice(i, end + 1);
+            if (tag.charAt(1) === '/') {
+                stack.pop();
+            } else if (!/\\/>$/.test(tag)) {
+                var m = tag.slice(1).match(/^[a-zA-Z0-9]+/);
+                if (m) stack.push({ name: m[0], open: tag });
+            }
+            cur += tag;
+            i = end + 1;
+            continue;
+        }
+        cur += ch;
+        i++;
+    }
+    var tail2 = '';
+    for (var k3 = stack.length - 1; k3 >= 0; k3--) tail2 += '</' + stack[k3].name + '>';
+    lines.push(cur + tail2);
+    return lines;
 }
-self.addEventListener = __addListener;
 
 if (__bootError) {
     self.postMessage({ type: 'bootfail', error: __bootError });
 } else {
     try {
-        if (typeof Prism !== 'undefined') Prism.disableWorkerMessageHandler = true;
         applyAllLangPatches();
         applyUserFunctionRules();
-        self.postMessage({ type: 'ready' });
-    } catch (err2) {
-        self.postMessage({ type: 'bootfail', error: String(err2) });
+        self.onmessage = function (e) {
+            var data;
+            try {
+                data = JSON.parse(e.data);
+            } catch (err) {
+                return;
+            }
+            var id = data.id;
+            var code = data.code || '';
+            var language = data.language;
+            var lines = null;
+            try {
+                if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages[language]) {
+                    lines = __splitLines(Prism.highlight(code, Prism.languages[language], language));
+                }
+            } catch (err2) {
+                lines = null;
+            }
+            self.postMessage({ id: id, lines: lines });
+        };
+        self.postMessage({ type: 'ready', languages: Object.keys(Prism.languages || {}) });
+    } catch (err3) {
+        self.postMessage({ type: 'bootfail', error: String(err3) });
     }
 }
-
-self.onmessage = function (e) {
-    var id = e.data && e.data.id;
-    var text = e.data && e.data.text;
-    var lang = e.data && e.data.lang;
-    var html = null;
-    try {
-        if (typeof Prism !== 'undefined' && Prism.languages && Prism.languages[lang]) {
-            html = Prism.highlight(text, Prism.languages[lang], lang);
-        }
-    } catch (err) {
-        html = null;
-    }
-    self.postMessage({ id: id, html: html });
-};
 `;
+            return prologue + boot + epilogue;
         }
 
         /** Worker 报废：终止、归还挂起请求、按需提示主线程缺 grammar */
         function markWorkerBroken(reason) {
             if (hlWorkerBroken) return;
             hlWorkerBroken = true;
-            if (reason) console.warn('[highlight] Worker 不可用，降级为主线程高亮', reason);
+            if (reason) {
+                const msg = '[highlight] Worker 启动失败，主线程降级高亮';
+                // 还能换源重建时只是信息（在线版 cdnjs 不通很常见，随后会用 jsdelivr 重建成）；
+                // 彻底放弃才用 warn，免得成功重建后控制台还挂着一条红字。
+                if (hlWorkerTries < HL_WORKER_MAX_TRIES) console.info(msg + '（稍后按新 CDN 源重试）', reason);
+                else console.warn(msg, reason);
+            }
             const w = hlWorker;
             hlWorker = null;
             if (hlWorkerObjectUrl) {
@@ -352,10 +431,20 @@ self.onmessage = function (e) {
                 clearTimeout(pending.timer);
                 pending.resolve(null);
             }
+            hlWorkerLangs = null;
+            hlWorkerReady = false;
             if (w) { try { w.terminate(); } catch (e) { } }
-            // Worker 与主线程都没有 grammar，才是真的没有高亮能力，照旧提示
+            // 状态栏要给个说法，否则用户只看到「就绪」却在卡：
+            //   主线程还有 grammar → 只是降级（黄），还能着色；
+            //   主线程也没有 grammar → 高亮真的没了（红，老的 warnPrism）。
+            // 纯文本模式（langName 为 null）本来就不需要高亮，不提示。
             const langName = prismLangName();
-            if (langName && !(typeof Prism !== 'undefined' && Prism.languages && Prism.languages[langName])) {
+            if (!langName) return;
+            const mainHasGrammar = typeof Prism !== 'undefined' && Prism.languages && Prism.languages[langName];
+            if (mainHasGrammar) {
+                setStatusHint('worker', t('warnWorkerDegraded'),
+                    'Worker 未就绪，高亮已降级为主线程（大文档可能卡顿）');
+            } else {
                 showPrismWarn();
             }
         }
@@ -366,29 +455,55 @@ self.onmessage = function (e) {
                 const url = URL.createObjectURL(blob);
                 hlWorkerObjectUrl = url;
                 const w = new Worker(url);
+                // 握手超时：Worker 建出来了但 ready 永远不回（file:// 下 importScripts 被静默
+                // 拦掉就是这样），得兜底判死，否则状态栏一直「就绪」而高亮一直走主线程。
+                const readyTimer = setTimeout(() => {
+                    // 期间若已换源重建，这个 timer 属于旧 Worker，别把新的杀掉
+                    if (hlWorker !== w || hlWorkerReady) return;
+                    markWorkerBroken('ready timeout');
+                }, HL_WORKER_READY_TIMEOUT);
                 w.onmessage = (e) => {
-                    const data = e.data || {};
+                    const data = e.data;
+                    if (!data || typeof data !== 'object') return;
                     if (data.type === 'ready') {
+                        clearTimeout(readyTimer);
+                        hlWorkerLangs = Array.isArray(data.languages) ? data.languages : null;
+                        hlWorkerReady = true;
                         if (hlWorkerObjectUrl) {
                             try { URL.revokeObjectURL(hlWorkerObjectUrl); } catch (err) { }
                             hlWorkerObjectUrl = null;
                         }
+                        // Worker 回来了：收起「降级」提示。红色的 prism 提示是另一回事，不动。
+                        const hint = document.getElementById('statusHint');
+                        if (hint && hint.dataset.kind === 'worker') setStatusHint('', '');
+                        // 早先 Worker 还没就绪时，文档可能只是纯文本占位（或换了 CDN 源才重建成）；
+                        // 这里补一次，否则要等用户敲键盘才着色。
+                        if (highlightCode && highlightCode.textContent &&
+                            !highlightCode.querySelector('.token')) {
+                            lastHighlightedText = null;
+                            updateHighlight(true);
+                        }
                         return;
                     }
                     if (data.type === 'bootfail') {
+                        clearTimeout(readyTimer);
                         markWorkerBroken(data.error);
                         return;
                     }
+                    // 高亮结果：{ id, lines }，按 id 直接配对（不再依赖 FIFO）
                     if (hlPending && data.id === hlPending.id) {
                         const pending = hlPending;
                         hlPending = null;
                         clearTimeout(pending.timer);
-                        pending.resolve(data.html === undefined ? null : data.html);
+                        pending.resolve(Array.isArray(data.lines) ? { lines: data.lines } : null);
                     }
                 };
-                w.onerror = (err) => markWorkerBroken(err && err.message
-                    ? (err.message + (err.lineno ? ' @' + err.lineno + ':' + err.colno : ''))
-                    : err);
+                w.onerror = (err) => {
+                    clearTimeout(readyTimer);
+                    markWorkerBroken(err && err.message
+                        ? (err.message + (err.lineno ? ' @' + err.lineno + ':' + err.colno : ''))
+                        : err);
+                };
                 return w;
             } catch (e) {
                 console.warn('[highlight] Worker 创建失败，降级为主线程高亮', e);
@@ -397,16 +512,32 @@ self.onmessage = function (e) {
             }
         }
 
+        /** Worker 重建上限：在线版换 CDN 源时最多试这么多次，避免死循环 */
+        const HL_WORKER_MAX_TRIES = 3;
+
         function ensureHighlightWorker() {
-            if (hlWorker || hlWorkerBroken) return hlWorker;
+            if (hlWorker) return hlWorker;
+            if (hlWorkerBroken) {
+                // 在线版常见的坑：cdnjs 挂了 → importScripts 失败 → Worker 判死，
+                // 而主线程这时会退到 jsdelivr / unpkg 把高亮救回来，Worker 却再也不重建。
+                // 所以「资源根变了」或「主线程 Prism 已就绪」时给一次重建机会，总次数封顶。
+                if (hlWorkerTries >= HL_WORKER_MAX_TRIES) return null;
+                const root = prismAssetRoot();
+                if (root === hlWorkerRoot && window.__prismState !== 'ready') return null;
+                hlWorkerBroken = false;
+            }
+            hlWorkerRoot = prismAssetRoot();
+            hlWorkerTries++;
             hlWorker = createHighlightWorker();
             return hlWorker;
         }
 
-        /** Promise<string|null>：null = Worker 不可用 / 出错 / 超时，调用方降级为主线程 */
+        /** Promise<{lines:string[]}|null>：null = Worker 不可用 / 出错 / 超时，调用方降级为主线程 */
         function highlightInWorker(text, lang) {
             const w = ensureHighlightWorker();
-            if (!w) return Promise.resolve(null);
+            if (!w || !hlWorkerReady) return Promise.resolve(null);
+            // grammar 缺失时 Worker 里 Prism 直接抛错，先挡一道走主线程。
+            if (hlWorkerLangs && lang && hlWorkerLangs.indexOf(lang) < 0) return Promise.resolve(null);
             return new Promise((resolve) => {
                 const id = ++hlSeq;
                 if (hlPending) {
@@ -423,7 +554,7 @@ self.onmessage = function (e) {
                     }
                 }, HL_WORKER_TIMEOUT);
                 hlPending = { id, resolve, timer };
-                w.postMessage({ id, text, lang });
+                w.postMessage(JSON.stringify({ id, code: text, language: lang }));
             });
         }
     </script>
@@ -1500,6 +1631,18 @@ self.onmessage = function (e) {
             text-shadow: none !important;
             padding: 0;
             margin: 0;
+            display: block;
+        }
+
+        /* 高亮层按行渲染：每行一个 div，行高固定，才能和 textarea 的行盒逐行对齐。
+           只改内容变化的行，常规输入每键只重写一个 div。 */
+        .highlight-layer .hl-line {
+            display: block;
+            height: var(--editor-line-height);
+            min-height: var(--editor-line-height);
+            line-height: var(--editor-line-height);
+            white-space: pre;
+            word-wrap: normal;
         }
 
         .search-layer {
@@ -1592,6 +1735,23 @@ self.onmessage = function (e) {
         #codeInput::placeholder {
             color: var(--text-faint);
             -webkit-text-fill-color: var(--text-faint);
+        }
+
+        /*
+         * 输入法组字期间（compositionstart ~ compositionend）：
+         * 这期间每拼一个字母浏览器都会派发一次 input，若照常触发全量高亮，
+         * 就等于每个拼音字母都把整篇高亮层重写一遍——旧内核上会把主线程塞满，
+         * 连输入法候选框都卡住。所以组字期间跳过高亮，改由 textarea 自己显示文字：
+         * 文字从透明改为可见，背景改为不透明以盖住下面还没跟上的高亮层。
+         */
+        #codeInput.ime-composing {
+            background: var(--bg-editor);
+            color: var(--text-strong);
+            -webkit-text-fill-color: var(--text-strong);
+        }
+
+        #codeInput.ime-composing::selection {
+            -webkit-text-fill-color: var(--text-strong);
         }
 
         /* ==================== 行号列 ==================== */
@@ -3121,6 +3281,7 @@ self.onmessage = function (e) {
                 alertReadFileFail: '读取文件失败',
                 errInvalidStructure: '结构错误：需为数组，每个分类含 category 和 subgroups（含 none/v/va 三个数组）',
                 warnPrism: '⚠ Prism 未加载，语法高亮不可用（检查网络或 vendor 目录）',
+                warnWorkerDegraded: '⚠ 高亮已降级（Worker 未就绪，大文档可能卡顿）',
                 warnNoStorage: '⚠ 浏览器禁用了本地存储，积木改动只在本次会话有效',
                 warnOpenFileFail: '⚠ 打开文件失败：命令行传入的文件读不出来（请用 scratchverilog.cmd 启动，它带本地文件读取权限）',
                 copied: '已复制',
@@ -3401,6 +3562,7 @@ self.onmessage = function (e) {
                 alertReadFileFail: 'Failed to read file',
                 errInvalidStructure: 'Invalid structure: expected an array where each category has category and subgroups (with none/v/va arrays)',
                 warnPrism: '⚠ Prism not loaded; syntax highlighting unavailable (check the network or vendor folder)',
+                warnWorkerDegraded: '⚠ Highlighting degraded (Worker not ready; large files may lag)',
                 warnNoStorage: '⚠ Local storage is disabled; block changes last for this session only',
                 warnOpenFileFail: '⚠ Failed to open the file passed on the command line (launch via scratchverilog.cmd, which enables local file access)',
                 copied: 'Copied',
@@ -3613,6 +3775,14 @@ self.onmessage = function (e) {
             // 缩进弹窗的 hint 是动态文案，跟着语言刷新
             const hintEl = document.getElementById('indentWidthHint');
             if (hintEl) hintEl.textContent = indentHintText();
+            // 状态栏提示也是动态文案（文字由 kind 决定），切界面语言时按 kind 重取
+            const statusHintEl = document.getElementById('statusHint');
+            if (statusHintEl && statusHintEl.dataset.kind) {
+                const kind = statusHintEl.dataset.kind;
+                setStatusHint(kind,
+                    t(kind === 'prism' ? 'warnPrism' : 'warnWorkerDegraded'),
+                    statusHintEl.title);
+            }
             // 超精简第一行的编程语言下拉跟着编辑语言同步
             if (typeof syncUltraLangSelect === 'function') syncUltraLangSelect();
         }
@@ -4786,12 +4956,47 @@ TODO: replace this sample with your own notes.
         // ==================== 高亮与滚动同步 ====================
         let lastHighlightedText = null;
 
-        function syncScrollbarWidth() {
-            const scrollbarWidth = codeInput.offsetWidth - codeInput.clientWidth;
+        /** 最近一次已知的滚动条宽度 / 内容区高度（-1 = 还没量过） */
+        let sbScrollbarWidth = -1;
+        let sbClientHeight = -1;
+        let sbObserver = null;
+
+        /**
+         * 只写不读：把已知尺寸落到高亮层 / 搜索层 / 行号列上。
+         * 尺寸没变就直接返回 —— 反复写 paddingRight 会让布局失效，下一帧又得重排一次。
+         */
+        function applyScrollbarMetrics(scrollbarWidth, clientHeight) {
+            if (scrollbarWidth === sbScrollbarWidth && clientHeight === sbClientHeight) return;
+            sbScrollbarWidth = scrollbarWidth;
+            sbClientHeight = clientHeight;
             highlightPre.style.paddingRight = (16 + scrollbarWidth) + 'px';
             searchPre.style.paddingRight = (16 + scrollbarWidth) + 'px';
             // 行号列高度对齐 textarea 内容区（不含水平滚动条），避免遮挡滚动条
-            if (lnVisible) lineNumbers.style.height = codeInput.clientHeight + 'px';
+            if (lnVisible) lineNumbers.style.height = clientHeight + 'px';
+        }
+
+        /**
+         * 同步读尺寸并写回。读 offsetWidth / clientWidth 会强制浏览器立刻完成布局，
+         * 所以只用于低频路径（初始化、字号变化、窗口 resize）。
+         * 输入 / 高亮这类高频路径请用 syncScrollbarWidthDeferred()。
+         */
+        function syncScrollbarWidth() {
+            applyScrollbarMetrics(codeInput.offsetWidth - codeInput.clientWidth, codeInput.clientHeight);
+        }
+
+        /**
+         * 高频路径专用：不读布局。
+         * textarea 的滚动条出现/消失、窗口缩放、字号变化都会改变 content-box，
+         * ResizeObserver 会在布局之后回调，此时读尺寸不会额外触发重排；
+         * innerHTML 变化本身不影响 textarea 自身尺寸，所以高亮完不必再量一次。
+         */
+        function syncScrollbarWidthDeferred() {
+            if (!sbObserver && typeof ResizeObserver !== 'undefined') {
+                sbObserver = new ResizeObserver(() => { syncScrollbarWidth(); });
+                sbObserver.observe(codeInput);
+            }
+            // 还没量过（首屏）/ 环境不支持 ResizeObserver：同步读一次兜底
+            if (!sbObserver || sbScrollbarWidth < 0) syncScrollbarWidth();
         }
 
         /** 当前语言对应的 Prism grammar 名（切换语言时更新）；纯文本没有 grammar，返回 null */
@@ -4805,71 +5010,340 @@ TODO: replace this sample with your own notes.
         /**
          * Prism 是否可用：
          *  - name === null（纯文本模式）→ 无需 grammar，视为就绪；
-         *  - Worker 活着 → 分词在 Worker 里做，主线程即使没有 grammar 也算就绪（否则会误报 warnPrism）；
+         *  - Worker 已经 ready → 分词在 Worker 里做，主线程即使没有 grammar 也算就绪（否则会误报 warnPrism）；
          *  - 其余按主线程 grammar 判断。
+         * 注意必须看 hlWorkerReady：刚 new 出来的 Worker 还没握手，这时候按它就绪会跳过
+         * 「grammar 到位后重新高亮」的轮询，Worker 真挂了文档就一直没颜色。
          */
         function hasPrismGrammar(name) {
             if (name === null) return true;
-            if (hlWorker && !hlWorkerBroken) return true;
+            if (hlWorker && !hlWorkerBroken && hlWorkerReady) return true;
             return typeof Prism !== 'undefined' && !!Prism.languages && !!Prism.languages[name];
         }
 
         /**
-         * 状态栏提示：当前语言的 Prism grammar 加载失败。
-         * 幂等——同一个提示只占一个 span，反复切语言不会叠加；
-         * grammar 后来到位时用 clearPrismWarn() 收起。
+         * 状态栏提示槽：全程只占一个 span，不同的降级原因只是换文字和颜色。
+         * kind: 'prism'（语法高亮完全不可用，红）| 'worker'（Worker 降级，主线程兜底，黄）
+         * 幂等——同一个 span，重复调用只改内容；text 为空则收起。
+         * dataset.kind 记下当前提示类型，供「Worker 恢复 ready 时只收起黄字」判断。
          */
-        function showPrismWarn() {
+        function setStatusHint(kind, text, title) {
             const bar = document.querySelector('.status-bar');
+            let span = document.getElementById('statusHint');
+            if (!text) {
+                if (span && span.parentNode) span.parentNode.removeChild(span);
+                return;
+            }
             if (!bar) return;
-            let span = document.getElementById('prismWarn');
             if (!span) {
                 span = document.createElement('span');
-                span.id = 'prismWarn';
-                span.style.color = 'var(--danger)';
+                span.id = 'statusHint';
                 bar.appendChild(span);
             }
-            const lang = prismLangName();
-            span.textContent = t('warnPrism');
-            span.title = 'prism-' + lang + '.min.js 未加载（本地版检查 vendor 目录，在线版检查网络）';
+            span.dataset.kind = kind || '';
+            span.textContent = text;
+            span.title = title || '';
+            // 没有 --warning 变量，用 --sub-custom-fg（深色 #fdcb6e / 浅色 #8b6914，都压得住底色）
+            span.style.color = (kind === 'prism')
+                ? 'var(--danger)'
+                : 'var(--sub-custom-fg, #fdcb6e)';
         }
 
+        /** 语法高亮彻底不可用（Prism 主文件或 grammar 没加载到）→ 红色常驻提示 */
+        function showPrismWarn() {
+            const lang = prismLangName();
+            setStatusHint('prism', t('warnPrism'),
+                'prism-' + lang + '.min.js 未加载（本地版检查 vendor 目录，在线版检查网络）');
+        }
+
+        /** 收起 prism 红字；黄字（Worker 降级）由 markWorkerBroken / ready 自己管，不在这里误清 */
         function clearPrismWarn() {
-            const span = document.getElementById('prismWarn');
-            if (span && span.parentNode) span.parentNode.removeChild(span);
+            const span = document.getElementById('statusHint');
+            if (span && span.dataset.kind === 'prism') setStatusHint('', '');
+        }
+
+        // ==================== 高亮层：按行渲染 + 只画视口 ====================
+        // 整篇一个 <code> 时，每敲一个键都要整篇重写 innerHTML（10KB 文档约 90KB HTML），
+        // 解析 + 布局全量重来。第一步改成「每行一个 div」，只改内容变化的那几行。
+        // 第二步（这里）：Worker 仍对整篇分词（跨行 token 才对、行数组才和文本行一一对应），
+        // 主线程只把视口 ±N 行写进 DOM。行 div 仍按整篇行数建，<pre> 总高 = 行数 × 行高，
+        // 滚动条长度、gotoLine 的 scrollTop 计算都不受影响；视口外的 div 保留上一次内容，
+        // 滚进来时立刻被覆盖，所以不会闪白。hlLines 必须整篇留着，diff 基准才完整。
+        let hlLineEls = [];        // 与 codeInput 的行一一对应
+        let hlLines = null;        // 最近一次整篇行数组（HTML 或纯文本）
+        let hlLangApplied = null;  // hlLines 对应的语言，'txt' = 纯文本
+
+        /** 视口上下各多画几行：滚动时新行已经在 DOM 里，不会露白 */
+        const HL_VIEW_MARGIN = 60;
+        /** 与 .highlight-layer pre { padding: 16px } 保持一致 */
+        const HL_PAD_TOP = 16;
+
+        /** 补/删行 div，使数量等于 targetLen；结构变了返回 true */
+        function ensureLineEls(targetLen) {
+            const cur = hlLineEls.length;
+            // DOM 被外部改写过（子节点数与缓存不一致）→ 整体重建
+            if (highlightCode.children.length !== cur) {
+                highlightCode.textContent = '';
+                hlLineEls = [];
+            } else if (cur === targetLen) {
+                return false;
+            }
+            if (targetLen > hlLineEls.length) {
+                const frag = document.createDocumentFragment();
+                for (let i = hlLineEls.length; i < targetLen; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'hl-line';
+                    frag.appendChild(div);
+                    hlLineEls.push(div);
+                }
+                highlightCode.appendChild(frag);
+            } else {
+                for (let i = hlLineEls.length - 1; i >= targetLen; i--) {
+                    hlLineEls[i].remove();
+                    hlLineEls.pop();
+                }
+            }
+            return true;
+        }
+
+        /**
+         * 当前视口对应的行范围 [start, end)（0 起，end 不含）。
+         * 纯算术：第 i 行顶边 = HL_PAD_TOP + i * 行高，不读 getBoundingClientRect。
+         */
+        function visibleLineRange() {
+            const lineH = editorLineHeight() || 24;
+            const total = hlLines ? hlLines.length : hlLineEls.length;
+            const viewTop = codeInput.scrollTop;
+            const viewH = codeInput.clientHeight || 0;
+            let start = Math.floor((viewTop - HL_PAD_TOP) / lineH) - HL_VIEW_MARGIN;
+            let end = Math.ceil((viewTop + viewH - HL_PAD_TOP) / lineH) + HL_VIEW_MARGIN;
+            if (start < 0) start = 0;
+            if (end > total) end = total;
+            if (end < start) end = start;
+            return { start, end };
+        }
+
+        /** 只把视口 ±N 行写进 DOM：视口外不动，缓存里的旧内容留着 */
+        function paintVisibleLines() {
+            if (!hlLines) return;
+            const plain = (hlLangApplied === 'txt');
+            const range = visibleLineRange();
+            for (let i = range.start; i < range.end; i++) {
+                const div = hlLineEls[i];
+                if (!div) continue;
+                if (plain) {
+                    if (div._text !== hlLines[i]) {
+                        div.textContent = hlLines[i];
+                        div._text = hlLines[i];
+                        div._html = null;
+                    }
+                } else if (div._html !== hlLines[i]) {
+                    div.innerHTML = hlLines[i];
+                    div._html = hlLines[i];
+                    div._text = null;
+                }
+            }
+        }
+
+        /** 高亮写入排队：Worker 回来的结果先存这里，空闲帧再写 DOM */
+        let pendingHl = null;   // { lines, lang } —— lang === 'txt' 表示纯文本
+
+        /**
+         * 记下待写的高亮并排一次空闲任务（不立刻写 DOM）。
+         * 连续输入时后到的结果覆盖 pending，一帧只写一次，写的还是视口 ±N 行。
+         * 用同一个 key 'hl'：高亮与纯文本共用一个槽，后到的赢，顺序不会乱。
+         */
+        function postHighlight(lines, lang) {
+            pendingHl = { lines, lang };
+            scheduleIdle('hl', () => {
+                if (!pendingHl) return;
+                const p = pendingHl;
+                pendingHl = null;
+                paintHighlight(p);
+            });
+        }
+
+        /** 真正写 DOM：整篇建 div（保证 <pre> 高度）+ 只画视口 */
+        function paintHighlight(p) {
+            const plain = (p.lang === 'txt');
+            const cls = plain ? '' : 'language-' + p.lang;
+            if (highlightCode.className !== cls) highlightCode.className = cls;
+            ensureLineEls(p.lines.length);
+            hlLines = p.lines;
+            hlLangApplied = p.lang;
+            paintVisibleLines();
+            syncScrollbarWidthDeferred();
+            syncScroll();
+        }
+
+        /** 应用 Worker 回来的逐行 HTML：按整篇行数建 div，只画视口 */
+        function applyHighlightedLines(lines, langName) {
+            postHighlight(lines, langName);
+        }
+
+        /** 纯文本模式：同上，但写 textContent（不解析 HTML） */
+        function applyPlainLines(lines) {
+            postHighlight(lines, 'txt');
+        }
+
+        /** 立刻把排队中的高亮写进 DOM（打开文件 / 切语言 / 撤销等「要马上看到」的路径） */
+        function flushHighlight() {
+            flushIdle('hl');
+            if (pendingHl) {
+                const p = pendingHl;
+                pendingHl = null;
+                paintHighlight(p);
+            }
+        }
+
+        /**
+         * 主线程降级：整篇高亮后按行切开（与 Worker 里的 __splitLines 同一套逻辑）。
+         * 只在 Worker 不可用时走，成本 O(html)。
+         */
+        function splitLinesMain(html) {
+            const lines = [];
+            const stack = [];
+            let cur = '';
+            let i = 0;
+            while (i < html.length) {
+                const ch = html[i];
+                if (ch === '\n') {
+                    let tail = '';
+                    for (let k = stack.length - 1; k >= 0; k--) tail += '</' + stack[k].name + '>';
+                    lines.push(cur + tail);
+                    cur = '';
+                    for (let k = 0; k < stack.length; k++) cur += stack[k].open;
+                    i++;
+                    continue;
+                }
+                if (ch === '<') {
+                    const end = html.indexOf('>', i);
+                    if (end < 0) { cur += ch; i++; continue; }
+                    const tag = html.slice(i, end + 1);
+                    if (tag.charAt(1) === '/') {
+                        stack.pop();
+                    } else if (!/\/>$/.test(tag)) {
+                        const m = tag.slice(1).match(/^[a-zA-Z0-9]+/);
+                        if (m) stack.push({ name: m[0], open: tag });
+                    }
+                    cur += tag;
+                    i = end + 1;
+                    continue;
+                }
+                cur += ch;
+                i++;
+            }
+            let tail = '';
+            for (let k = stack.length - 1; k >= 0; k--) tail += '</' + stack[k].name + '>';
+            lines.push(cur + tail);
+            return lines;
+        }
+
+        /** 主线程降级路径的防抖间隔（ms）：停手后这么久才跑 Prism.highlight */
+        const HL_SYNC_DEBOUNCE = 120;
+        /** 防抖定时器句柄（模块级，同一时刻最多一个待跑的主线程分词） */
+        let hlSyncTimer = null;
+
+        /**
+         * 主线程降级路径：推迟 Prism.highlight 到「停手后」。
+         * 连续输入时每个键只重置定时器，不跑分词；停手 HL_SYNC_DEBOUNCE 后才跑一次。
+         * 跑之前做两道校验，任何一道不过就放弃：
+         *   - seq !== hlApplySeq：期间又发起了新请求，这次结果已过期
+         *   - codeInput.value !== text：文本变了，分词结果对不上
+         * 注意：Prism.highlight 本身同步不可中断，这里只保证「什么时候开始」。
+         */
+        function scheduleHighlightSync(text, langName, seq) {
+            if (hlSyncTimer) { clearTimeout(hlSyncTimer); hlSyncTimer = null; }
+            hlSyncTimer = setTimeout(() => {
+                hlSyncTimer = null;
+                if (seq !== hlApplySeq) return;
+                if (codeInput.value !== text) return;
+                highlightSync(text, langName);
+            }, HL_SYNC_DEBOUNCE);
+        }
+
+        /** 取消排队中的主线程分词（切语言 / 打开文件 / 清空 / 撤销时用，避免旧结果落地） */
+        function cancelHighlightSync() {
+            if (hlSyncTimer) { clearTimeout(hlSyncTimer); hlSyncTimer = null; }
         }
 
         /** 主线程同步高亮（Worker 不可用时的降级路径） */
         function highlightSync(text, langName) {
             if (langName && typeof Prism !== 'undefined' && Prism.languages && Prism.languages[langName]) {
                 try {
-                    highlightCode.className = 'language-' + langName;
-                    highlightCode.innerHTML = Prism.highlight(text, Prism.languages[langName], langName);
+                    applyHighlightedLines(splitLinesMain(Prism.highlight(text, Prism.languages[langName], langName)), langName);
+                    // 防抖已经保证「停手后才跑」，这次结果就是当前文本的高亮，立刻落地：
+                    // 再等 idle 会变成「停手 120ms + idle」，延迟肉眼可见
+                    flushHighlight();
                     return;
                 } catch (err) {
                     // 高亮出问题也不能影响编辑：退回纯文本
                     console.warn('[highlight] 主线程 Prism 失败，退回纯文本', err);
                 }
             }
-            highlightCode.className = '';
-            highlightCode.textContent = text;
+            applyPlainLines(text.split('\n'));
+            flushHighlight();
+        }
+
+        // ==================== 空闲调度 ====================
+        // 同一个 key 的多次调用合并成一次，在空闲帧执行；不支持 requestIdleCallback 时退回 setTimeout。
+        // timeout 是兜底：连续输入时浏览器可能一直「忙」，不能无限期等，最迟 120ms 必须执行。
+        const idleEntries = new Map();   // key -> { handle, fn }
+        const HL_IDLE_TIMEOUT = 120;
+
+        function scheduleIdle(key, fn) {
+            if (idleEntries.has(key)) return;   // 已排队：合并成一次，等那一帧一次性做
+            const entry = { handle: 0, fn };
+            const run = () => {
+                if (idleEntries.get(key) !== entry) return;   // 已被 flush / cancel
+                idleEntries.delete(key);
+                fn();
+            };
+            if (typeof requestIdleCallback === 'function') {
+                entry.handle = requestIdleCallback(run, { timeout: HL_IDLE_TIMEOUT });
+            } else {
+                entry.handle = setTimeout(run, 16);
+            }
+            idleEntries.set(key, entry);
+        }
+
+        /** 丢弃排队（不执行） */
+        function cancelIdle(key) {
+            const entry = idleEntries.get(key);
+            if (!entry) return;
+            idleEntries.delete(key);
+            try { cancelIdleCallback(entry.handle); } catch (e) { }
+            try { clearTimeout(entry.handle); } catch (e) { }
+        }
+
+        /** 立即执行排队中的任务（没排队就什么都不做） */
+        function flushIdle(key) {
+            const entry = idleEntries.get(key);
+            if (!entry) return;
+            idleEntries.delete(key);
+            try { cancelIdleCallback(entry.handle); } catch (e) { }
+            try { clearTimeout(entry.handle); } catch (e) { }
+            entry.fn();
         }
 
         let hlApplySeq = 0;
-        /** 超过这个字符数就不再写「纯文本占位」，避免多一次整篇排版 */
-        const HL_PLACEHOLDER_MAX = 30000;
 
         /**
          * 刷新行号 / 脏标记，并把分词交给 Worker。
          * 异步：调用方不需要 await（各处都是「发出去不用管」）。
+         * 结果不立刻写 DOM，先排队到空闲帧（见 postHighlight）——按键帧只剩调度登记。
          * Worker 不可用时自动降级为主线程同步高亮，行为与以前一致。
+         * now=true：写完后立刻 flush（打开文件 / 切语言 / 撤销这类要马上看到结果的路径）。
          */
-        async function updateHighlight() {
+        async function updateHighlight(now) {
             // 内容也可能被程序化改写（撤销/清空/缩进/插入积木），统一在这里刷新未保存状态
             updateDirtyState();
             const text = codeInput.value;
             renderLineNumbers(text);
-            if (text === lastHighlightedText) return;
+            if (text === lastHighlightedText) {
+                if (now) flushHighlight();   // 文本没变也可能有上一轮排队没落地
+                return;
+            }
             lastHighlightedText = text;
 
             const mySeq = ++hlApplySeq;
@@ -4878,36 +5352,31 @@ TODO: replace this sample with your own notes.
             if (!langName) {
                 // 纯文本模式：高亮层只放原文，不挂 language-* 类。
                 // 序号已在上面 +1，任何还没回来的 Worker 结果都作废（否则会覆盖成上一门语言的高亮）
-                highlightCode.className = '';
-                highlightCode.textContent = text;
-                syncScrollbarWidth();
-                syncScroll();
+                applyPlainLines(text.split('\n'));
+                if (now) flushHighlight();
                 return;
             }
 
-            // 小文档先放纯文本占位：等待期间是「新文本 + 无色」，不会出现「旧高亮 + 新文本」错位。
-            // 大文档跳过占位：占位与随后的 innerHTML 各会触发一次整篇排版（10k 行约 2×70ms），
-            // 比「短暂保留旧高亮」贵得多——Worker 一般 30ms 内就回来了。
-            if (text.length <= HL_PLACEHOLDER_MAX) {
-                highlightCode.className = '';
-                highlightCode.textContent = text;
-            }
-
-            const html = await highlightInWorker(text, langName);
+            const result = await highlightInWorker(text, langName);
 
             // 等待期间文本又变了 / 又发起了新请求：这次结果作废
             if (mySeq !== hlApplySeq) return;
             if (codeInput.value !== text) return;
 
-            if (html === null) {
-                highlightSync(text, langName);
+            if (result && Array.isArray(result.lines)) {
+                applyHighlightedLines(result.lines, langName);
+                if (now) flushHighlight();
             } else {
-                highlightCode.className = 'language-' + langName;
-                highlightCode.innerHTML = html;
+                // Worker 不可用 / 缺 grammar：主线程降级。
+                // now=true（打开文件 / 切语言 / 撤销）要立刻看到结果，不走防抖；
+                // 其余（打字）走防抖，按键帧不跑 Prism。
+                if (now) {
+                    cancelHighlightSync();
+                    highlightSync(text, langName);
+                } else {
+                    scheduleHighlightSync(text, langName, mySeq);
+                }
             }
-
-            syncScrollbarWidth();
-            syncScroll();
         }
 
         let scrollRaf = null;
@@ -4927,6 +5396,19 @@ TODO: replace this sample with your own notes.
             });
         }
 
+        /**
+         * 滚动补写视口：用 rAF 而不是 idle —— 滚动期间浏览器认为「忙」，
+         * requestIdleCallback 可能迟迟不触发，视口里就会露白。
+         */
+        let paintRaf = null;
+        function schedulePaintVisible() {
+            if (paintRaf) return;
+            paintRaf = requestAnimationFrame(() => {
+                paintRaf = null;
+                paintVisibleLines();
+            });
+        }
+
         // ==================== 行号 ====================
         const LN_STORAGE_KEY = 'line-numbers-visible';
         let lnVisible = SafeStore.get(LN_STORAGE_KEY) !== '0';
@@ -4934,37 +5416,63 @@ TODO: replace this sample with your own notes.
         let lnLastActive = -1;
         let lnGutterWidth = 40;
 
-        /** 计算光标所在行（1 起） */
-        function getCaretLine() {
-            const pos = codeInput.selectionStart;
-            const text = codeInput.value;
-            let line = 1;
-            for (let i = 0; i < pos; i++) {
-                if (text.charCodeAt(i) === 10) line++;
+        // 行首偏移表：一次 O(n) 扫描同时供「行号总数 / 光标行列」用，文本没变就复用
+        // （连续上下键只有光标动、文本不变，一次扫描都不做）。
+        let lsText = null;
+        let lsStarts = null;
+
+        /** 行首偏移表（升序，[0] === 0，长度 = 行数） */
+        function ensureLineStarts(text) {
+            if (lsStarts && lsText !== null && lsText === text) return lsStarts;
+            const n = text.length;
+            let count = 1;
+            for (let i = 0; i < n; i++) {
+                if (text.charCodeAt(i) === 10) count++;
             }
-            return line;
+            const starts = new Uint32Array(count);
+            let k = 1;
+            for (let i = 0; i < n; i++) {
+                if (text.charCodeAt(i) === 10) starts[k++] = i + 1;
+            }
+            lsText = text;
+            lsStarts = starts;
+            return starts;
         }
 
-        /** 只刷新当前行高亮 */
-        function updateActiveLineNumber() {
+        /** 二分：offset 落在第几行（0 起） */
+        function lineIndexOfOffset(starts, offset) {
+            let lo = 0;
+            let hi = starts.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi + 1) >> 1;
+                if (starts[mid] <= offset) lo = mid; else hi = mid - 1;
+            }
+            return lo;
+        }
+
+        /** 计算光标所在行（1 起） */
+        function getCaretLine() {
+            const text = codeInput.value;
+            return lineIndexOfOffset(ensureLineStarts(text), codeInput.selectionStart) + 1;
+        }
+
+        /** 只刷新当前行高亮（line 省略时按光标算） */
+        function updateActiveLineNumber(line) {
             if (!lnVisible) return;
-            const line = getCaretLine();
-            if (line === lnLastActive) return;
+            const ln = (line === undefined) ? getCaretLine() : line;
+            if (ln === lnLastActive) return;
             const prev = lineNumbersInner.querySelector('.ln-row.current');
             if (prev) prev.classList.remove('current');
-            const cur = lineNumbersInner.children[line - 1];
+            const cur = lineNumbersInner.children[ln - 1];
             if (cur) cur.classList.add('current');
-            lnLastActive = line;
+            lnLastActive = ln;
         }
 
         /** 重建行号内容（行数变化时才重建） */
         function renderLineNumbers(text) {
             if (!lnVisible) return;
             const src = text === undefined ? codeInput.value : text;
-            let count = 1;
-            for (let i = 0; i < src.length; i++) {
-                if (src.charCodeAt(i) === 10) count++;
-            }
+            const count = ensureLineStarts(src).length;
 
             if (count !== lnLastCount) {
                 const frag = [];
@@ -5115,14 +5623,25 @@ TODO: replace this sample with your own notes.
             }
         });
 
+        /** 光标位置：排队到空闲帧算（连续上下键合并成一次，不占按键帧） */
         function updateCursorPosition() {
+            scheduleIdle('cursor', paintCursorPosition);
+        }
+
+        /** 真正算行 / 列并刷新状态栏与行号高亮 */
+        function paintCursorPosition() {
+            const text = codeInput.value;
             const start = codeInput.selectionStart;
-            const textBefore = codeInput.value.substring(0, start);
-            const lines = textBefore.split('\n');
-            const line = lines.length;
-            const col = lines[lines.length - 1].length + 1;
-            cursorPos.textContent = t('cursorPos', { line: line, col: col });
-            updateActiveLineNumber();
+            const starts = ensureLineStarts(text);
+            const line0 = lineIndexOfOffset(starts, start);
+            cursorPos.textContent = t('cursorPos', { line: line0 + 1, col: start - starts[line0] + 1 });
+            updateActiveLineNumber(line0 + 1);
+        }
+
+        /** 需要立刻刷新（打开文件 / 跳转 / 撤销 / blur）：丢掉排队，直接算 */
+        function updateCursorPositionNow() {
+            cancelIdle('cursor');
+            paintCursorPosition();
         }
 
         // ==================== 历史栈 ====================
@@ -5169,11 +5688,12 @@ TODO: replace this sample with your own notes.
         }
 
         function applyHistoryState(state) {
+            cancelHighlightSync();   // 丢掉排队中的旧分词（放在改文本之前，省掉一次白跑）
             codeInput.value = state.text;
-            updateHighlight();
+            updateHighlight(true);   // 撤销/重做要立刻看到着色
             codeInput.setSelectionRange(state.caret, state.caret);
             codeInput.focus();
-            updateCursorPosition();
+            updateCursorPositionNow();
             history.lastText = state.text;
             updateUndoRedoButtons();
         }
@@ -5903,7 +6423,7 @@ TODO: replace this sample with your own notes.
             });
             html += escapeHtml(text.substring(last));
             searchCode.innerHTML = html;
-            syncScrollbarWidth();
+            syncScrollbarWidthDeferred();
             syncScroll();
         }
 
@@ -5942,7 +6462,7 @@ TODO: replace this sample with your own notes.
             searchState.anchor = m.start;   // 锚点跟着选中项走，连续输入时不会跳回开头
             codeInput.focus();
             codeInput.setSelectionRange(m.start, m.end);
-            updateCursorPosition();
+            updateCursorPositionNow();
             searchInput.focus();
         }
 
@@ -5977,7 +6497,7 @@ TODO: replace this sample with your own notes.
             const text = codeInput.value;
             const newText = text.substring(0, m.start) + replaceInput.value + text.substring(m.end);
             codeInput.value = newText;
-            updateHighlight();
+            updateHighlight(true);
             schedulePushHistory();
             performSearch();
         }
@@ -5989,7 +6509,7 @@ TODO: replace this sample with your own notes.
             const newText = text.replace(regex, replaceInput.value);
             if (newText === text) return;
             codeInput.value = newText;
-            updateHighlight();
+            updateHighlight(true);
             schedulePushHistory();
             performSearch();
         }
@@ -6214,7 +6734,7 @@ TODO: replace this sample with your own notes.
             const targetTop = padTop + (lineNo - 1) * lineHeight;
             const viewH = codeInput.clientHeight;
             codeInput.scrollTop = Math.max(0, targetTop - viewH / 2 + lineHeight / 2);
-            updateCursorPosition();
+            updateCursorPositionNow();
             syncScroll();
         }
 
@@ -6280,8 +6800,9 @@ TODO: replace this sample with your own notes.
                 alert(t('alertNoImportText'));
                 return;
             }
+            cancelHighlightSync();
             codeInput.value = text;
-            updateHighlight();
+            updateHighlight(true);
             history.stack = [{ text, caret: 0 }];
             history.index = 0;
             history.lastText = text;
@@ -8326,8 +8847,8 @@ TODO: replace this sample with your own notes.
 
             if (isCode) {
                 lastHighlightedText = null;
-                updateHighlight();
-                updateCursorPosition();
+                updateHighlight(true);
+                updateCursorPositionNow();
                 pushHistoryImmediate();
             } else if (el === searchInput) {
                 performSearch();     // 查找词变了，立刻重跑搜索
@@ -8415,7 +8936,41 @@ TODO: replace this sample with your own notes.
         });
 
         // ==================== 编辑器事件 ====================
-        codeInput.addEventListener('input', () => {
+
+        /**
+         * 输入法组字中（中文 / 日文等）。
+         * 组字期间每拼一个字母都会来一次 input，这时不做全量高亮：
+         * 高亮是「整篇 HTML 全量重写 + 重新布局」，一个拼音字母来一次，
+         * 在大文档 + 旧内核上足以把主线程占满，输入法候选框也跟着卡。
+         */
+        let editorComposing = false;
+
+        codeInput.addEventListener('compositionstart', () => {
+            editorComposing = true;
+            codeInput.classList.add('ime-composing');
+        });
+
+        codeInput.addEventListener('compositionend', () => {
+            editorComposing = false;
+            codeInput.classList.remove('ime-composing');
+            // 组字结束补一次完整高亮（期间被跳过的那次）
+            updateHighlight(true);
+            updateCursorPositionNow();
+        });
+
+        codeInput.addEventListener('input', (e) => {
+            // 组字期间：只维护光标位置与未保存状态，正文高亮等组字结束再补。
+            // 除状态位外再看一眼事件自带的 isComposing，顺带兜住「没收到 compositionend」的情况
+            if (editorComposing && e && e.isComposing === false) {
+                editorComposing = false;
+                codeInput.classList.remove('ime-composing');
+            }
+            if (editorComposing || (e && e.isComposing === true)) {
+                updateDirtyState();
+                updateCursorPosition();
+                syncScroll();
+                return;
+            }
             // 敲完 end / endmodule / endcase / join 等闭合关键字时自动反缩进（仅 Verilog）
             handleVerilogCloser();
             updateHighlight();
@@ -8427,6 +8982,9 @@ TODO: replace this sample with your own notes.
 
         codeInput.addEventListener('scroll', () => {
             syncScroll();
+            // 高亮只画视口：滚进来的行在这里补写（内部有缓存比对，只写真变了的）。
+            // 有 pending（新结果还没落地）时先不补，免得用旧内容刷一遍再被覆盖。
+            if (hlLines && !pendingHl) schedulePaintVisible();
             // toolbar 打开的是居中弹，滚编辑器时不该跟着动；贴光标的入口才重定位。
             // 重定位不传 point：ctrl-click 的鼠标坐标滚动后已失效，统一按当前光标算。
             if (blockPickerState.visible && blockPickerState.source !== 'toolbar') {
@@ -8544,6 +9102,9 @@ TODO: replace this sample with your own notes.
         });
 
         codeInput.addEventListener('blur', () => {
+            // 切走前把排队的活干完，避免回来时还停在旧状态
+            flushHighlight();
+            updateCursorPositionNow();
             if (history.debounceTimer) {
                 clearTimeout(history.debounceTimer);
                 history.debounceTimer = null;
@@ -8919,13 +9480,14 @@ TODO: replace this sample with your own notes.
 
         /** 把读到的内容装入编辑器：打开文件、拖放、命令行 ?file= 共用，保证状态重置一致 */
         function applyLoadedFile(name, content, handle) {
+            cancelHighlightSync();   // 丢掉上一份文件排队中的主线程分词
             codeInput.value = content;
             titleInput.value = name;
             currentFileHandle = handle || null;   // 只有选择器打开的文件才有句柄，可写回
             lastSavedSnapshot = content;          // 刚打开视为已保存
             syncTitleWidth();
             lastHighlightedText = null;
-            updateHighlight();
+            updateHighlight(true);
             history.stack = [{ text: content, caret: 0 }];
             history.index = 0;
             history.lastText = content;
@@ -8938,8 +9500,12 @@ TODO: replace this sample with your own notes.
             codeInput.setSelectionRange(0, 0);
             codeInput.scrollTop = 0;
             codeInput.scrollLeft = 0;
-            updateCursorPosition();
+            updateCursorPositionNow();
             syncScroll();
+            // 高亮刚排进空闲帧：先落地，再补一次视口重绘
+            // （scrollTop 本来就是 0 时不会触发 scroll 事件，滚动补写那条路不会跑）
+            flushHighlight();
+            paintVisibleLines();
         }
 
         /** 拖入文件夹：webkitGetAsEntry 是唯一可靠判断方式（0 字节文件也是 size===0） */
@@ -9348,8 +9914,8 @@ TODO: replace this sample with your own notes.
             takeSnapshot(true);
             codeInput.value = snap.text;
             lastHighlightedText = null;
-            updateHighlight();
-            updateCursorPosition();
+            updateHighlight(true);
+            updateCursorPositionNow();
             pushHistoryImmediate();
             closeSnapshotModal();
             flashStatus(t('snapRestored'));
@@ -9532,18 +10098,19 @@ TODO: replace this sample with your own notes.
         });
 
         document.getElementById('clearBtn').addEventListener('click', () => {
+            cancelHighlightSync();
             codeInput.value = '';
             lastHighlightedText = null;
-            updateHighlight();
-            updateCursorPosition();
+            updateHighlight(true);
+            updateCursorPositionNow();
             pushHistoryImmediate();
             codeInput.focus();
         });
 
         document.getElementById('exampleBtn').addEventListener('click', () => {
             codeInput.value = getExampleCode(currentEditorLang);
-            updateHighlight();
-            updateCursorPosition();
+            updateHighlight(true);
+            updateCursorPositionNow();
             pushHistoryImmediate();
             codeInput.focus();
             codeInput.setSelectionRange(codeInput.value.length, codeInput.value.length);
@@ -9930,10 +10497,11 @@ TODO: replace this sample with your own notes.
             //    顺序会让 applyUserFunctionRules() 永不执行，foo( 这类调用名的兜底高亮就没了
             //    （基础高亮看着正常，很难发现）。
             clearPrismPoll();               // 切语言前先停掉上一次遗留的轮询
+            cancelHighlightSync();          // 丢掉上一门语言排队中的主线程分词
             applyAllLangPatches();
             applyUserFunctionRules();       // grammar 不存在时内部直接返回 false，无害
             lastHighlightedText = null;
-            updateHighlight();
+            updateHighlight(true);       // 切语言：立刻看到新高亮，不算「打字中」
 
             // grammar 还没到：起一个轮询，最多约 12 秒
             if (hasPrismGrammar(prismLangName())) {
@@ -9947,7 +10515,7 @@ TODO: replace this sample with your own notes.
                         applyAllLangPatches();
                         applyUserFunctionRules();
                         lastHighlightedText = null;
-                        updateHighlight();
+                        updateHighlight(true);
                         clearPrismWarn();
                     } else if (tries > 40) {
                         clearPrismPoll();
@@ -10012,7 +10580,12 @@ TODO: replace this sample with your own notes.
 
             const defaultCode = getDefaultCode(currentEditorLang);
             codeInput.value = defaultCode;
-            updateHighlight();
+            // 高亮层按行渲染：首帧前清掉可能的残留（HTML 里 <code> 是空的，这里只是兜底）
+            highlightCode.textContent = '';
+            hlLineEls = [];
+            hlLines = null;
+            hlLangApplied = null;
+            updateHighlight(true);       // 首屏：立刻着色，不等空闲帧
 
             history.stack = [{ text: defaultCode, caret: 0 }];
             history.index = 0;
@@ -10058,7 +10631,7 @@ TODO: replace this sample with your own notes.
                 applyAllLangPatches();
                 applyUserFunctionRules();
                 lastHighlightedText = null;      // 清缓存，强制重新着色
-                updateHighlight();
+                updateHighlight(true);
                 return true;
             }
             if (!checkPrism()) {
