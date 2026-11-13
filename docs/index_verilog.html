@@ -1636,9 +1636,12 @@ if (__bootError) {
             display: block;
         }
 
-        /* 高亮层按行渲染：每行一个 div，行高固定，才能和 textarea 的行盒逐行对齐。
+        /* 高亮层 / 查找层都按行渲染：每行一个 div，行高固定，
+           才能和 textarea 的行盒逐行对齐（查找层原来是整篇 <code> 文本，
+           行盒受 inline span 撑高，X5 上会逐行累积偏移）。
            只改内容变化的行，常规输入每键只重写一个 div。 */
-        .highlight-layer .hl-line {
+        .highlight-layer .hl-line,
+        .search-layer .se-line {
             display: block;
             height: var(--editor-line-height);
             min-height: var(--editor-line-height);
@@ -1878,6 +1881,7 @@ if (__bootError) {
             margin: 0 !important;
         }
         .highlight-layer .hl-line,
+        .search-layer .se-line,
         .ln-row {
             height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
             min-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
@@ -6658,23 +6662,82 @@ TODO: replace this sample with your own notes.
             return new RegExp(pattern, flags);
         }
 
+        // ==================== 查找层（按行渲染，与高亮层同构） ====================
+        // 结构：pre > code > div.se-line × 行数。每行独立定高，
+        // 行内 span.search-match 撑不高行盒；与高亮层共用同一套行高变量。
+        // 只写内容变化的行：next/prev 只改 2 行，改查询词时没匹配的行不动。
+        let seLines = [];
+        let seLineHtml = [];
+
+        /** 补/删行 div，使数量等于 n */
+        function ensureSearchLines(n) {
+            // DOM 被外部改过（或上次是整篇 innerHTML 残留）→ 清空重来
+            if (seLines.length !== searchCode.children.length) {
+                searchCode.textContent = '';
+                seLines = [];
+                seLineHtml = [];
+            }
+            if (n > seLines.length) {
+                const frag = document.createDocumentFragment();
+                for (let i = seLines.length; i < n; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'se-line';
+                    frag.appendChild(div);
+                    seLines.push(div);
+                    seLineHtml.push(null);
+                }
+                searchCode.appendChild(frag);
+            } else if (n < seLines.length) {
+                for (let i = seLines.length - 1; i >= n; i--) {
+                    seLines[i].remove();
+                    seLines.pop();
+                    seLineHtml.pop();
+                }
+            }
+        }
+
+        /** 清空查找层（关闭查找 / 无匹配） */
+        function clearSearchLayer() {
+            if (searchCode.firstChild) searchCode.textContent = '';
+            seLines = [];
+            seLineHtml = [];
+        }
+
         function renderSearchLayer() {
             if (!searchState.visible || searchState.matches.length === 0) {
-                searchCode.innerHTML = '';
+                clearSearchLayer();
                 return;
             }
             const text = codeInput.value;
             const matches = searchState.matches;
-            let html = '';
-            let last = 0;
-            matches.forEach((m, i) => {
-                html += escapeHtml(text.substring(last, m.start));
-                const cls = i === searchState.currentIndex ? 'search-match current' : 'search-match';
-                html += `<span class="${cls}">${escapeHtml(text.substring(m.start, m.end))}</span>`;
-                last = m.end;
-            });
-            html += escapeHtml(text.substring(last));
-            searchCode.innerHTML = html;
+            const starts = ensureLineStarts(text);
+            const n = starts.length;
+            ensureSearchLines(n);
+            const cur = searchState.currentIndex;
+            let mi = 0;   // 匹配游标：逐行推进，整体 O(行数 + 匹配数)
+            for (let li = 0; li < n; li++) {
+                const ls = starts[li];
+                // 行内容区间 [ls, le)：去掉行尾的 \n；最后一行到文本末尾
+                const le = (li + 1 < n) ? starts[li + 1] - 1 : text.length;
+                // 跳过完全在本行之前的匹配（跨行匹配会留在 mi 上被两侧各取一段）
+                while (mi < matches.length && matches[mi].end <= ls) mi++;
+                let html = '';
+                let from = ls;
+                for (let j = mi; j < matches.length && matches[j].start < le; j++) {
+                    const s = matches[j].start > ls ? matches[j].start : ls;
+                    const e = matches[j].end < le ? matches[j].end : le;
+                    if (s >= e) continue;
+                    if (s > from) html += escapeHtml(text.substring(from, s));
+                    html += '<span class="' + (j === cur ? 'search-match current' : 'search-match') + '">' +
+                        escapeHtml(text.substring(s, e)) + '</span>';
+                    from = e;
+                }
+                if (from < le) html += escapeHtml(text.substring(from, le));
+                if (seLineHtml[li] !== html) {
+                    seLines[li].innerHTML = html;
+                    seLineHtml[li] = html;
+                }
+            }
             syncScrollbarWidthDeferred();
             syncScroll();
         }
@@ -6792,7 +6855,7 @@ TODO: replace this sample with your own notes.
             searchState.currentIndex = -1;
             // 关闭时把锚点留在当前光标处：下次打开从当前位置往后找
             searchState.anchor = codeInput.selectionStart || 0;
-            searchCode.innerHTML = '';
+            clearSearchLayer();
             codeInput.focus();
         }
 
