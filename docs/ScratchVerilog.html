@@ -1902,26 +1902,32 @@ if (__bootError) {
             text-size-adjust: 100%;
         }
 
-        /* 高亮层 / 行号列 / 查找层用「实测行高」优先。
+        /* 高亮层 / 查找层 / 行号列统一用「实测行高」优先。
            X5（微信内置浏览器）的 textarea 可能不采用 CSS line-height，
            按字体自然行高算；这里让另外三层跟着 textarea 的实际行高走，
            保证三层严格对齐。--editor-actual-line-height 由 JS 实测写入，
-           没实测时回落到 --editor-line-height（普通浏览器行为不变）。 */
+           没实测时回落到 --editor-line-height（普通浏览器行为不变）。
+           查找层和高亮层结构一致（都是 pre > code），规则也一致，
+           避免 X5 上 line-height: inherit 不传递导致查找层偏。 */
         .highlight-layer pre,
         .search-layer pre,
         .ln-inner {
             line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
         }
+        /* code 也显式写 actual（不依赖 inherit）；padding/margin 清零，
+           避免 pre > code 的默认间距把首行往下推。
+           pre 自身的 padding / margin 规则不动（行号让位那条要能生效）。 */
+        .highlight-layer pre code,
+        .search-layer pre code {
+            line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
         .highlight-layer .hl-line,
         .ln-row {
             height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
             min-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
-            line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
-        }
-        /* 查找层是 <pre><code>整篇文本（不按行切）。pre 上已给了 actual，
-           但 code 原来靠 line-height: inherit 传递 —— X5 上实测传递不可靠，
-           这里对 code 也显式写 actual，不依赖继承。 */
-        .search-layer pre code {
             line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
         }
 
