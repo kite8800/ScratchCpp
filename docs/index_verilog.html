@@ -1818,6 +1818,43 @@ if (__bootError) {
             padding-left: calc(16px + var(--ln-width, 40px) + 8px);
         }
 
+        /* ==================== 三层字体度量复位 ====================
+           textarea 是 replaced element，内部匿名行盒的 line-height 计算
+           和块级元素不完全一致；再加上 font-kerning / ligatures / text-rendering
+           可能让字符宽度微变，累积到后面就是「输入点和行号对不齐」。
+           这里把三层（textarea / 高亮层 / 查找层 / 行号列）所有影响
+           行高和字符宽度的属性显式锁死，保证度量完全一致。
+           注意：必须放在上面各层自己的 font-* 定义之后，靠层叠覆盖。 */
+        #codeInput,
+        .highlight-layer pre,
+        .search-layer pre,
+        .ln-inner {
+            font-family: var(--font-mono);
+            font-size: var(--editor-font-size);
+            font-style: normal;
+            font-weight: 400;
+            font-variant: normal;
+            font-stretch: normal;
+            font-kerning: none;
+            font-variant-ligatures: none;
+            font-feature-settings: normal;
+            line-height: var(--editor-line-height);
+            letter-spacing: 0;
+            word-spacing: 0;
+            text-transform: none;
+            text-indent: 0;
+            text-rendering: optimizeSpeed;
+            tab-size: var(--tab-size, 3);
+            -moz-tab-size: var(--tab-size, 3);
+            -webkit-font-smoothing: auto;
+            -moz-osx-font-smoothing: auto;
+            box-sizing: border-box;
+            margin: 0;
+            border: 0;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
         /* ---------- 语法高亮（不依赖 Prism 主题 CSS，随主题变量切换） ---------- */
         .highlight-layer .token.comment { color: var(--tok-comment); font-style: italic; }
         .highlight-layer .token.string { color: var(--tok-string); }
@@ -2548,7 +2585,7 @@ if (__bootError) {
                 <div class="search-layer" id="searchLayer">
                     <pre><code id="searchCode"></code></pre>
                 </div>
-                <textarea id="codeInput" spellcheck="false" data-i18n-placeholder="editorPlaceholder" placeholder="// 点击左侧积木或直接编写 Verilog..."></textarea>
+                <textarea id="codeInput" spellcheck="false" wrap="off" data-i18n-placeholder="editorPlaceholder" placeholder="// 点击左侧积木或直接编写 Verilog..."></textarea>
                 <div class="drop-hint" id="dropHint">
                     <div class="drop-hint-content">
                         <svg class="icon"><use href="#icon-upload"/></svg>
