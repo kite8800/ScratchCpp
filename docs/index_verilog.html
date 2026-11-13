@@ -2192,8 +2192,8 @@ if (__bootError) {
         .block-picker {
             position: fixed;
             z-index: 1500;
-            width: 460px;
-            max-width: 92vw;
+            width: min(670px, 92vw);
+            max-width: 92vw;   /* min() 已限，这行是给不支持 min() 的老浏览器兜底 */
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -2233,6 +2233,35 @@ if (__bootError) {
         }
         .block-picker-header input:focus { border-color: var(--accent); }
         .block-picker-header input::placeholder { color: var(--text-faint); }
+
+        /* 浮层 header 右侧的小开关按钮（插入模式 Auto/Line/Exp、dabbrev 的 Aa）。
+           样式对齐查找栏的 .opt-btn，但 .opt-btn 的选择器限定在 .search-bar 下，
+           这里单独写一份；input 是 flex:1，按钮必须 flex-shrink: 0 才不被挤掉。
+           insert-mode-btn 用 min-width 固定，避免 Auto(4 字符) / Exp(3 字符) 切换时宽度跳动；
+           Aa 固定两字符，不需要。 */
+        .block-picker-header .picker-mode-btn,
+        .block-picker-header .dabbrev-case-btn {
+            flex-shrink: 0;
+            padding: 4px 8px;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            text-align: center;
+            background: transparent;
+            border: 1px solid var(--border-input);
+            border-radius: 5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.12s;
+        }
+        .block-picker-header .picker-mode-btn { min-width: 44px; }
+        .block-picker-header .picker-mode-btn:hover,
+        .block-picker-header .dabbrev-case-btn:hover { border-color: var(--accent-2); color: var(--btn-text-hover); }
+        .block-picker-header .picker-mode-btn.active,
+        .block-picker-header .dabbrev-case-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent-light);
+        }
 
         .block-picker-list {
             max-height: 320px;
@@ -2281,6 +2310,28 @@ if (__bootError) {
             color: var(--text-dim);
             flex-shrink: 0;
             letter-spacing: 0.5px;
+        }
+
+        /* 类别列：夹在 label 和 mode 之间。
+           flex: 0 1 auto 让它在窄屏时先于 label 收缩；
+           max-width 截断长类别名（「数学 / 模拟函数」→「数学 / 模拟…」），
+           截断后靠 title 看全名。 */
+        .block-picker-cat {
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 160px;
+            font-size: 0.66rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .block-picker-item.active .block-picker-cat { color: #fff; }
+
+        /* 窄屏（<780px）：类别列隐藏，退回三列布局，避免挤掉 label。
+           浮层是 position: fixed，@media 按视口宽度判断，不受容器影响。 */
+        @media (max-width: 780px) {
+            .block-picker-cat { display: none; }
         }
 
         .block-picker-footer {
@@ -3003,6 +3054,11 @@ if (__bootError) {
                    data-i18n-placeholder="pickerPlaceholder"
                    placeholder="筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）"
                    spellcheck="false" autocomplete="off">
+            <!-- 插入模式临时覆盖：Auto（用积木自身 mode）/ Line / Exp。
+                 只在本次浮层打开期间有效，关闭重置为 Auto。 -->
+            <button type="button" class="picker-mode-btn" id="blockPickerModeBtn"
+                    data-i18n-title="pickerModeBtnTitleAuto"
+                    title="插入模式：Auto（用积木自身模式），点击切换">Auto</button>
         </div>
         <div class="block-picker-list" id="blockPickerList"></div>
         <div class="block-picker-footer">
@@ -3022,6 +3078,11 @@ if (__bootError) {
                    data-i18n-placeholder="dabbrevPlaceholder"
                    placeholder="筛选…"
                    spellcheck="false" autocomplete="off">
+            <!-- 区分大小写开关：默认不区分；active = 区分。
+                 只在本次浮层打开期间有效，关闭重置为不区分。 -->
+            <button type="button" class="dabbrev-case-btn" id="dabbrevCaseBtn"
+                    data-i18n-title="dabbrevCaseOffTitle"
+                    title="区分大小写（已关闭，点击开启）">Aa</button>
         </div>
         <div class="block-picker-list" id="dabbrevList"></div>
         <div class="block-picker-footer">
@@ -3274,6 +3335,9 @@ if (__bootError) {
                 helpFontReset: '重置字号',
                 // 积木选择浮层
                 pickerPlaceholder: '筛选积木...（↑↓ 选择，Enter 插入，Esc 关闭）',
+                pickerModeBtnTitleAuto: '插入模式：Auto（用积木自身模式），点击切换',
+                pickerModeBtnTitleLine: '插入模式：Line（强制行插入），点击切换',
+                pickerModeBtnTitleExp: '插入模式：Exp（强制公式插入），点击切换',
                 pickerEmpty: '没有匹配的积木',
                 // dabbrev 词补全
                 dabbrevPlaceholder: '筛选…',
@@ -3282,6 +3346,8 @@ if (__bootError) {
                 dabbrevNoWords: '附近没有可补全的词',
                 dabbrevCount: '{n} 项',
                 dabbrevFieldTitle: 'Alt+/ 词补全（候选词来自编辑器代码）',
+                dabbrevCaseOnTitle: '区分大小写（已开启，点击关闭）',
+                dabbrevCaseOffTitle: '区分大小写（已关闭，点击开启）',
                 pickerNoBlocks: '暂无积木，请在左侧面板添加',
                 pickerFooterNav: '↑↓ 选择',
                 pickerFooterInsert: 'Enter 插入',
@@ -3555,6 +3621,9 @@ if (__bootError) {
                 helpFontReset: 'Reset font size',
                 // Block picker
                 pickerPlaceholder: 'Filter blocks... (↑↓ select, Enter insert, Esc close)',
+                pickerModeBtnTitleAuto: "Insert mode: Auto (use each block's own mode), click to cycle",
+                pickerModeBtnTitleLine: 'Insert mode: Line (force line insert), click to cycle',
+                pickerModeBtnTitleExp: 'Insert mode: Exp (force expression insert), click to cycle',
                 pickerEmpty: 'No matching blocks',
                 // dabbrev completion
                 dabbrevPlaceholder: 'Filter…',
@@ -3563,6 +3632,8 @@ if (__bootError) {
                 dabbrevNoWords: 'No words nearby to complete',
                 dabbrevCount: '{n} items',
                 dabbrevFieldTitle: 'Alt+/ word complete (words come from editor code)',
+                dabbrevCaseOnTitle: 'Match case (on, click to disable)',
+                dabbrevCaseOffTitle: 'Match case (off, click to enable)',
                 pickerNoBlocks: 'No blocks yet. Add them in the left panel',
                 pickerFooterNav: '↑↓ select',
                 pickerFooterInsert: 'Enter insert',
@@ -3834,6 +3905,8 @@ if (__bootError) {
             updateAutoFillBtn();   // 语言切换后 title 文案要跟着开关状态换
             updateCompactBtn();    // 精简模式按钮的 title 也要跟着开关状态换
             updateEditorLangUi();  // 编辑语言下拉框的选中项与占位符
+            updatePickerModeBtn(); // 积木浮层的插入模式按钮 title 也跟着语言换
+            updateDabbrevCaseBtn(); // dabbrev 的大小写开关 title 也跟着语言换
             if (Array.isArray(BLOCKS) && BLOCKS.length) renderBlocksPanel();
             if (blockPickerState.visible) renderBlockPickerList();
             // 快速生成弹窗开着时切界面语言，下拉里的类别名也要跟着换（保住用户已选中的分类）
@@ -8429,6 +8502,35 @@ TODO: replace this sample with your own notes.
         const blockPickerInput = document.getElementById('blockPickerInput');
         const blockPickerList = document.getElementById('blockPickerList');
         const blockPickerCount = document.getElementById('blockPickerCount');
+        const blockPickerModeBtn = document.getElementById('blockPickerModeBtn');
+
+        // 快速插入的「临时模式覆盖」：'auto' = 用积木自身 mode；'line' / 'exp' = 强制。
+        // 只在本次浮层打开期间有效（openBlockPicker 时重置为 'auto'），不持久化。
+        let pickerModeOverride = 'auto';
+
+        /** 三态循环 auto → line → exp → auto，并刷新按钮 */
+        function cyclePickerModeOverride() {
+            pickerModeOverride = pickerModeOverride === 'auto'
+                ? MODE_LINE
+                : pickerModeOverride === MODE_LINE ? MODE_EXP : 'auto';
+            updatePickerModeBtn();
+        }
+
+        /** 按当前覆盖态刷新按钮文字 / title / 高亮 */
+        function updatePickerModeBtn() {
+            if (!blockPickerModeBtn) return;
+            blockPickerModeBtn.textContent = pickerModeOverride === 'auto'
+                ? 'Auto'
+                : pickerModeOverride === MODE_LINE ? 'Line' : 'Exp';
+            // 非 auto 时高亮（紫底），提示「当前不是默认」
+            blockPickerModeBtn.classList.toggle('active', pickerModeOverride !== 'auto');
+            const titleKey = pickerModeOverride === 'auto'
+                ? 'pickerModeBtnTitleAuto'
+                : pickerModeOverride === MODE_LINE ? 'pickerModeBtnTitleLine' : 'pickerModeBtnTitleExp';
+            // 同步 data-i18n-title，切界面语言时 applyI18n 会按这个键重取 title
+            blockPickerModeBtn.dataset.i18nTitle = titleKey;
+            blockPickerModeBtn.title = t(titleKey);
+        }
 
         // ---- 扁平索引：与 BLOCKS 同步 ----
         let completionIndex = [];
@@ -8448,7 +8550,8 @@ TODO: replace this sample with your own notes.
                             code: item.code,          // 原始模板
                             mode: normalizeMode(item.mode),
                             icon: item.icon || 'cube',
-                            category: cat.category,
+                            // 存显示名（跟着界面语言走），列表直接展示
+                            category: getCategoryDisplayName(cat),
                             searchText: label.toLowerCase()
                         });
                     });
@@ -8524,6 +8627,16 @@ TODO: replace this sample with your own notes.
                 labelEl.textContent = item.label;
                 row.appendChild(labelEl);
 
+                // 类别列：窄屏由 CSS 隐藏，这里不判断视口（切换宽度时 CSS 立即生效）。
+                // 空类别不建节点：.block-picker-item 有 gap: 8px，空 span 会多出一个间距。
+                if (item.category) {
+                    const catEl = document.createElement('span');
+                    catEl.className = 'block-picker-cat';
+                    catEl.textContent = item.category;
+                    catEl.title = item.category;   // 截断时 hover 看全名
+                    row.appendChild(catEl);
+                }
+
                 const modeEl = document.createElement('span');
                 modeEl.className = 'block-picker-mode';
                 modeEl.textContent = item.mode === MODE_EXP ? t('modeExp') : t('modeLine');
@@ -8582,7 +8695,7 @@ TODO: replace this sample with your own notes.
         }
 
         function positionBlockPicker(source, point) {
-            const pw = blockPicker.offsetWidth || 460;
+            const pw = blockPicker.offsetWidth || 670;
             const ph = blockPicker.offsetHeight || 300;
             const margin = 8;
             let left, top;
@@ -8629,6 +8742,10 @@ TODO: replace this sample with your own notes.
                 : (codeInput.selectionStart || 0);
             blockPickerState.activeIndex = 0;
             blockPickerState.visible = true;
+
+            // 每次打开重置为 Auto（临时覆盖只在本次浮层期间有效）
+            pickerModeOverride = 'auto';
+            updatePickerModeBtn();
 
             // 1) 贴光标的入口（Ctrl+/ / Ctrl+点编辑器）在光标不在视口内时先滚到光标处（上 1/3），
             //    否则贴光标定位会把浮层顶出视口。工具栏按钮是居中弹，不动用户当前视口。
@@ -8682,7 +8799,8 @@ TODO: replace this sample with your own notes.
         function acceptBlockFromPicker(item) {
             const offset = blockPickerState.insertOffset;
             const code = item.code;       // 原始模板，交给 insertCode 内部 renderCode
-            const mode = item.mode;
+            // 临时模式覆盖：非 auto 时忽略积木自身 mode，用用户选中的
+            const mode = pickerModeOverride === 'auto' ? item.mode : pickerModeOverride;
             hideBlockPicker(false);
             codeInput.focus();
             codeInput.setSelectionRange(offset, offset);
@@ -8690,6 +8808,20 @@ TODO: replace this sample with your own notes.
         }
 
         // ---- 浮层内交互 ----
+        // 插入模式覆盖按钮：点一次切一态，焦点立刻回筛选框（方便继续打字）
+        if (blockPickerModeBtn) {
+            blockPickerModeBtn.addEventListener('mousedown', (e) => {
+                // 阻止默认聚焦行为，避免筛选框先失焦再抢回来造成的闪烁
+                e.preventDefault();
+            });
+            blockPickerModeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                cyclePickerModeOverride();
+                blockPickerInput.focus();
+            });
+        }
+
         let pickerComposing = false;
         blockPickerInput.addEventListener('compositionstart', () => { pickerComposing = true; });
         blockPickerInput.addEventListener('compositionend', () => { pickerComposing = false; });
@@ -8762,6 +8894,31 @@ TODO: replace this sample with your own notes.
             source: 'caret'     // 'caret'（Alt+/、Ctrl+点击）贴光标 | 'toolbar'（工具栏「补全」按钮）窗口居中
         };
 
+        // dabbrev 的「区分大小写」开关：默认 false（不区分）。
+        // 只在本次浮层打开期间有效（openDabbrevFor 时重置为 false），不持久化。
+        let dabbrevCaseSensitive = false;
+
+        const dabbrevCaseBtn = document.getElementById('dabbrevCaseBtn');
+
+        function updateDabbrevCaseBtn() {
+            if (!dabbrevCaseBtn) return;
+            dabbrevCaseBtn.classList.toggle('active', dabbrevCaseSensitive);
+            const key = dabbrevCaseSensitive ? 'dabbrevCaseOnTitle' : 'dabbrevCaseOffTitle';
+            // 同步 data-i18n-title，切界面语言时 applyI18n 按这个键重取 title
+            dabbrevCaseBtn.dataset.i18nTitle = key;
+            dabbrevCaseBtn.title = t(key);
+        }
+
+        function cycleDabbrevCase() {
+            dabbrevCaseSensitive = !dabbrevCaseSensitive;
+            updateDabbrevCaseBtn();
+            // 重新收集候选：前缀没变，但匹配规则变了
+            const q = dabbrevInput.value.trim();
+            dabbrevState.items = collectDabbrevCandidates(q, undefined, undefined, dabbrevCaseSensitive);
+            dabbrevState.activeIndex = 0;
+            renderDabbrevList();
+        }
+
         /** 光标向左连续取标识符字符，返回前缀（不在词上返回空串） */
         function getWordBeforeCaret(text, caret) {
             let start = caret;
@@ -8798,10 +8955,11 @@ TODO: replace this sample with your own notes.
         }
 
         /**
-         * 收集候选词：前缀匹配（不区分大小写）、去重，**仅按离光标的距离升序**（Emacs 风格）。
-         * 空前缀（光标不在词上）时不过滤，附近所有词都参选。
+         * 收集候选词：前缀匹配（默认不区分大小写，可开关）、去重，
+         * **仅按离光标的距离升序**（Emacs 风格）。
+         * 空前缀（光标不在词上）时不过滤，附近所有词都参选（此时大小写开关无意义）。
          */
-        function collectDabbrevCandidates(prefix, text, caretOverride) {
+        function collectDabbrevCandidates(prefix, text, caretOverride, caseSensitive) {
             const src = text === undefined ? codeInput.value : text;
             const caret = (typeof caretOverride === 'number')
                 ? caretOverride
@@ -8823,7 +8981,16 @@ TODO: replace this sample with your own notes.
                 // 跳过光标处那一个实例（否则 pri|nt 会拿自己补自己）；空前缀时词范围为空，不跳过任何词
                 if (absPos >= wordRange.start && absPos + w.length <= wordRange.end) continue;
                 if (w === prefix) continue;                                // 与原词相同，替换了也没变化
-                if (lowerPrefix && w.toLowerCase().indexOf(lowerPrefix) !== 0) continue;   // 空前缀不过滤
+
+                // 前缀匹配：区分大小写时用原串比，否则两边 toLowerCase。
+                // 空前缀不过滤（没有前缀可比，大小写开关无意义）。
+                if (prefix) {
+                    if (caseSensitive) {
+                        if (w.indexOf(prefix) !== 0) continue;
+                    } else {
+                        if (w.toLowerCase().indexOf(lowerPrefix) !== 0) continue;
+                    }
+                }
 
                 const dist = Math.abs(absPos - caret);
                 const prev = stats.get(w);
@@ -9069,11 +9236,17 @@ TODO: replace this sample with your own notes.
             const prefix = getWordBeforeCaret(text, caret);
             const wordRange = getWordRangeAtCaret(text, caret);
 
+            // 每次打开重置大小写开关（临时开关，只在本次浮层期间有效）。
+            // 必须在下面 collect 之前重置，否则首次候选会用上一次的开关值。
+            dabbrevCaseSensitive = false;
+            updateDabbrevCaseBtn();
+
             // 词源固定取编辑器全文，距离中心用编辑器自己的光标（保持「附近优先」）
             const items = collectDabbrevCandidates(
                 prefix,
                 codeInput.value,
-                codeInput.selectionStart || 0
+                codeInput.selectionStart || 0,
+                dabbrevCaseSensitive
             );
 
             if (blockPickerState.visible) hideBlockPicker(false);
@@ -9176,10 +9349,24 @@ TODO: replace this sample with your own notes.
         dabbrevInput.addEventListener('compositionstart', () => { dabbrevComposing = true; });
         dabbrevInput.addEventListener('compositionend', () => { dabbrevComposing = false; });
 
+        // 大小写开关：点一次切一次，焦点立刻回筛选框（方便继续打字）
+        if (dabbrevCaseBtn) {
+            dabbrevCaseBtn.addEventListener('mousedown', (e) => {
+                // 阻止默认聚焦，避免筛选框先失焦再抢回来造成闪烁
+                e.preventDefault();
+            });
+            dabbrevCaseBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                cycleDabbrevCase();
+                dabbrevInput.focus();
+            });
+        }
+
         dabbrevInput.addEventListener('input', () => {
             const q = dabbrevInput.value.trim();
             // 清空输入框 = 空前缀，重新列出所有词（不是空列表）
-            dabbrevState.items = collectDabbrevCandidates(q);
+            dabbrevState.items = collectDabbrevCandidates(q, undefined, undefined, dabbrevCaseSensitive);
             dabbrevState.activeIndex = 0;
             renderDabbrevList();
         });
