@@ -1918,6 +1918,12 @@ if (__bootError) {
             min-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
             line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
         }
+        /* 查找层是 <pre><code>整篇文本（不按行切）。pre 上已给了 actual，
+           但 code 原来靠 line-height: inherit 传递 —— X5 上实测传递不可靠，
+           这里对 code 也显式写 actual，不依赖继承。 */
+        .search-layer pre code {
+            line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
+        }
 
         /* ---------- 语法高亮（不依赖 Prism 主题 CSS，随主题变量切换） ---------- */
         .highlight-layer .token.comment { color: var(--tok-comment); font-style: italic; }
@@ -4454,7 +4460,7 @@ if (__bootError) {
 
         // Python 积木：先定义结构、再写基础语句、最后控制流与 I/O —— 从上到下、由外到内。
         // 读一遍面板 = 读一遍 Python 程序结构：Import → Functions → Classes → Basic →
-        // Variables → Containers → Strings → Control Flow → I/O。
+        // Variables → Containers → Operator → Strings → Control Flow → I/O。
         // 字段名用 category_i18n（下划线），可直接点号访问。
         const DEFAULT_BLOCKS_PYTHON = [
             {
@@ -4466,6 +4472,9 @@ if (__bootError) {
                 subgroups: {
                     none: [
                         { id: 'py-import', icon: 'file-import', label: 'import os', code: 'import os', mode: 'line' },
+                        { id: 'py-import-sys', icon: 'terminal', label: 'import sys', code: 'import sys', mode: 'line' },
+                        { id: 'py-import-math', icon: 'calculator', label: 'import math', code: 'import math', mode: 'line' },
+                        { id: 'py-import-random', icon: 'star', label: 'import random', code: 'import random', mode: 'line' },
                         { id: 'py-import-as', icon: 'file-import', label: 'import numpy as np', code: 'import numpy as np', mode: 'line' },
                         { id: 'py-from-import', icon: 'file-import', label: 'from os import path', code: 'from os import path', mode: 'line' },
                         { id: 'py-from-import-star', icon: 'file-import', label: 'from math import *', code: 'from math import *', mode: 'line' }
@@ -4489,12 +4498,17 @@ if (__bootError) {
                         { id: 'py-return', icon: 'sign-out-alt', label: 'return x', code: 'return x', mode: 'line' },
                         { id: 'py-return-none', icon: 'sign-out-alt', label: 'return', code: 'return', mode: 'line' },
                         { id: 'py-lambda', icon: 'bolt', label: 'lambda x: x + 1', code: 'lambda x: x + 1', mode: 'exp' },
-                        { id: 'py-abs', icon: 'absolute', label: 'abs(x)', code: 'abs(x)', mode: 'exp' },
-                        { id: 'py-min', icon: 'arrow-down', label: 'min(xs)', code: 'min(xs)', mode: 'exp' },
-                        { id: 'py-max', icon: 'arrow-up', label: 'max(xs)', code: 'max(xs)', mode: 'exp' },
-                        { id: 'py-sum', icon: 'plus', label: 'sum(xs)', code: 'sum(xs)', mode: 'exp' },
-                        { id: 'py-round', icon: 'circle', label: 'round(x, 2)', code: 'round(x, 2)', mode: 'exp' },
-                        { id: 'py-global', icon: 'globe', label: 'global x', code: 'global x', mode: 'line' }
+                        { id: 'py-type', icon: 'search', label: 'type(x)', code: 'type(x)', mode: 'exp' },
+                        { id: 'py-isinstance', icon: 'balance-scale', label: 'isinstance(x, int)', code: 'isinstance(x, int)', mode: 'exp' },
+                        { id: 'py-global', icon: 'globe', label: 'global x', code: 'global x', mode: 'line' },
+                        { id: 'py-main-guard', icon: 'play', label: 'if __name__ == "__main__":', code: 'if __name__ == "__main__":\n    ', mode: 'line' }
+                    ],
+                    argv: [
+                        { id: 'py-import-sys-argv', icon: 'terminal', label: 'import sys', code: 'import sys', mode: 'line' },
+                        { id: 'py-argv', icon: 'terminal', label: 'sys.argv', code: 'sys.argv', mode: 'exp' },
+                        { id: 'py-argv-get', icon: 'terminal', label: 'sys.argv[1]', code: 'sys.argv[1]', mode: 'exp' },
+                        { id: 'py-argv-len', icon: 'terminal', label: 'len(sys.argv)', code: 'len(sys.argv)', mode: 'exp' },
+                        { id: 'py-argv-check', icon: 'exclamation-triangle', label: 'if len(sys.argv) > 1:', code: 'if len(sys.argv) > 1:\n    ', mode: 'line' }
                     ],
                     py: []
                 }
@@ -4511,10 +4525,10 @@ if (__bootError) {
                         { id: 'py-class-init', icon: 'cubes', label: 'class Foo: def __init__', code: 'class Foo:\n    def __init__(self):\n        ', mode: 'line' },
                         { id: 'py-class-method', icon: 'code', label: 'class Foo: def method', code: 'class Foo:\n    def method(self):\n        ', mode: 'line' },
                         { id: 'py-class-inherit', icon: 'cubes', label: 'class Foo(Bar):', code: 'class Foo(Bar):\n    def __init__(self):\n        super().__init__()\n        ', mode: 'line' },
+                        { id: 'py-property', icon: 'star', label: '@property', code: '@property\ndef method(self):\n    ', mode: 'line' },
                         { id: 'py-self', icon: 'location-arrow', label: 'self.x = x', code: 'self.x = x', mode: 'line' },
                         { id: 'py-super', icon: 'arrow-up', label: 'super().__init__()', code: 'super().__init__()', mode: 'line' }
-                    ],
-                    py: []
+                    ]
                 }
             },
             {
@@ -4526,12 +4540,13 @@ if (__bootError) {
                 subgroups: {
                     none: [
                         { id: 'py-comment-line', icon: 'comment', label: '# comment', code: '# ', mode: 'line' },
-                        { id: 'py-docstring', icon: 'quote-left', label: '"""docstring"""', code: '"""\n\n"""', mode: 'line' },
+                        { id: 'py-todo', icon: 'check', label: '# TODO: ...', code: '# TODO: ', mode: 'line' },
+                        { id: 'py-docstring', icon: 'quote-left', label: '"""docstring"""', code: '"""\n    \n"""', mode: 'line' },
                         { id: 'py-print', icon: 'print', label: 'print("Hello")', code: 'print("Hello")', mode: 'line' },
                         { id: 'py-print-f', icon: 'print', label: 'print(f"{x}")', code: 'print(f"{x}")', mode: 'line' },
+                        { id: 'py-print-end', icon: 'print', label: 'print("...", end="")', code: 'print("...", end="")', mode: 'line' },
                         { id: 'py-input', icon: 'keyboard', label: 'input("prompt: ")', code: 'input("prompt: ")', mode: 'exp' },
-                        { id: 'py-pass', icon: 'stop', label: 'pass', code: 'pass', mode: 'line' },
-                        { id: 'py-main-guard', icon: 'play', label: 'if __name__ == "__main__":', code: 'if __name__ == "__main__":\n    ', mode: 'line' }
+                        { id: 'py-pass', icon: 'stop', label: 'pass', code: 'pass', mode: 'line' }
                     ],
                     py: []
                 }
@@ -4547,6 +4562,7 @@ if (__bootError) {
                         { id: 'py-assign', icon: 'equals', label: 'x = 10', code: 'x = 10', mode: 'line' },
                         { id: 'py-assign-multi', icon: 'equals', label: 'a = b = 0', code: 'a = b = 0', mode: 'line' },
                         { id: 'py-tuple', icon: 'list', label: 'a, b = 1, 2', code: 'a, b = 1, 2', mode: 'line' },
+                        { id: 'py-swap', icon: 'exchange-alt', label: 'x, y = y, x', code: 'x, y = y, x', mode: 'line' },
                         { id: 'py-add-assign', icon: 'plus', label: 'x += 1', code: 'x += 1', mode: 'line' },
                         { id: 'py-sub-assign', icon: 'minus', label: 'x -= 1', code: 'x -= 1', mode: 'line' },
                         { id: 'py-mul-assign', icon: 'times', label: 'x *= 2', code: 'x *= 2', mode: 'line' },
@@ -4554,8 +4570,7 @@ if (__bootError) {
                         { id: 'py-none', icon: 'circle', label: 'x = None', code: 'x = None', mode: 'line' },
                         { id: 'py-is-none', icon: 'equals', label: 'x is None', code: 'x is None', mode: 'exp' },
                         { id: 'py-type-cast', icon: 'exchange-alt', label: 'int("42")', code: 'int("42")', mode: 'exp' }
-                    ],
-                    py: []
+                    ]
                 }
             },
             {
@@ -4565,13 +4580,15 @@ if (__bootError) {
                 icon: 'list',
                 collapsed: false,
                 subgroups: {
-                    none: [],
                     list: [
                         { id: 'py-list', icon: 'list', label: 'xs = [1, 2, 3]', code: 'xs = [1, 2, 3]', mode: 'line' },
                         { id: 'py-comp-list', icon: 'bolt', label: 'ys = [x for x in xs]', code: 'ys = [x for x in xs]', mode: 'line' },
                         { id: 'py-append', icon: 'plus', label: 'xs.append(x)', code: 'xs.append(x)', mode: 'line' },
+                        { id: 'py-pop', icon: 'minus', label: 'x = xs.pop()', code: 'x = xs.pop()', mode: 'line' },
                         { id: 'py-len', icon: 'ruler-horizontal', label: 'n = len(xs)', code: 'n = len(xs)', mode: 'line' },
-                        { id: 'py-sorted', icon: 'sort', label: 'ys = sorted(xs)', code: 'ys = sorted(xs)', mode: 'line' }
+                        { id: 'py-sorted', icon: 'sort', label: 'ys = sorted(xs)', code: 'ys = sorted(xs)', mode: 'line' },
+                        { id: 'py-sort', icon: 'sort', label: 'xs.sort()', code: 'xs.sort()', mode: 'line' },
+                        { id: 'py-sort-key', icon: 'sort', label: 'xs.sort(key=len)', code: 'xs.sort(key=len)', mode: 'line' }
                     ],
                     dict: [
                         { id: 'py-dict', icon: 'database', label: 'd = {"k": v}', code: 'd = {"k": v}', mode: 'line' },
@@ -4588,6 +4605,51 @@ if (__bootError) {
                         { id: 'py-range', icon: 'calculator', label: 'for i in range(n):', code: 'for i in range(n):\n    ', mode: 'line' },
                         { id: 'py-enumerate', icon: 'calculator', label: 'for i, x in enumerate(xs):', code: 'for i, x in enumerate(xs):\n    ', mode: 'line' },
                         { id: 'py-zip', icon: 'exchange-alt', label: 'for x, y in zip(a, b):', code: 'for x, y in zip(a, b):\n    ', mode: 'line' }
+                    ]
+                }
+            },
+            {
+                id: 'cat-py-operator',
+                category: 'Operator',
+                category_i18n: { zh: '运算符' },
+                icon: 'calculator',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'py-op-add', icon: 'plus', label: 'a + b', code: 'a + b', mode: 'exp' },
+                        { id: 'py-op-sub', icon: 'minus', label: 'a - b', code: 'a - b', mode: 'exp' },
+                        { id: 'py-op-mul', icon: 'times', label: 'a * b', code: 'a * b', mode: 'exp' },
+                        { id: 'py-op-div', icon: 'divide', label: 'a / b', code: 'a / b', mode: 'exp' },
+                        { id: 'py-op-floordiv', icon: 'divide', label: 'a // b', code: 'a // b', mode: 'exp' },
+                        { id: 'py-op-mod', icon: 'percent', label: 'a % b', code: 'a % b', mode: 'exp' },
+                        { id: 'py-op-pow', icon: 'superscript', label: 'a ** b', code: 'a ** b', mode: 'exp' },
+                        { id: 'py-abs', icon: 'absolute', label: 'abs(x)', code: 'abs(x)', mode: 'exp' },
+                        { id: 'py-round', icon: 'circle', label: 'round(x, 2)', code: 'round(x, 2)', mode: 'exp' },
+                        { id: 'py-min', icon: 'arrow-down', label: 'min(xs)', code: 'min(xs)', mode: 'exp' },
+                        { id: 'py-max', icon: 'arrow-up', label: 'max(xs)', code: 'max(xs)', mode: 'exp' },
+                        { id: 'py-sum', icon: 'plus', label: 'sum(xs)', code: 'sum(xs)', mode: 'exp' },
+                        { id: 'py-pow', icon: 'superscript', label: 'pow(x, 2)', code: 'pow(x, 2)', mode: 'exp' },
+                        { id: 'py-divmod', icon: 'divide', label: 'divmod(a, b)', code: 'divmod(a, b)', mode: 'exp' }
+                    ],
+                    math: [
+                        { id: 'py-import-math-math', icon: 'calculator', label: 'import math', code: 'import math', mode: 'line' },
+                        { id: 'py-math-sqrt', icon: 'square-root-alt', label: 'math.sqrt(x)', code: 'math.sqrt(x)', mode: 'exp' },
+                        { id: 'py-math-floor', icon: 'arrow-down', label: 'math.floor(x)', code: 'math.floor(x)', mode: 'exp' },
+                        { id: 'py-math-ceil', icon: 'arrow-up', label: 'math.ceil(x)', code: 'math.ceil(x)', mode: 'exp' },
+                        { id: 'py-math-pi', icon: 'circle', label: 'math.pi', code: 'math.pi', mode: 'exp' },
+                        { id: 'py-math-e', icon: 'chart-line', label: 'math.e', code: 'math.e', mode: 'exp' },
+                        { id: 'py-math-log', icon: 'chart-line', label: 'math.log(x)', code: 'math.log(x)', mode: 'exp' },
+                        { id: 'py-math-exp', icon: 'chart-line', label: 'math.exp(x)', code: 'math.exp(x)', mode: 'exp' },
+                        { id: 'py-math-sin', icon: 'wave-square', label: 'math.sin(x)', code: 'math.sin(x)', mode: 'exp' },
+                        { id: 'py-math-cos', icon: 'wave-square', label: 'math.cos(x)', code: 'math.cos(x)', mode: 'exp' },
+                        { id: 'py-math-tan', icon: 'wave-square', label: 'math.tan(x)', code: 'math.tan(x)', mode: 'exp' }
+                    ],
+                    random: [
+                        { id: 'py-import-random-op', icon: 'star', label: 'import random', code: 'import random', mode: 'line' },
+                        { id: 'py-random', icon: 'star', label: 'random.random()', code: 'random.random()', mode: 'exp' },
+                        { id: 'py-randint', icon: 'star', label: 'random.randint(1, 10)', code: 'random.randint(1, 10)', mode: 'exp' },
+                        { id: 'py-choice', icon: 'star', label: 'random.choice(xs)', code: 'random.choice(xs)', mode: 'exp' },
+                        { id: 'py-shuffle', icon: 'sort', label: 'random.shuffle(xs)', code: 'random.shuffle(xs)', mode: 'line' }
                     ]
                 }
             },
@@ -4609,10 +4671,11 @@ if (__bootError) {
                         { id: 'py-str-join', icon: 'link', label: '"sep".join(xs)', code: '"sep".join(xs)', mode: 'exp' },
                         { id: 'py-str-replace', icon: 'exchange-alt', label: 's.replace(a, b)', code: 's.replace(a, b)', mode: 'exp' },
                         { id: 'py-str-find', icon: 'search', label: 's.find("sub")', code: 's.find("sub")', mode: 'exp' },
+                        { id: 'py-str-count', icon: 'search', label: 's.count("sub")', code: 's.count("sub")', mode: 'exp' },
+                        { id: 'py-str-isdigit', icon: 'check', label: 's.isdigit()', code: 's.isdigit()', mode: 'exp' },
                         { id: 'py-str-startswith', icon: 'search', label: 's.startswith("pre")', code: 's.startswith("pre")', mode: 'exp' },
                         { id: 'py-str-in', icon: 'search', label: '"sub" in s', code: '"sub" in s', mode: 'exp' }
-                    ],
-                    py: []
+                    ]
                 }
             },
             {
@@ -4624,6 +4687,7 @@ if (__bootError) {
                 subgroups: {
                     none: [
                         { id: 'py-if', icon: 'code-branch', label: 'if cond:', code: 'if cond:\n    ', mode: 'line' },
+                        { id: 'py-if-not', icon: 'code-branch', label: 'if not cond:', code: 'if not cond:\n    ', mode: 'line' },
                         { id: 'py-if-else', icon: 'code-branch', label: 'if cond: ... else: ...', code: 'if cond:\n    \nelse:\n    ', mode: 'line' },
                         { id: 'py-if-elif-else', icon: 'code-branch', label: 'if / elif / else', code: 'if cond:\n    \nelif cond2:\n    \nelse:\n    ', mode: 'line' },
                         { id: 'py-for', icon: 'redo', label: 'for x in xs:', code: 'for x in xs:\n    ', mode: 'line' },
@@ -4637,8 +4701,7 @@ if (__bootError) {
                         { id: 'py-assert', icon: 'check', label: 'assert cond, "msg"', code: 'assert cond, "msg"', mode: 'line' },
                         { id: 'py-raise', icon: 'exclamation-triangle', label: 'raise ValueError("msg")', code: 'raise ValueError("msg")', mode: 'line' },
                         { id: 'py-with', icon: 'code-branch', label: 'with expr as x:', code: 'with expr as x:\n    ', mode: 'line' }
-                    ],
-                    py: []
+                    ]
                 }
             },
             {
@@ -4649,6 +4712,9 @@ if (__bootError) {
                 collapsed: false,
                 subgroups: {
                     none: [
+                        { id: 'py-import-sys-io', icon: 'terminal', label: 'import sys', code: 'import sys', mode: 'line' },
+                        { id: 'py-import-os-io', icon: 'file-import', label: 'import os', code: 'import os', mode: 'line' },
+                        { id: 'py-path-exists', icon: 'search', label: 'os.path.exists("file.txt")', code: 'os.path.exists("file.txt")', mode: 'exp' },
                         { id: 'py-open-read', icon: 'folder-open', label: 'open("file.txt", "r")', code: 'open("file.txt", "r")', mode: 'exp' },
                         { id: 'py-open-write', icon: 'save', label: 'open("file.txt", "w")', code: 'open("file.txt", "w")', mode: 'exp' },
                         { id: 'py-with-open', icon: 'folder-open', label: 'with open("file.txt") as f:', code: 'with open("file.txt") as f:\n    ', mode: 'line' },
@@ -4656,7 +4722,20 @@ if (__bootError) {
                         { id: 'py-readlines', icon: 'list', label: 'f.readlines()', code: 'f.readlines()', mode: 'exp' },
                         { id: 'py-write', icon: 'print', label: 'f.write("...")', code: 'f.write("...")', mode: 'line' }
                     ],
-                    py: []
+                    stdio: [
+                        { id: 'py-stdout', icon: 'terminal', label: 'sys.stdout', code: 'sys.stdout', mode: 'exp' },
+                        { id: 'py-stderr', icon: 'exclamation-triangle', label: 'sys.stderr', code: 'sys.stderr', mode: 'exp' },
+                        { id: 'py-stdout-write', icon: 'terminal', label: 'sys.stdout.write("...")', code: 'sys.stdout.write("...")', mode: 'line' },
+                        { id: 'py-stdout-flush', icon: 'terminal', label: 'sys.stdout.flush()', code: 'sys.stdout.flush()', mode: 'line' },
+                        { id: 'py-stderr-write', icon: 'exclamation-triangle', label: 'sys.stderr.write("...")', code: 'sys.stderr.write("...")', mode: 'line' },
+                        { id: 'py-print-stderr', icon: 'print', label: 'print("...", file=sys.stderr)', code: 'print("...", file=sys.stderr)', mode: 'line' },
+                        { id: 'py-redirect-stdout', icon: 'arrow-right', label: 'sys.stdout = open("out.txt", "w")', code: 'sys.stdout = open("out.txt", "w")', mode: 'line' },
+                        { id: 'py-redirect-stderr', icon: 'arrow-right', label: 'sys.stderr = open("err.txt", "w")', code: 'sys.stderr = open("err.txt", "w")', mode: 'line' },
+                        { id: 'py-redirect-restore', icon: 'rotate-left', label: 'sys.stdout = sys.__stdout__', code: 'sys.stdout = sys.__stdout__', mode: 'line' },
+                        { id: 'py-redirect-stderr-restore', icon: 'rotate-left', label: 'sys.stderr = sys.__stderr__', code: 'sys.stderr = sys.__stderr__', mode: 'line' },
+                        { id: 'py-stdin-read', icon: 'keyboard', label: 'sys.stdin.read()', code: 'sys.stdin.read()', mode: 'exp' },
+                        { id: 'py-stdin-readline', icon: 'keyboard', label: 'sys.stdin.readline()', code: 'sys.stdin.readline()', mode: 'exp' }
+                    ]
                 }
             }
         ];
