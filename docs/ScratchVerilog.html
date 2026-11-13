@@ -1836,12 +1836,21 @@ if (__bootError) {
             white-space: nowrap;
             will-change: transform;
             box-sizing: border-box;
+            /* 行号由 CSS counter 生成：节点文本永远为空，中间增删行时浏览器自动重算，
+               JS 不需要逐个改 textContent（比 textContent 方案少 O(行数) 次 DOM 写） */
+            counter-reset: line-num;
         }
 
         .ln-row {
             height: var(--editor-line-height);
             line-height: var(--editor-line-height);
             transition: color 0.1s;
+            counter-increment: line-num;
+        }
+
+        /* 编号由 ::before 生成；节点本身 textContent 为空 */
+        .ln-row::before {
+            content: counter(line-num);
         }
 
         .ln-row.current {
@@ -5474,6 +5483,13 @@ TODO: replace this sample with your own notes.
         let lnLastCount = -1;
         let lnLastActive = -1;
         let lnGutterWidth = 40;
+        // 行号节点缓存，与 lineNumbersInner.children 一一对应。
+        // 用数组而不是每次 children[i]，避免 live HTMLCollection 的索引访问开销。
+        let lnRows = [];
+        // 当前带 .current 的那个元素。记账用元素引用而不是行号数字：
+        // 行数变化时数字会被重置，光靠数字就再也找不到那条旧高亮（残留）；
+        // 用引用可以直接摘掉，O(1)，不用 querySelector 全扫。
+        let lnCurEl = null;
 
         // 行首偏移表：一次 O(n) 扫描同时供「行号总数 / 光标行列」用，文本没变就复用
         // （连续上下键只有光标动、文本不变，一次扫描都不做）。
@@ -5520,25 +5536,50 @@ TODO: replace this sample with your own notes.
             if (!lnVisible) return;
             const ln = (line === undefined) ? getCaretLine() : line;
             if (ln === lnLastActive) return;
-            const prev = lineNumbersInner.querySelector('.ln-row.current');
-            if (prev) prev.classList.remove('current');
-            const cur = lineNumbersInner.children[ln - 1];
-            if (cur) cur.classList.add('current');
+            if (lnCurEl) { lnCurEl.classList.remove('current'); lnCurEl = null; }
+            const cur = lnRows[ln - 1];
+            if (cur) { cur.classList.add('current'); lnCurEl = cur; }
             lnLastActive = ln;
         }
 
-        /** 重建行号内容（行数变化时才重建） */
+        /** 重建行号内容（只补/删差异，不整篇重建；文本由 CSS counter 生成，不写 textContent） */
         function renderLineNumbers(text) {
             if (!lnVisible) return;
             const src = text === undefined ? codeInput.value : text;
             const count = ensureLineStarts(src).length;
 
+            // 防御：lnRows 和 DOM 不一致（外部改过 / 隐藏显示边界）→ 清空重来
+            if (lnRows.length !== lineNumbersInner.children.length) {
+                lineNumbersInner.textContent = '';
+                lnRows = [];
+                lnCurEl = null;
+                lnLastCount = -1;
+            }
+
             if (count !== lnLastCount) {
-                const frag = [];
-                for (let i = 1; i <= count; i++) {
-                    frag.push('<div class="ln-row">' + i + '</div>');
+                // 行数变了：节点只补/删尾部，旧节点可能仍带 .current，
+                // 而下面要把 lnLastActive 重置为 -1（数字记账失准），
+                // 之后仅凭数字就再也清不掉那条残留高亮 → 这里按引用摘掉，O(1)。
+                if (lnCurEl) { lnCurEl.classList.remove('current'); lnCurEl = null; }
+
+                // 节点数量对齐：只补/删尾部的差异，O(|count - oldCount|)。
+                // 文本不写（编号由 CSS counter 生成），所以中间增删时
+                // 前面节点不重建、后面节点不重编号，浏览器自动算。
+                if (count > lnRows.length) {
+                    const frag = document.createDocumentFragment();
+                    for (let i = lnRows.length; i < count; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'ln-row';
+                        frag.appendChild(div);
+                        lnRows.push(div);
+                    }
+                    lineNumbersInner.appendChild(frag);
+                } else {
+                    for (let i = lnRows.length - 1; i >= count; i--) {
+                        lnRows[i].remove();
+                        lnRows.pop();
+                    }
                 }
-                lineNumbersInner.innerHTML = frag.join('');
                 lnLastCount = count;
                 lnLastActive = -1;
                 applyGutterWidth(count);

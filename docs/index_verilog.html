@@ -384,6 +384,9 @@ if (__bootError) {
                 clearTimeout(pending.timer);
                 pending.resolve(null);
             }
+            hlWorkerBusy = false;    // Worker 没了：别让后续输入一直卡在「忙」上排队
+            hlWorkerTimeouts = 0;
+            cancelWorkerQueue();     // 排队作废（Worker 都挂了，补发没意义，转主线程降级）
             hlWorkerLangs = null;
             hlWorkerReady = false;
             if (w) { try { w.terminate(); } catch (e) { } }
@@ -448,7 +451,11 @@ if (__bootError) {
                         const pending = hlPending;
                         hlPending = null;
                         clearTimeout(pending.timer);
+                        hlWorkerTimeouts = 0;
                         pending.resolve(Array.isArray(data.lines) ? { lines: data.lines } : null);
+                        // Worker 空闲了：补发排队的最新一次。放在 resolve 之后，
+                        // 让被唤醒的 await 先跑完自己的 seq / 文本校验再发新请求。
+                        flushWorkerQueue();
                     }
                 };
                 w.onerror = (err) => {
@@ -485,16 +492,54 @@ if (__bootError) {
             return hlWorker;
         }
 
+        // ==================== Worker 合并请求 ====================
+        // 连续输入时 Worker 正忙 → 只记下最新待发文本，等它回来再补发。
+        // 10 个键最多跑 2 次分词（正在跑的 + 停手后补的），中间那些被覆盖掉，不再白烧 Worker。
+        // 约束：Worker 忙时 updateHighlight 不降级主线程，否则 Worker + 主线程双跑，比不合并更慢。
+        let hlWorkerBusy = false;        // Worker 正在处理一次请求
+        let hlWorkerQueuedText = null;   // 排队中的最新文本（null = 无排队）
+        let hlWorkerQueuedLang = null;
+        let hlWorkerQueuedSeq = 0;
+        let hlWorkerTimeouts = 0;        // 连续超时次数（成功回包即清零）
+
+        /** 丢弃排队（切语言 / 打开文件 / 清空 / Worker 报废时用） */
+        function cancelWorkerQueue() {
+            hlWorkerQueuedText = null;
+            hlWorkerQueuedLang = null;
+            hlWorkerQueuedSeq = 0;
+        }
+
+        /** Worker 变空闲（回包 / 超时 / 报废）后补发排队的最新一次 */
+        function flushWorkerQueue() {
+            hlWorkerBusy = false;
+            if (hlWorkerQueuedText === null) return;
+            const text = hlWorkerQueuedText;
+            const lang = hlWorkerQueuedLang;
+            const seq = hlWorkerQueuedSeq;
+            cancelWorkerQueue();
+            // 排队期间又有新输入 / 切了语言 / 文本被改掉：这次排队已经过期
+            if (seq !== hlApplySeq) return;
+            if (codeInput.value !== text) return;
+            if (prismLangName() !== lang) return;
+            if (!hlWorker || !hlWorkerReady || hlWorkerBroken) return;
+            // updateHighlight 开头有「文本没变就直接 return」的短路：
+            // 不清掉缓存的话，这一发会被它自己挡掉，高亮就永远停在旧文本上。
+            lastHighlightedText = null;
+            updateHighlight(false);
+        }
+
         /** Promise<{lines:string[]}|null>：null = Worker 不可用 / 出错 / 超时，调用方降级为主线程 */
         function highlightInWorker(text, lang) {
             const w = ensureHighlightWorker();
             if (!w || !hlWorkerReady) return Promise.resolve(null);
             // grammar 缺失时 Worker 里 Prism 直接抛错，先挡一道走主线程。
             if (hlWorkerLangs && lang && hlWorkerLangs.indexOf(lang) < 0) return Promise.resolve(null);
+            hlWorkerBusy = true;
             return new Promise((resolve) => {
                 const id = ++hlSeq;
                 if (hlPending) {
-                    // 只保留最新请求：旧请求直接放弃（Worker 里仍会算完，结果丢弃）
+                    // now=true 路径（打开文件等）会并发插进来：旧请求直接放弃
+                    // （Worker 里仍会算完，结果丢弃——那一刻 busy 仍为 true，由新请求接续）
                     const old = hlPending;
                     hlPending = null;
                     clearTimeout(old.timer);
@@ -504,6 +549,10 @@ if (__bootError) {
                     if (hlPending && hlPending.id === id) {
                         hlPending = null;
                         resolve(null);
+                        hlWorkerTimeouts++;
+                        // 连续两次卡死就当 Worker 坏了，转主线程；偶尔慢一次则补发排队的
+                        if (hlWorkerTimeouts >= 2) markWorkerBroken('timeout');
+                        else flushWorkerQueue();
                     }
                 }, HL_WORKER_TIMEOUT);
                 hlPending = { id, resolve, timer };
@@ -1740,12 +1789,21 @@ if (__bootError) {
             white-space: nowrap;
             will-change: transform;
             box-sizing: border-box;
+            /* 行号由 CSS counter 生成：节点文本永远为空，中间增删行时浏览器自动重算，
+               JS 不需要逐个改 textContent（比 textContent 方案少 O(行数) 次 DOM 写） */
+            counter-reset: line-num;
         }
 
         .ln-row {
             height: var(--editor-line-height);
             line-height: var(--editor-line-height);
             transition: color 0.1s;
+            counter-increment: line-num;
+        }
+
+        /* 编号由 ::before 生成；节点本身 textContent 为空 */
+        .ln-row::before {
+            content: counter(line-num);
         }
 
         .ln-row.current {
@@ -5310,6 +5368,16 @@ TODO: replace this sample with your own notes.
                 return;
             }
 
+            // Worker 正忙 + 非 now 路径：只记下最新待发文本，等它回来再补发（覆盖旧的排队项）。
+            // 不降级主线程——否则 Worker + 主线程双跑，比不合并还慢。
+            // now=true（打开文件 / 切语言 / 撤销）不排队：这类操作不连续，且要立刻看到结果。
+            if (hlWorkerBusy && !now && hlWorkerReady && hlWorker && !hlWorkerBroken) {
+                hlWorkerQueuedText = text;
+                hlWorkerQueuedLang = langName;
+                hlWorkerQueuedSeq = mySeq;
+                return;
+            }
+
             const result = await highlightInWorker(text, langName);
 
             // 等待期间文本又变了 / 又发起了新请求：这次结果作废
@@ -5368,6 +5436,13 @@ TODO: replace this sample with your own notes.
         let lnLastCount = -1;
         let lnLastActive = -1;
         let lnGutterWidth = 40;
+        // 行号节点缓存，与 lineNumbersInner.children 一一对应。
+        // 用数组而不是每次 children[i]，避免 live HTMLCollection 的索引访问开销。
+        let lnRows = [];
+        // 当前带 .current 的那个元素。记账用元素引用而不是行号数字：
+        // 行数变化时数字会被重置，光靠数字就再也找不到那条旧高亮（残留）；
+        // 用引用可以直接摘掉，O(1)，不用 querySelector 全扫。
+        let lnCurEl = null;
 
         // 行首偏移表：一次 O(n) 扫描同时供「行号总数 / 光标行列」用，文本没变就复用
         // （连续上下键只有光标动、文本不变，一次扫描都不做）。
@@ -5414,25 +5489,50 @@ TODO: replace this sample with your own notes.
             if (!lnVisible) return;
             const ln = (line === undefined) ? getCaretLine() : line;
             if (ln === lnLastActive) return;
-            const prev = lineNumbersInner.querySelector('.ln-row.current');
-            if (prev) prev.classList.remove('current');
-            const cur = lineNumbersInner.children[ln - 1];
-            if (cur) cur.classList.add('current');
+            if (lnCurEl) { lnCurEl.classList.remove('current'); lnCurEl = null; }
+            const cur = lnRows[ln - 1];
+            if (cur) { cur.classList.add('current'); lnCurEl = cur; }
             lnLastActive = ln;
         }
 
-        /** 重建行号内容（行数变化时才重建） */
+        /** 重建行号内容（只补/删差异，不整篇重建；文本由 CSS counter 生成，不写 textContent） */
         function renderLineNumbers(text) {
             if (!lnVisible) return;
             const src = text === undefined ? codeInput.value : text;
             const count = ensureLineStarts(src).length;
 
+            // 防御：lnRows 和 DOM 不一致（外部改过 / 隐藏显示边界）→ 清空重来
+            if (lnRows.length !== lineNumbersInner.children.length) {
+                lineNumbersInner.textContent = '';
+                lnRows = [];
+                lnCurEl = null;
+                lnLastCount = -1;
+            }
+
             if (count !== lnLastCount) {
-                const frag = [];
-                for (let i = 1; i <= count; i++) {
-                    frag.push('<div class="ln-row">' + i + '</div>');
+                // 行数变了：节点只补/删尾部，旧节点可能仍带 .current，
+                // 而下面要把 lnLastActive 重置为 -1（数字记账失准），
+                // 之后仅凭数字就再也清不掉那条残留高亮 → 这里按引用摘掉，O(1)。
+                if (lnCurEl) { lnCurEl.classList.remove('current'); lnCurEl = null; }
+
+                // 节点数量对齐：只补/删尾部的差异，O(|count - oldCount|)。
+                // 文本不写（编号由 CSS counter 生成），所以中间增删时
+                // 前面节点不重建、后面节点不重编号，浏览器自动算。
+                if (count > lnRows.length) {
+                    const frag = document.createDocumentFragment();
+                    for (let i = lnRows.length; i < count; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'ln-row';
+                        frag.appendChild(div);
+                        lnRows.push(div);
+                    }
+                    lineNumbersInner.appendChild(frag);
+                } else {
+                    for (let i = lnRows.length - 1; i >= count; i--) {
+                        lnRows[i].remove();
+                        lnRows.pop();
+                    }
                 }
-                lineNumbersInner.innerHTML = frag.join('');
                 lnLastCount = count;
                 lnLastActive = -1;
                 applyGutterWidth(count);
@@ -5642,6 +5742,7 @@ TODO: replace this sample with your own notes.
 
         function applyHistoryState(state) {
             cancelHighlightSync();   // 丢掉排队中的旧分词（放在改文本之前，省掉一次白跑）
+            cancelWorkerQueue();     // 同上：Worker 侧的排队也作废
             codeInput.value = state.text;
             updateHighlight(true);   // 撤销/重做要立刻看到着色
             codeInput.setSelectionRange(state.caret, state.caret);
@@ -6754,6 +6855,7 @@ TODO: replace this sample with your own notes.
                 return;
             }
             cancelHighlightSync();
+            cancelWorkerQueue();
             codeInput.value = text;
             updateHighlight(true);
             history.stack = [{ text, caret: 0 }];
@@ -9434,6 +9536,7 @@ TODO: replace this sample with your own notes.
         /** 把读到的内容装入编辑器：打开文件、拖放、命令行 ?file= 共用，保证状态重置一致 */
         function applyLoadedFile(name, content, handle) {
             cancelHighlightSync();   // 丢掉上一份文件排队中的主线程分词
+            cancelWorkerQueue();     // 同一份旧内容的 Worker 排队也作废
             codeInput.value = content;
             titleInput.value = name;
             currentFileHandle = handle || null;   // 只有选择器打开的文件才有句柄，可写回
@@ -10052,6 +10155,7 @@ TODO: replace this sample with your own notes.
 
         document.getElementById('clearBtn').addEventListener('click', () => {
             cancelHighlightSync();
+            cancelWorkerQueue();
             codeInput.value = '';
             lastHighlightedText = null;
             updateHighlight(true);
@@ -10451,6 +10555,7 @@ TODO: replace this sample with your own notes.
             //    （基础高亮看着正常，很难发现）。
             clearPrismPoll();               // 切语言前先停掉上一次遗留的轮询
             cancelHighlightSync();          // 丢掉上一门语言排队中的主线程分词
+            cancelWorkerQueue();            // 上一门语言的 Worker 排队也作废（否则会回写旧语言结果）
             applyAllLangPatches();
             applyUserFunctionRules();       // grammar 不存在时内部直接返回 false，无害
             lastHighlightedText = null;
