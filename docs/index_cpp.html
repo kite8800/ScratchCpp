@@ -1855,6 +1855,23 @@ if (__bootError) {
             text-size-adjust: 100%;
         }
 
+        /* 高亮层 / 行号列 / 查找层用「实测行高」优先。
+           X5（微信内置浏览器）的 textarea 可能不采用 CSS line-height，
+           按字体自然行高算；这里让另外三层跟着 textarea 的实际行高走，
+           保证三层严格对齐。--editor-actual-line-height 由 JS 实测写入，
+           没实测时回落到 --editor-line-height（普通浏览器行为不变）。 */
+        .highlight-layer pre,
+        .search-layer pre,
+        .ln-inner {
+            line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
+        }
+        .highlight-layer .hl-line,
+        .ln-row {
+            height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
+            min-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
+            line-height: var(--editor-actual-line-height, var(--editor-line-height)) !important;
+        }
+
         /* ---------- 语法高亮（不依赖 Prism 主题 CSS，随主题变量切换） ---------- */
         .highlight-layer .token.comment { color: var(--tok-comment); font-style: italic; }
         .highlight-layer .token.string { color: var(--tok-string); }
@@ -5624,9 +5641,15 @@ TODO: replace this sample with your own notes.
         }
         let editorFontSize = readFontSize();
 
-        /** 行高固定 1.6 倍：15px → 24px，与改造前完全一致 */
+        /** 实测的 textarea 行高（0 = 未测 / 与 CSS 名义值一致）。
+            X5（微信内置浏览器）的 textarea 可能不采用 CSS line-height，
+            而是按字体自然行高排；这时三层若仍按名义值排就会逐行累积错位。 */
+        let editorActualLineHeight = 0;
+
+        /** 行高：优先用 textarea 的实测值，未实测时用 CSS 名义值（1.6 倍字号）
+            行高固定 1.6 倍：15px → 24px，与改造前完全一致 */
         function editorLineHeight() {
-            return Math.round(editorFontSize * 1.6);
+            return editorActualLineHeight || Math.round(editorFontSize * 1.6);
         }
         /**
          * 等宽字体单字符宽度（像素）。
@@ -5671,8 +5694,16 @@ TODO: replace this sample with your own notes.
         function applyEditorFontSize(size, opts) {
             const v = Math.max(FS_MIN, Math.min(FS_MAX, Math.round(size)));
             editorFontSize = v;
+            // 字号变了，上次的实测行高作废；下面重新实测
+            editorActualLineHeight = 0;
+            const nominal = Math.round(v * 1.6);
             document.documentElement.style.setProperty('--editor-font-size', v + 'px');
-            document.documentElement.style.setProperty('--editor-line-height', editorLineHeight() + 'px');
+            // 这里必须写名义值：editorLineHeight() 会优先返回实测值，
+            // 拿它回写 CSS 变量会自己喂自己
+            document.documentElement.style.setProperty('--editor-line-height', nominal + 'px');
+            // 先实测（会让 --editor-actual-line-height 与 editorLineHeight() 定下来），
+            // 后面的行号列宽、滚动补偿、查找层都要用最终行高
+            syncTextareaLineHeight();
             updateFontButtons();
             if (!opts || opts.persist !== false) {
                 try { localStorage.setItem(FS_KEY, String(v)); } catch (e) { }
@@ -5682,6 +5713,51 @@ TODO: replace this sample with your own notes.
             syncScrollbarWidth();
             syncScroll();
             if (searchState.visible) renderSearchLayer();
+        }
+
+        /**
+         * 实测 textarea 的实际行高，写入 --editor-actual-line-height，
+         * 让高亮层 / 行号列 / 查找层跟着走（X5 下 textarea 可能无视 CSS line-height）。
+         *
+         * 做法：把高度临时压成 0 —— 此时 scrollHeight 不再被「视口高度」钳住，
+         * 等于「内容总高 + 上下 padding」，用当前文本行数反推行高即可。
+         * 全程不改 value，所以不会清掉文本框的撤销栈。
+         */
+        function syncTextareaLineHeight() {
+            if (!codeInput) return;
+            // 输入法组字期间不碰文本框几何，避免打断组字。
+            // editorComposing 声明在更后面，用 try 兜住 TDZ（那说明还没初始化，更不可能在组字）
+            try { if (editorComposing) return; } catch (e) { }
+
+            const savedHeight = codeInput.style.height;
+            const savedTop = codeInput.scrollTop;
+            const lines = ensureLineStarts(codeInput.value).length;
+            const nominal = Math.round(editorFontSize * 1.6);
+            let actual = 0;
+            try {
+                codeInput.style.height = '0px';
+                const cs = getComputedStyle(codeInput);
+                const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+                actual = (codeInput.scrollHeight - padY) / lines;
+            } catch (e) {
+                actual = 0;
+            } finally {
+                codeInput.style.height = savedHeight;
+                // 先强制回流，否则恢复高度前写 scrollTop 会被旧布局钳掉
+                void codeInput.scrollHeight;
+                codeInput.scrollTop = savedTop;
+            }
+
+            // 实测值与名义值相差不到 0.6px：说明浏览器正常遵循 line-height，
+            // 不写变量 —— 否则取整噪声会让三层变成 23.98px 这种值并逐行累积。
+            if (actual > 0 && isFinite(actual) && Math.abs(actual - nominal) >= 0.6) {
+                editorActualLineHeight = actual;
+                document.documentElement.style.setProperty(
+                    '--editor-actual-line-height', actual.toFixed(2) + 'px');
+            } else {
+                editorActualLineHeight = 0;
+                document.documentElement.style.removeProperty('--editor-actual-line-height');
+            }
         }
 
         function stepFontSize(delta) {
