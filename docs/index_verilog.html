@@ -20,6 +20,8 @@
     <script src="vendor/prism/prism-cpp.min.js"></script>
     <!-- Python 语法：prism-python 无前置依赖 -->
     <script src="vendor/prism/prism-python.min.js"></script>
+    <!-- Shell 语法：prism-bash 无前置依赖，一次定义 bash / sh / shell 三个名字 -->
+    <script src="vendor/prism/prism-bash.min.js"></script>
     <script>
         // ==================== 语言增强补丁（数据驱动）====================
         // 每个语言一条：keywords 追加到 keyword 规则，functions 替换 function 规则为白名单，
@@ -55,6 +57,16 @@
                 //   靠 (?=\() 前瞻的规则就再也匹配不到了。
                 tokenOrder: ['preprocessor', 'comment', 'string', 'keyword',
                     'user-macro', 'user-function', 'number', 'operator', 'punctuation', 'function']
+            },
+            bash: {
+                // Prism 的 bash grammar 只认 sh / bash 关键字，csh 的 endif / end /
+                // foreach / switch / breaksw / endsw 不在白名单里，会被当普通标识符。
+                // 这里追加进去，让 shell 模式下 csh 关键字也着色。
+                // 用 keyword 类别（跟 if / then / fi 同色），不新增 token。
+                keywords: [
+                    'endif', 'end', 'foreach', 'endsw', 'switch', 'breaksw',
+                    'default', 'while', 'case'
+                ]
             }
         };
 
@@ -113,9 +125,17 @@
             const g = P.languages[langName];
 
             // 1. 追加关键字：拼进 keyword 规则的 (?:...) 分支
+            // keyword 有两种形态：直接是 RegExp（verilog 等），或 { pattern: RegExp } 对象
+            // （bash 用第 4 种写法带 (^|[\s;|&]) 前缀分组，避免 lookbehind）。两种都要认，
+            // 否则 .source 取到 undefined，replace 直接抛错、整页脚本中断。
             if (patch.keywords && patch.keywords.length && g.keyword) {
-                const kwSrc = g.keyword.source;
-                g.keyword = new RegExp(kwSrc.replace(/\(\?:/, '(?:' + patch.keywords.join('|') + '|'));
+                const isObj = !(g.keyword instanceof RegExp) && g.keyword.pattern instanceof RegExp;
+                const re = isObj ? g.keyword.pattern : g.keyword;
+                const merged = new RegExp(
+                    re.source.replace(/\(\?:/, '(?:' + patch.keywords.join('|') + '|'),
+                    re.flags
+                );
+                if (isObj) g.keyword.pattern = merged; else g.keyword = merged;
             }
 
             // 2. 覆盖函数白名单：精确匹配，纯标识符也高亮
@@ -213,7 +233,8 @@
                 grammarBase + 'prism-verilog.min.js',
                 grammarBase + 'prism-c.min.js',
                 grammarBase + 'prism-cpp.min.js',
-                grammarBase + 'prism-python.min.js'
+                grammarBase + 'prism-python.min.js',
+                grammarBase + 'prism-bash.min.js'
             ];
         }
 
@@ -657,11 +678,9 @@ if (__bootError) {
             --tok-type: var(--tok-func);
             --tok-op: #a9b7c6;
 
-            /* 子组标签 */
+            /* 子组标签：默认子组一色 + 自定义子组一色 */
             --sub-c-bg: #1a3a5a;
             --sub-c-fg: #74b9ff;
-            --sub-cpp-bg: #1a3a5a;
-            --sub-cpp-fg: #a29bfe;
             --sub-custom-bg: #3a3a2a;
             --sub-custom-fg: #fdcb6e;
 
@@ -761,8 +780,6 @@ if (__bootError) {
 
             --sub-c-bg: #e8e8ff;
             --sub-c-fg: #0000cc;
-            --sub-cpp-bg: #f3e8ff;
-            --sub-cpp-fg: #a020f0;
             --sub-custom-bg: #fff8e0;
             --sub-custom-fg: #8b6914;
 
@@ -1272,11 +1289,11 @@ if (__bootError) {
             margin: 4px 0 2px;
             border-radius: 4px;
             display: inline-block;
+            /* 默认子组（v / va / c / cpp / py / sh / csh 等）统一一个色；
+               自定义子组用 .custom 覆盖。不再按 v/va/c/cpp 细分。 */
+            background: var(--sub-c-bg);
+            color: var(--sub-c-fg);
         }
-        .subgroup-label.v,
-        .subgroup-label.c { background: var(--sub-c-bg); color: var(--sub-c-fg); }
-        .subgroup-label.va,
-        .subgroup-label.cpp { background: var(--sub-cpp-bg); color: var(--sub-cpp-fg); }
         .subgroup-label.custom { background: var(--sub-custom-bg); color: var(--sub-custom-fg); }
 
         .block {
@@ -1914,6 +1931,15 @@ if (__bootError) {
         .highlight-layer .token.triple-quoted-string { color: var(--tok-string); }
         .highlight-layer .token.decorator { color: var(--tok-func); }
         .highlight-layer .token.builtin { color: var(--tok-func); }
+        /* Shell：$VAR / ${VAR} / 命令替换里的变量。
+           Prism bash 把这些拆成 variable / environment / parameter-expansion / assign-left，
+           后三者 alias 到 variable，这里一并列出（alias 已加 class，多列只是兜底）。 */
+        .highlight-layer .token.variable,
+        .highlight-layer .token.environment,
+        .highlight-layer .token.parameter-expansion,
+        .highlight-layer .token.assign-left { color: var(--tok-number); }
+        /* Shell：shebang 行（#!/bin/bash）Prism 标成 important（alias），按注释色处理 */
+        .highlight-layer .token.important { color: var(--tok-comment); font-style: italic; }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
@@ -1932,6 +1958,35 @@ if (__bootError) {
             transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
         }
         .status-bar .icon { color: var(--success); }
+
+        /* localStorage 容量状态：状态栏最右。
+           正常 / 精简：LS 1.2M / 10M；超精简：LS 12%。
+           超 80% 黄色，超 95% 红色。窄屏（<600px）隐藏。 */
+        .ls-usage {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            flex-shrink: 0;
+            white-space: nowrap;
+            cursor: default;
+            transition: color 0.15s;
+        }
+        .ls-usage .ls-prefix {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .ls-usage.warn { color: var(--sub-custom-fg, #fdcb6e); }
+        .ls-usage.warn .ls-prefix { color: var(--sub-custom-fg, #fdcb6e); }
+        .ls-usage.danger { color: var(--danger); }
+        .ls-usage.danger .ls-prefix { color: var(--danger); }
+        /* 超精简：隐藏完整，显示百分比 */
+        body.ultra-compact-toolbar .ls-usage .ls-full { display: none; }
+        body.ultra-compact-toolbar .ls-usage .ls-pct { display: inline; }
+        .ls-usage .ls-pct { display: none; }
+        /* 窄屏隐藏 */
+        @media (max-width: 600px) {
+            .ls-usage { display: none; }
+        }
 
         /* ==================== 帮助弹窗（快捷键与功能）====================
            居中 / 遮罩 / 宽度上限全交给 .modal-overlay + .modal，这里只写内容样式 */
@@ -2139,27 +2194,24 @@ if (__bootError) {
         }
         .snapshot-item {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 4px;
             padding: 8px 10px;
             border-radius: 8px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
         }
+        /* 第一行：时间（左）+ 大小（右） */
+        .snapshot-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
         .snapshot-time {
             font-family: var(--font-mono);
             font-size: 0.78rem;
             color: var(--text-strong);
-            flex-shrink: 0;
-        }
-        .snapshot-name {
-            flex: 1;
-            min-width: 0;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         .snapshot-size {
             font-family: var(--font-mono);
@@ -2169,6 +2221,22 @@ if (__bootError) {
             min-width: 56px;          /* 容纳 "1023 B" / "10.5 KB" 这类最长值 */
             text-align: right;
             white-space: nowrap;
+        }
+        /* 第二行：文件名 + 恢复 + 删除 */
+        .snapshot-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .snapshot-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .snapshot-restore-btn {
             background: var(--btn-bg);
@@ -2181,6 +2249,22 @@ if (__bootError) {
             flex-shrink: 0;
         }
         .snapshot-restore-btn:hover { background: var(--btn-bg-hover); }
+
+        /* 单条删除：危险色，跟「恢复」并排 */
+        .snapshot-delete-btn {
+            background: transparent;
+            border: 1px solid var(--danger-border-soft);
+            color: var(--danger);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .snapshot-delete-btn:hover {
+            background: var(--danger-hover-soft);
+            color: var(--danger-text);
+        }
         .snapshot-empty {
             padding: 24px;
             text-align: center;
@@ -2503,6 +2587,7 @@ if (__bootError) {
             <option value="verilog">Verilog</option>
             <option value="cpp">C++</option>
             <option value="python">Python</option>
+            <option value="shell">Shell</option>
             <option value="txt">Text</option>
         </select>
         <!-- 超精简第一行专用：编程语言下拉。用 id 而不是 .ultra-only，
@@ -2511,6 +2596,7 @@ if (__bootError) {
             <option value="verilog">Verilog</option>
             <option value="cpp">C++</option>
             <option value="python">Python</option>
+            <option value="shell">Shell</option>
             <option value="txt">Text</option>
         </select>
         <!-- 精简模式按钮已移到第二行最右（第一行右侧太挤：语言下拉 + 下拉箭头已经占满） -->
@@ -2683,6 +2769,12 @@ if (__bootError) {
     <div class="status-bar">
         <span data-i18n="statusReady"><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
         <span id="execTime"></span>
+        <span style="flex:1"></span>
+        <span id="lsUsage" class="ls-usage" title="">
+            <span class="ls-prefix">LS</span>
+            <span class="ls-full"> 0B / 10M</span>
+            <span class="ls-pct"> 0%</span>
+        </span>
     </div>
 
     <!-- 积木编辑弹窗 -->
@@ -3155,14 +3247,77 @@ if (__bootError) {
                 },
                 set(key, value) {
                     if (!store) return false;
-                    try { store.setItem(key, value); return true; } catch (e) { return false; }
+                    try {
+                        store.setItem(key, value);
+                        if (typeof scheduleLsUsageUpdate === 'function') scheduleLsUsageUpdate();
+                        return true;
+                    } catch (e) { return false; }
                 },
                 remove(key) {
                     if (!store) return;
-                    try { store.removeItem(key); } catch (e) { }
+                    try {
+                        store.removeItem(key);
+                        if (typeof scheduleLsUsageUpdate === 'function') scheduleLsUsageUpdate();
+                    } catch (e) { }
                 }
             };
         })();
+
+        // ==================== localStorage 容量显示 ====================
+        /** localStorage 上限（字节，按 UTF-16 算）：5M 字符 × 2 = 10MB。
+            各浏览器实际不同（Firefox 约 10MB，Safari 约 5MB），这是估算。 */
+        const LS_QUOTA_BYTES = 10 * 1024 * 1024;
+
+        /** 算 localStorage 已用字节（UTF-16：字符数 × 2） */
+        function getLocalStorageUsedBytes() {
+            let chars = 0;
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k === null) continue;
+                    const v = localStorage.getItem(k) || '';
+                    chars += k.length + v.length;
+                }
+            } catch (e) {
+                return 0;
+            }
+            return chars * 2;
+        }
+
+        /** 格式化字节：B / K / M */
+        function formatLsBytes(bytes) {
+            if (bytes < 1024) return bytes + 'B';
+            if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + 'K';
+            const mb = bytes / (1024 * 1024);
+            return (mb < 10 ? mb.toFixed(1) : Math.round(mb)) + 'M';
+        }
+
+        /** 更新状态栏的 localStorage 容量显示 */
+        function updateLsUsage() {
+            const el = document.getElementById('lsUsage');
+            if (!el) return;
+            const used = getLocalStorageUsedBytes();
+            const pct = Math.min(100, Math.round(used / LS_QUOTA_BYTES * 100));
+            const usedStr = formatLsBytes(used);
+            const quotaStr = formatLsBytes(LS_QUOTA_BYTES);
+            const fullEl = el.querySelector('.ls-full');
+            const pctEl = el.querySelector('.ls-pct');
+            if (fullEl) fullEl.textContent = ' ' + usedStr + ' / ' + quotaStr;
+            if (pctEl) pctEl.textContent = ' ' + pct + '%';
+            el.title = 'localStorage: ' + usedStr + ' / ' + quotaStr + '（' + pct + '%）';
+            el.classList.toggle('warn', pct >= 80 && pct < 95);
+            el.classList.toggle('danger', pct >= 95);
+        }
+
+        /** 防抖更新（500ms） */
+        let lsUsageTimer = null;
+        function scheduleLsUsageUpdate() {
+            if (lsUsageTimer) clearTimeout(lsUsageTimer);
+            lsUsageTimer = setTimeout(() => {
+                lsUsageTimer = null;
+                updateLsUsage();
+            }, 500);
+        }
 
         // ==================== 应用标识 ====================
         // 本文件是 Verilog 版（唯一源）。index_cpp.html / index_python.html 由 build.py 生成，
@@ -3209,6 +3364,9 @@ if (__bootError) {
                 btnSnapshotClear: '清空',
                 snapEmpty: '还没有快照',
                 snapRestore: '恢复',
+                snapDelete: '删除',
+                snapDeleteTitle: '删除此快照',
+                snapDeleted: '已删除快照',
                 snapRestoreConfirm: '恢复此快照？当前内容会先自动保存为一条快照。',
                 snapClearAllConfirm: '确定清空所有快照吗？',
                 snapRestored: '已恢复快照',
@@ -3381,11 +3539,6 @@ if (__bootError) {
                 iconInputPlaceholder: '或直接输入图标名，如 star',
                 fieldSubcategory: '子类别归属',
                 subGeneral: '通用',
-                subV: 'v',
-                subVa: 'va',
-                subC: 'c',
-                subCpp: 'cpp',
-                subPy: 'py',
                 subCustom: '自定义',
                 subCustomPlaceholder: '自定义子类别名，如 advanced / 示例',
                 fieldInsertMode: '插入方式',
@@ -3436,6 +3589,7 @@ if (__bootError) {
                 editorPlaceholder: '// 点击左侧积木或直接编写 Verilog...',
                 editorPlaceholderCpp: '// 点击左侧积木或直接编写 C++...',
                 editorPlaceholderPython: '# 点击左侧积木或直接编写 Python...',
+                editorPlaceholderShell: '# 点击左侧积木或直接编写 Shell...',
                 editorPlaceholderTxt: '// 纯文本，无语法高亮',
                 themeTitleDark: '当前：深色（点击切换为浅色）',
                 themeTitleLight: '当前：浅色（点击切换为跟随系统）',
@@ -3495,6 +3649,9 @@ if (__bootError) {
                 btnSnapshotClear: 'Clear',
                 snapEmpty: 'No snapshots yet',
                 snapRestore: 'Restore',
+                snapDelete: 'Delete',
+                snapDeleteTitle: 'Delete this snapshot',
+                snapDeleted: 'Snapshot deleted',
                 snapRestoreConfirm: 'Restore this snapshot? Current content will be saved as a snapshot first.',
                 snapClearAllConfirm: 'Clear all snapshots?',
                 snapRestored: 'Snapshot restored',
@@ -3667,11 +3824,6 @@ if (__bootError) {
                 iconInputPlaceholder: 'Or type an icon name, e.g. star',
                 fieldSubcategory: 'Subcategory',
                 subGeneral: 'General',
-                subV: 'v',
-                subVa: 'va',
-                subC: 'c',
-                subCpp: 'cpp',
-                subPy: 'py',
                 subCustom: 'Custom',
                 subCustomPlaceholder: 'Custom subcategory name, e.g. advanced / example',
                 fieldInsertMode: 'Insert mode',
@@ -3722,6 +3874,7 @@ if (__bootError) {
                 editorPlaceholder: '// Click a block on the left, or just start typing Verilog...',
                 editorPlaceholderCpp: '// Click a block on the left, or just start typing C++...',
                 editorPlaceholderPython: '# Click a block on the left, or just start typing Python...',
+                editorPlaceholderShell: '# Click a block on the left, or just start typing Shell...',
                 editorPlaceholderTxt: '// Plain text, no syntax highlighting',
                 themeTitleDark: 'Current: dark (click for light)',
                 themeTitleLight: 'Current: light (click to follow system)',
@@ -3883,15 +4036,22 @@ if (__bootError) {
          * 占位符是 data-i18n-placeholder，必须同步改 dataset，
          * 否则 applyI18n（切界面语言时）会把它写回成 Verilog 的文案。
          */
+        // 编辑语言 → 占位符 i18n key。加语言只加一行，不改 updateEditorLangUi 的控制流。
+        // 没列出的语言（verilog）用默认 editorPlaceholder。
+        const EDITOR_PLACEHOLDER_KEY = {
+            cpp: 'editorPlaceholderCpp',
+            python: 'editorPlaceholderPython',
+            shell: 'editorPlaceholderShell',
+            txt: 'editorPlaceholderTxt'
+            // verilog 不写，走默认
+        };
+
         function updateEditorLangUi() {
             const sel = document.getElementById('editorLangSelect');
             if (sel) sel.value = currentEditorLang;
             if (codeInput) {
                 codeInput.dataset.i18nPlaceholder =
-                    currentEditorLang === 'cpp' ? 'editorPlaceholderCpp'
-                        : currentEditorLang === 'python' ? 'editorPlaceholderPython'
-                            : currentEditorLang === 'txt' ? 'editorPlaceholderTxt'
-                                : 'editorPlaceholder';
+                    EDITOR_PLACEHOLDER_KEY[currentEditorLang] || 'editorPlaceholder';
                 codeInput.placeholder = t(codeInput.dataset.i18nPlaceholder);
             }
         }
@@ -3922,6 +4082,17 @@ if (__bootError) {
                 // 用遍历而不是拼属性选择器：自定义子组键可能带引号
                 if (keepSub) {
                     const subRadio = Array.from(document.querySelectorAll('#quickAddSubRadioGroup input'))
+                        .find(i => i.value === keepSub);
+                    if (subRadio) subRadio.checked = true;
+                }
+            }
+            // 新增积木弹窗开着时切界面语言，子类别 radio 的「通用」也要跟着换语言
+            if (addBlockModal && addBlockModal.classList.contains('show')) {
+                const checkedSub = document.querySelector('#addBlockSubRadioGroup input:checked');
+                const keepSub = checkedSub ? checkedSub.value : null;
+                renderAddBlockSubRadios('addBlockSubRadioGroup', addingBlockTo ? addingBlockTo.catId : null);
+                if (keepSub) {
+                    const subRadio = Array.from(document.querySelectorAll('#addBlockSubRadioGroup input'))
                         .find(i => i.value === keepSub);
                     if (subRadio) subRadio.checked = true;
                 }
@@ -4776,6 +4947,546 @@ if (__bootError) {
             }
         ];
 
+        // ==================== Shell 积木 ====================
+        // 以 POSIX sh / bash 为主，csh 专属积木放 csh 子类别。
+        // 分类对齐 Verilog / C++ / Python 版：头 / 变量 / 条件 / 循环 / 函数 / I/O / 命令。
+        // csh 子类别只给最基本的（if / foreach / set / switch），其余 csh 用户自己加。
+        const DEFAULT_BLOCKS_SH = [
+            {
+                id: 'cat-sh-header',
+                category: 'Header',
+                category_i18n: { zh: '脚本头' },
+                icon: 'terminal',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'sh-exit-0', icon: 'sign-out-alt', label: 'exit 0', code: 'exit 0', mode: 'line' },
+                        { id: 'sh-exit-1', icon: 'sign-out-alt', label: 'exit 1', code: 'exit 1', mode: 'line' },
+                        { id: 'sh-true', icon: 'check', label: 'true', code: 'true', mode: 'line' },
+                        { id: 'sh-false', icon: 'x', label: 'false', code: 'false', mode: 'line' },
+                    ],
+                    'sh-shebang': [
+                        { id: 'sh-shebang-bash', icon: 'terminal', label: '#!/bin/bash', code: '#!/bin/bash', mode: 'line' },
+                        { id: 'sh-shebang-sh', icon: 'terminal', label: '#!/bin/sh', code: '#!/bin/sh', mode: 'line' },
+                    ],
+                    'sh-set': [
+                        { id: 'sh-set-e', icon: 'bolt', label: 'set -e', code: 'set -e', mode: 'line' },
+                        { id: 'sh-set-u', icon: 'bolt', label: 'set -u', code: 'set -u', mode: 'line' },
+                        { id: 'sh-set-euo', icon: 'bolt', label: 'set -euo pipefail', code: 'set -euo pipefail', mode: 'line' },
+                        { id: 'sh-set-pipefail', icon: 'bolt', label: 'set -o pipefail', code: 'set -o pipefail', mode: 'line' },
+                        { id: 'sh-set-x', icon: 'terminal', label: 'set -x', code: 'set -x', mode: 'line' },
+                        { id: 'sh-set-plus-x', icon: 'terminal', label: 'set +x', code: 'set +x', mode: 'line' },
+                    ],
+                    'sh-trap': [
+                        { id: 'sh-trap-exit', icon: 'stop', label: "trap 'cleanup' EXIT", code: "trap 'cleanup' EXIT", mode: 'line' },
+                        { id: 'sh-trap-int', icon: 'exclamation-triangle', label: "trap 'handler' INT", code: "trap 'handler' INT", mode: 'line' },
+                        { id: 'sh-trap-clear', icon: 'rotate-left', label: 'trap - EXIT', code: 'trap - EXIT', mode: 'line' },
+                    ],
+                    'csh-shebang': [
+                        { id: 'csh-shebang', icon: 'terminal', label: '#!/bin/csh', code: '#!/bin/csh', mode: 'line' },
+                    ],
+                    'csh-onintr': [
+                        { id: 'csh-onintr', icon: 'exclamation-triangle', label: 'onintr handler', code: 'onintr handler', mode: 'line' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-args',
+                category: 'Args',
+                category_i18n: { zh: '参数' },
+                icon: 'list',
+                collapsed: true,
+                subgroups: {
+                    none: [
+                        { id: 'sh-arg-0', icon: 'terminal', label: '$0', code: '$0', mode: 'exp' },
+                        { id: 'sh-arg-1', icon: 'arrow-right', label: '$1', code: '$1', mode: 'exp' },
+                        { id: 'sh-arg-2', icon: 'arrow-right', label: '$2', code: '$2', mode: 'exp' },
+                        { id: 'sh-arg-3', icon: 'arrow-right', label: '$3', code: '$3', mode: 'exp' },
+                        { id: 'sh-arg-star', icon: 'cubes', label: '$*', code: '$*', mode: 'exp' },
+                        { id: 'sh-shift', icon: 'rotate-left', label: 'shift', code: 'shift', mode: 'line' },
+                        { id: 'sh-shift-2', icon: 'rotate-left', label: 'shift 2', code: 'shift 2', mode: 'line' },
+                        { id: 'sh-arg-pid', icon: 'hashtag', label: '$$', code: '$$', mode: 'exp' },
+                        { id: 'sh-arg-bgpid', icon: 'hashtag', label: '$!', code: '$!', mode: 'exp' },
+                    ],
+                    'sh-positional': [
+                        { id: 'sh-arg-10', icon: 'arrow-right', label: '${10}', code: '${10}', mode: 'exp' },
+                        { id: 'sh-arg-count', icon: 'hashtag', label: '$#', code: '$#', mode: 'exp' },
+                        { id: 'sh-arg-at', icon: 'cubes', label: '$@', code: '$@', mode: 'exp' },
+                        { id: 'sh-arg-at-quoted', icon: 'quote-left', label: '"$@"', code: '"$@"', mode: 'exp' },
+                    ],
+                    'sh-set': [
+                        { id: 'sh-set-positional', icon: 'equals', label: 'set -- a b c', code: 'set -- a b c', mode: 'line' },
+                    ],
+                    'sh-getopts': [
+                        { id: 'sh-getopts', icon: 'keyboard', label: 'getopts "ab:c" opt', code: 'getopts "ab:c" opt', mode: 'line' },
+                        { id: 'sh-getopts-while', icon: 'rotate-left', label: 'while getopts ...; do ... done', code: 'while getopts "ab:c" opt; do\n    case "$opt" in\n        a) ;;\n        b) ;;\n        *) ;;\n    esac\ndone', mode: 'line' },
+                    ],
+                    'sh-special': [
+                        { id: 'sh-special-status', icon: 'exclamation-triangle', label: '$?', code: '$?', mode: 'exp' },
+                        { id: 'sh-special-underscore', icon: 'arrow-right', label: '$_', code: '$_', mode: 'exp' },
+                        { id: 'sh-special-flags', icon: 'terminal', label: '$-', code: '$-', mode: 'exp' },
+                    ],
+                    'csh-argv': [
+                        { id: 'csh-argv', icon: 'list', label: '$argv', code: '$argv', mode: 'exp' },
+                        { id: 'csh-argv-count', icon: 'hashtag', label: '$#argv', code: '$#argv', mode: 'exp' },
+                        { id: 'csh-argv-1', icon: 'arrow-right', label: '$argv[1]', code: '$argv[1]', mode: 'exp' },
+                    ],
+                    'csh-special': [
+                        { id: 'csh-special-status', icon: 'exclamation-triangle', label: '$status', code: '$status', mode: 'exp' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-variables',
+                category: 'Variables',
+                category_i18n: { zh: '变量' },
+                icon: 'database',
+                collapsed: false,
+                subgroups: {
+                    'sh-local': [
+                        { id: 'sh-var-assign', icon: 'equals', label: 'VAR=value', code: 'VAR=value', mode: 'line' },
+                        { id: 'sh-var-local', icon: 'location-arrow', label: 'local VAR=value', code: 'local VAR=value', mode: 'line' },
+                        { id: 'sh-var-declare', icon: 'code', label: 'declare VAR=value', code: 'declare VAR=value', mode: 'line' },
+                        { id: 'sh-var-declare-i', icon: 'calculator', label: 'declare -i n=10', code: 'declare -i n=10', mode: 'line' },
+                        { id: 'sh-var-unset', icon: 'x', label: 'unset VAR', code: 'unset VAR', mode: 'line' },
+                    ],
+                    'sh-readonly': [
+                        { id: 'sh-var-readonly', icon: 'stop', label: 'readonly VAR', code: 'readonly VAR', mode: 'line' },
+                        { id: 'sh-var-readonly-assign', icon: 'stop', label: 'readonly VAR=value', code: 'readonly VAR=value', mode: 'line' },
+                        { id: 'sh-var-declare-r', icon: 'stop', label: 'declare -r VAR=value', code: 'declare -r VAR=value', mode: 'line' },
+                    ],
+                    'csh-local': [
+                        { id: 'csh-var-set', icon: 'equals', label: 'set VAR = value', code: 'set VAR = value', mode: 'line' },
+                        { id: 'csh-var-unset', icon: 'x', label: 'unset VAR', code: 'unset VAR', mode: 'line' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-env',
+                category: 'Env',
+                category_i18n: { zh: '环境变量' },
+                icon: 'globe',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'sh-env-home', icon: 'folder', label: '$HOME', code: '$HOME', mode: 'exp' },
+                        { id: 'sh-env-path', icon: 'link', label: '$PATH', code: '$PATH', mode: 'exp' },
+                        { id: 'sh-env-pwd', icon: 'location-arrow', label: '$PWD', code: '$PWD', mode: 'exp' },
+                        { id: 'sh-env-user', icon: 'globe', label: '$USER', code: '$USER', mode: 'exp' },
+                        { id: 'sh-env-shell', icon: 'terminal', label: '$SHELL', code: '$SHELL', mode: 'exp' },
+                        { id: 'sh-env-lang', icon: 'globe', label: '$LANG', code: '$LANG', mode: 'exp' },
+                        { id: 'sh-env-term', icon: 'terminal', label: '$TERM', code: '$TERM', mode: 'exp' },
+                    ],
+                    'sh-env': [
+                        { id: 'sh-var-export', icon: 'upload', label: 'export VAR=value', code: 'export VAR=value', mode: 'line' },
+                        { id: 'sh-var-export-alone', icon: 'upload', label: 'export VAR', code: 'export VAR', mode: 'line' },
+                        { id: 'sh-var-declare-x', icon: 'upload', label: 'declare -x VAR', code: 'declare -x VAR', mode: 'line' },
+                        { id: 'sh-env', icon: 'list', label: 'env', code: 'env', mode: 'line' },
+                        { id: 'sh-printenv', icon: 'list', label: 'printenv', code: 'printenv', mode: 'line' },
+                        { id: 'sh-printenv-var', icon: 'list', label: 'printenv VAR', code: 'printenv VAR', mode: 'line' },
+                        { id: 'sh-env-cmd', icon: 'terminal', label: 'env VAR=value cmd', code: 'env VAR=value command', mode: 'line' },
+                    ],
+                    'sh-env-vars': [
+                        { id: 'sh-env-uid', icon: 'globe', label: '$UID', code: '$UID', mode: 'exp' },
+                        { id: 'sh-env-hostname', icon: 'globe', label: '$HOSTNAME', code: '$HOSTNAME', mode: 'exp' },
+                        { id: 'sh-env-random', icon: 'star', label: '$RANDOM', code: '$RANDOM', mode: 'exp' },
+                        { id: 'sh-env-seconds', icon: 'circle', label: '$SECONDS', code: '$SECONDS', mode: 'exp' },
+                        { id: 'sh-env-lineno', icon: 'hashtag', label: '$LINENO', code: '$LINENO', mode: 'exp' },
+                    ],
+                    'csh-env': [
+                        { id: 'csh-var-setenv', icon: 'upload', label: 'setenv VAR value', code: 'setenv VAR value', mode: 'line' },
+                        { id: 'csh-var-unsetenv', icon: 'x', label: 'unsetenv VAR', code: 'unsetenv VAR', mode: 'line' },
+                    ],
+                    'csh-env-vars': [
+                        { id: 'csh-env-user', icon: 'globe', label: '$user', code: '$user', mode: 'exp' },
+                        { id: 'csh-env-shell', icon: 'terminal', label: '$shell', code: '$shell', mode: 'exp' },
+                        { id: 'csh-env-cwd', icon: 'location-arrow', label: '$cwd', code: '$cwd', mode: 'exp' },
+                        { id: 'csh-env-owd', icon: 'location-arrow', label: '$owd', code: '$owd', mode: 'exp' },
+                        { id: 'csh-env-uid', icon: 'globe', label: '$uid', code: '$uid', mode: 'exp' },
+                        { id: 'csh-env-host', icon: 'globe', label: '$host', code: '$host', mode: 'exp' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-arrays',
+                category: 'Arrays',
+                category_i18n: { zh: '数组 / 列表' },
+                icon: 'list',
+                collapsed: true,
+                subgroups: {
+                    'sh-indexed': [
+                        { id: 'sh-arr-assign', icon: 'list', label: 'arr=(a b c)', code: 'arr=(a b c)', mode: 'line' },
+                        { id: 'sh-arr-index', icon: 'arrow-right', label: '${arr[0]}', code: '${arr[0]}', mode: 'exp' },
+                        { id: 'sh-arr-all', icon: 'cubes', label: '${arr[@]}', code: '${arr[@]}', mode: 'exp' },
+                        { id: 'sh-arr-all-joined', icon: 'cubes', label: '${arr[*]}', code: '${arr[*]}', mode: 'exp' },
+                        { id: 'sh-arr-count', icon: 'hashtag', label: '${#arr[@]}', code: '${#arr[@]}', mode: 'exp' },
+                        { id: 'sh-arr-slice', icon: 'cut', label: '${arr[@]:1:2}', code: '${arr[@]:1:2}', mode: 'exp' },
+                        { id: 'sh-arr-append', icon: 'plus', label: 'arr+=(d)', code: 'arr+=(d)', mode: 'line' },
+                        { id: 'sh-arr-unset-index', icon: 'x', label: 'unset arr[1]', code: 'unset arr[1]', mode: 'line' },
+                        { id: 'sh-arr-unset', icon: 'trash', label: 'unset arr', code: 'unset arr', mode: 'line' },
+                        { id: 'sh-arr-declare', icon: 'code', label: 'declare -a arr', code: 'declare -a arr', mode: 'line' },
+                    ],
+                    'sh-assoc': [
+                        { id: 'sh-assoc-declare', icon: 'database', label: 'declare -A map', code: 'declare -A map', mode: 'line' },
+                        { id: 'sh-assoc-set', icon: 'equals', label: 'map[key]=value', code: 'map[key]=value', mode: 'line' },
+                        { id: 'sh-assoc-get', icon: 'arrow-right', label: '${map[key]}', code: '${map[key]}', mode: 'exp' },
+                    ],
+                    'sh-io': [
+                        { id: 'sh-arr-mapfile', icon: 'file-import', label: 'mapfile -t arr < file', code: 'mapfile -t arr < file', mode: 'line' },
+                        { id: 'sh-arr-readarray', icon: 'file-import', label: 'readarray -t arr < file', code: 'readarray -t arr < file', mode: 'line' },
+                    ],
+                    'sh-loop': [
+                        { id: 'sh-arr-for', icon: 'rotate-left', label: 'for x in "${arr[@]}"; do ... done', code: 'for x in "${arr[@]}"; do\n    \ndone', mode: 'line' },
+                    ],
+                    'csh-list': [
+                        { id: 'csh-arr-set', icon: 'list', label: 'set arr = (a b c)', code: 'set arr = (a b c)', mode: 'line' },
+                        { id: 'csh-arr-index', icon: 'arrow-right', label: '$arr[1]', code: '$arr[1]', mode: 'exp' },
+                        { id: 'csh-arr-all', icon: 'cubes', label: '$arr[*]', code: '$arr[*]', mode: 'exp' },
+                        { id: 'csh-arr-count', icon: 'hashtag', label: '$#arr', code: '$#arr', mode: 'exp' },
+                        { id: 'csh-arr-append', icon: 'plus', label: 'set arr = ($arr d)', code: 'set arr = ($arr d)', mode: 'line' },
+                        { id: 'csh-arr-shift', icon: 'rotate-left', label: 'shift arr', code: 'shift arr', mode: 'line' },
+                        { id: 'csh-arr-foreach', icon: 'rotate-left', label: 'foreach x ( $arr ) ... end', code: 'foreach x ( $arr )\n    \nend', mode: 'line' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-operators',
+                category: 'Operators',
+                category_i18n: { zh: '运算符 / 测试' },
+                icon: 'calculator',
+                collapsed: true,
+                subgroups: {
+                    none: [
+                        { id: 'sh-op-add', icon: 'plus', label: 'a + b', code: 'a + b', mode: 'exp' },
+                        { id: 'sh-op-sub', icon: 'minus', label: 'a - b', code: 'a - b', mode: 'exp' },
+                        { id: 'sh-op-mul', icon: 'times', label: 'a * b', code: 'a * b', mode: 'exp' },
+                        { id: 'sh-op-div', icon: 'divide', label: 'a / b', code: 'a / b', mode: 'exp' },
+                        { id: 'sh-op-mod', icon: 'percent', label: 'a % b', code: 'a % b', mode: 'exp' },
+                        { id: 'sh-op-eq', icon: 'equals', label: 'a == b', code: 'a == b', mode: 'exp' },
+                        { id: 'sh-op-neq', icon: 'equals', label: 'a != b', code: 'a != b', mode: 'exp' },
+                        { id: 'sh-op-lt', icon: 'arrow-down', label: 'a < b', code: 'a < b', mode: 'exp' },
+                        { id: 'sh-op-gt', icon: 'arrow-up', label: 'a > b', code: 'a > b', mode: 'exp' },
+                        { id: 'sh-op-and', icon: 'code-branch', label: 'a && b', code: 'a && b', mode: 'exp' },
+                        { id: 'sh-op-or', icon: 'code-branch', label: 'a || b', code: 'a || b', mode: 'exp' },
+                        { id: 'sh-op-not', icon: 'exclamation-triangle', label: '! a', code: '! a', mode: 'exp' },
+                    ],
+                    'sh-arith': [
+                        { id: 'sh-arith-add', icon: 'plus', label: '$((a + b))', code: '$((a + b))', mode: 'exp' },
+                        { id: 'sh-arith-sub', icon: 'minus', label: '$((a - b))', code: '$((a - b))', mode: 'exp' },
+                        { id: 'sh-arith-mul', icon: 'times', label: '$((a * b))', code: '$((a * b))', mode: 'exp' },
+                        { id: 'sh-arith-div', icon: 'divide', label: '$((a / b))', code: '$((a / b))', mode: 'exp' },
+                        { id: 'sh-arith-mod', icon: 'percent', label: '$((a % b))', code: '$((a % b))', mode: 'exp' },
+                        { id: 'sh-arith-pow', icon: 'superscript', label: '$((a ** b))', code: '$((a ** b))', mode: 'exp' },
+                        { id: 'sh-arith-hex', icon: 'hashtag', label: '$((16#ff))', code: '$((16#ff))', mode: 'exp' },
+                        { id: 'sh-arith-inc-post', icon: 'plus', label: '$((i++))', code: '$((i++))', mode: 'exp' },
+                        { id: 'sh-arith-inc-pre', icon: 'plus', label: '$((++i))', code: '$((++i))', mode: 'exp' },
+                        { id: 'sh-arith-dec-post', icon: 'minus', label: '$((i--))', code: '$((i--))', mode: 'exp' },
+                        { id: 'sh-arith-dec-pre', icon: 'minus', label: '$((--i))', code: '$((--i))', mode: 'exp' },
+                        { id: 'sh-let-add', icon: 'calculator', label: 'let "x = a + b"', code: 'let "x = a + b"', mode: 'line' },
+                        { id: 'sh-dparen-inc', icon: 'plus', label: '((i++))', code: '((i++))', mode: 'line' },
+                        { id: 'sh-dparen-dec', icon: 'minus', label: '((i--))', code: '((i--))', mode: 'line' },
+                        { id: 'sh-dparen-add', icon: 'plus', label: '((i += 1))', code: '((i += 1))', mode: 'line' },
+                        { id: 'sh-dparen-sub', icon: 'minus', label: '((i -= 1))', code: '((i -= 1))', mode: 'line' },
+                    ],
+                    'sh-test-file': [
+                        { id: 'sh-test-e', icon: 'search', label: '[ -e path ]', code: '[ -e path ]', mode: 'exp' },
+                        { id: 'sh-test-f', icon: 'file-import', label: '[ -f file ]', code: '[ -f file ]', mode: 'exp' },
+                        { id: 'sh-test-d', icon: 'folder', label: '[ -d dir ]', code: '[ -d dir ]', mode: 'exp' },
+                        { id: 'sh-test-r', icon: 'search', label: '[ -r file ]', code: '[ -r file ]', mode: 'exp' },
+                        { id: 'sh-test-w', icon: 'save', label: '[ -w file ]', code: '[ -w file ]', mode: 'exp' },
+                        { id: 'sh-test-x', icon: 'play', label: '[ -x file ]', code: '[ -x file ]', mode: 'exp' },
+                        { id: 'sh-test-s', icon: 'database', label: '[ -s file ]', code: '[ -s file ]', mode: 'exp' },
+                        { id: 'sh-test-L', icon: 'link', label: '[ -L path ]', code: '[ -L path ]', mode: 'exp' },
+                        { id: 'sh-test-h', icon: 'link', label: '[ -h path ]', code: '[ -h path ]', mode: 'exp' },
+                        { id: 'sh-test-p', icon: 'link', label: '[ -p path ]', code: '[ -p path ]', mode: 'exp' },
+                        { id: 'sh-test-S', icon: 'link', label: '[ -S path ]', code: '[ -S path ]', mode: 'exp' },
+                        { id: 'sh-test-b', icon: 'database', label: '[ -b path ]', code: '[ -b path ]', mode: 'exp' },
+                        { id: 'sh-test-c', icon: 'terminal', label: '[ -c path ]', code: '[ -c path ]', mode: 'exp' },
+                        { id: 'sh-test-t', icon: 'terminal', label: '[ -t fd ]', code: '[ -t fd ]', mode: 'exp' },
+                        { id: 'sh-test-nt', icon: 'arrow-up', label: '[ file1 -nt file2 ]', code: '[ file1 -nt file2 ]', mode: 'exp' },
+                        { id: 'sh-test-ot', icon: 'arrow-down', label: '[ file1 -ot file2 ]', code: '[ file1 -ot file2 ]', mode: 'exp' },
+                        { id: 'sh-test-ef', icon: 'equals', label: '[ file1 -ef file2 ]', code: '[ file1 -ef file2 ]', mode: 'exp' },
+                    ],
+                    'sh-test-string': [
+                        { id: 'sh-test-z', icon: 'circle', label: '[ -z "$VAR" ]', code: '[ -z "$VAR" ]', mode: 'exp' },
+                        { id: 'sh-test-n', icon: 'circle', label: '[ -n "$VAR" ]', code: '[ -n "$VAR" ]', mode: 'exp' },
+                        { id: 'sh-test-str-eq', icon: 'equals', label: '[ "$a" = "$b" ]', code: '[ "$a" = "$b" ]', mode: 'exp' },
+                        { id: 'sh-test-str-neq', icon: 'equals', label: '[ "$a" != "$b" ]', code: '[ "$a" != "$b" ]', mode: 'exp' },
+                    ],
+                    'sh-test-num': [
+                        { id: 'sh-test-num-eq', icon: 'equals', label: '[ "$a" -eq "$b" ]', code: '[ "$a" -eq "$b" ]', mode: 'exp' },
+                        { id: 'sh-test-num-neq', icon: 'equals', label: '[ "$a" -ne "$b" ]', code: '[ "$a" -ne "$b" ]', mode: 'exp' },
+                        { id: 'sh-test-num-lt', icon: 'arrow-down', label: '[ "$a" -lt "$b" ]', code: '[ "$a" -lt "$b" ]', mode: 'exp' },
+                        { id: 'sh-test-num-gt', icon: 'arrow-up', label: '[ "$a" -gt "$b" ]', code: '[ "$a" -gt "$b" ]', mode: 'exp' },
+                        { id: 'sh-test-num-le', icon: 'arrow-down', label: '[ "$a" -le "$b" ]', code: '[ "$a" -le "$b" ]', mode: 'exp' },
+                        { id: 'sh-test-num-ge', icon: 'arrow-up', label: '[ "$a" -ge "$b" ]', code: '[ "$a" -ge "$b" ]', mode: 'exp' },
+                    ],
+                    'sh-test-ext': [
+                        { id: 'sh-ext-str-eq', icon: 'equals', label: '[[ "$a" == "$b" ]]', code: '[[ "$a" == "$b" ]]', mode: 'exp' },
+                        { id: 'sh-ext-str-neq', icon: 'equals', label: '[[ "$a" != "$b" ]]', code: '[[ "$a" != "$b" ]]', mode: 'exp' },
+                        { id: 'sh-ext-regex', icon: 'search', label: '[[ "$a" =~ regex ]]', code: '[[ "$a" =~ regex ]]', mode: 'exp' },
+                        { id: 'sh-ext-lt', icon: 'arrow-down', label: '[[ "$a" < "$b" ]]', code: '[[ "$a" < "$b" ]]', mode: 'exp' },
+                        { id: 'sh-ext-gt', icon: 'arrow-up', label: '[[ "$a" > "$b" ]]', code: '[[ "$a" > "$b" ]]', mode: 'exp' },
+                        { id: 'sh-ext-and', icon: 'code-branch', label: '[[ -f file && -d dir ]]', code: '[[ -f file && -d dir ]]', mode: 'exp' },
+                        { id: 'sh-ext-or', icon: 'code-branch', label: '[[ -f file || -d dir ]]', code: '[[ -f file || -d dir ]]', mode: 'exp' },
+                    ],
+                    'csh-arith': [
+                        { id: 'csh-arith-add', icon: 'plus', label: '@ x = $a + $b', code: '@ x = $a + $b', mode: 'line' },
+                        { id: 'csh-arith-sub', icon: 'minus', label: '@ x = $a - $b', code: '@ x = $a - $b', mode: 'line' },
+                        { id: 'csh-arith-mul', icon: 'times', label: '@ x = $a * $b', code: '@ x = $a * $b', mode: 'line' },
+                        { id: 'csh-arith-div', icon: 'divide', label: '@ x = $a / $b', code: '@ x = $a / $b', mode: 'line' },
+                        { id: 'csh-arith-mod', icon: 'percent', label: '@ x = $a % $b', code: '@ x = $a % $b', mode: 'line' },
+                        { id: 'csh-arith-inc', icon: 'plus', label: '@ x++', code: '@ x++', mode: 'line' },
+                        { id: 'csh-arith-dec', icon: 'minus', label: '@ x--', code: '@ x--', mode: 'line' },
+                        { id: 'csh-arith-add-assign', icon: 'plus', label: '@ x += 1', code: '@ x += 1', mode: 'line' },
+                        { id: 'csh-arith-sub-assign', icon: 'minus', label: '@ x -= 1', code: '@ x -= 1', mode: 'line' },
+                        { id: 'csh-arith-mul-assign', icon: 'times', label: '@ x *= 2', code: '@ x *= 2', mode: 'line' },
+                        { id: 'csh-arith-div-assign', icon: 'divide', label: '@ x /= 2', code: '@ x /= 2', mode: 'line' },
+                    ],
+                    'csh-test-file': [
+                        { id: 'csh-test-e', icon: 'search', label: 'if ( -e path )', code: 'if ( -e path )', mode: 'exp' },
+                        { id: 'csh-test-f', icon: 'file-import', label: 'if ( -f file )', code: 'if ( -f file )', mode: 'exp' },
+                        { id: 'csh-test-d', icon: 'folder', label: 'if ( -d dir )', code: 'if ( -d dir )', mode: 'exp' },
+                        { id: 'csh-test-r', icon: 'search', label: 'if ( -r file )', code: 'if ( -r file )', mode: 'exp' },
+                        { id: 'csh-test-w', icon: 'save', label: 'if ( -w file )', code: 'if ( -w file )', mode: 'exp' },
+                        { id: 'csh-test-x', icon: 'play', label: 'if ( -x file )', code: 'if ( -x file )', mode: 'exp' },
+                    ],
+                    'csh-test-string': [
+                        { id: 'csh-test-z', icon: 'circle', label: 'if ( -z "$VAR" )', code: 'if ( -z "$VAR" )', mode: 'exp' },
+                        { id: 'csh-test-n', icon: 'circle', label: 'if ( -n "$VAR" )', code: 'if ( -n "$VAR" )', mode: 'exp' },
+                        { id: 'csh-test-str-eq', icon: 'equals', label: 'if ( "$a" == "$b" )', code: 'if ( "$a" == "$b" )', mode: 'exp' },
+                        { id: 'csh-test-str-neq', icon: 'equals', label: 'if ( "$a" != "$b" )', code: 'if ( "$a" != "$b" )', mode: 'exp' },
+                    ],
+                    'csh-test-num': [
+                        { id: 'csh-test-num-eq', icon: 'equals', label: 'if ( $a == $b )', code: 'if ( $a == $b )', mode: 'exp' },
+                        { id: 'csh-test-num-neq', icon: 'equals', label: 'if ( $a != $b )', code: 'if ( $a != $b )', mode: 'exp' },
+                        { id: 'csh-test-num-lt', icon: 'arrow-down', label: 'if ( $a < $b )', code: 'if ( $a < $b )', mode: 'exp' },
+                        { id: 'csh-test-num-gt', icon: 'arrow-up', label: 'if ( $a > $b )', code: 'if ( $a > $b )', mode: 'exp' },
+                        { id: 'csh-test-num-le', icon: 'arrow-down', label: 'if ( $a <= $b )', code: 'if ( $a <= $b )', mode: 'exp' },
+                        { id: 'csh-test-num-ge', icon: 'arrow-up', label: 'if ( $a >= $b )', code: 'if ( $a >= $b )', mode: 'exp' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-subst',
+                category: 'Substitution',
+                category_i18n: { zh: '替换 / 展开' },
+                icon: 'exchange-alt',
+                collapsed: true,
+                subgroups: {
+                    none: [
+                        { id: 'sh-subst-var', icon: 'arrow-right', label: '$VAR', code: '$VAR', mode: 'exp' },
+                        { id: 'sh-subst-var-brace', icon: 'arrow-right', label: '${VAR}', code: '${VAR}', mode: 'exp' },
+                        { id: 'sh-subst-cmd-old', icon: 'terminal', label: '`cmd`', code: '`command`', mode: 'exp' },
+                    ],
+                    'sh-default': [
+                        { id: 'sh-subst-default', icon: 'equals', label: '${VAR:-default}', code: '${VAR:-default}', mode: 'exp' },
+                        { id: 'sh-subst-assign-default', icon: 'equals', label: '${VAR:=default}', code: '${VAR:=default}', mode: 'exp' },
+                        { id: 'sh-subst-required', icon: 'exclamation-triangle', label: '${VAR:?msg}', code: '${VAR:?msg}', mode: 'exp' },
+                        { id: 'sh-subst-alt', icon: 'equals', label: '${VAR:+alt}', code: '${VAR:+alt}', mode: 'exp' },
+                    ],
+                    'sh-string': [
+                        { id: 'sh-subst-length', icon: 'hashtag', label: '${#VAR}', code: '${#VAR}', mode: 'exp' },
+                        { id: 'sh-subst-trim-prefix-short', icon: 'cut', label: '${VAR#prefix}', code: '${VAR#prefix}', mode: 'exp' },
+                        { id: 'sh-subst-trim-prefix-long', icon: 'cut', label: '${VAR##prefix}', code: '${VAR##prefix}', mode: 'exp' },
+                        { id: 'sh-subst-trim-suffix-short', icon: 'cut', label: '${VAR%suffix}', code: '${VAR%suffix}', mode: 'exp' },
+                        { id: 'sh-subst-trim-suffix-long', icon: 'cut', label: '${VAR%%suffix}', code: '${VAR%%suffix}', mode: 'exp' },
+                        { id: 'sh-subst-replace-first', icon: 'exchange-alt', label: '${VAR/a/b}', code: '${VAR/a/b}', mode: 'exp' },
+                        { id: 'sh-subst-replace-all', icon: 'exchange-alt', label: '${VAR//a/b}', code: '${VAR//a/b}', mode: 'exp' },
+                        { id: 'sh-subst-substr', icon: 'cut', label: '${VAR:offset:len}', code: '${VAR:offset:len}', mode: 'exp' },
+                        { id: 'sh-subst-upper', icon: 'font', label: '${VAR^^}', code: '${VAR^^}', mode: 'exp' },
+                        { id: 'sh-subst-lower', icon: 'font', label: '${VAR,,}', code: '${VAR,,}', mode: 'exp' },
+                    ],
+                    'sh-cmd': [
+                        { id: 'sh-subst-cmd', icon: 'terminal', label: '$(cmd)', code: '$(command)', mode: 'exp' },
+                        { id: 'sh-subst-arith', icon: 'calculator', label: '$((expr))', code: '$(( a + b ))', mode: 'exp' },
+                        { id: 'sh-subst-hex', icon: 'hashtag', label: '$((16#ff))', code: '$((16#ff))', mode: 'exp' },
+                    ],
+                    'csh-mod': [
+                        { id: 'csh-subst-root', icon: 'cut', label: '$VAR:r', code: '$VAR:r', mode: 'exp' },
+                        { id: 'csh-subst-head', icon: 'folder', label: '$VAR:h', code: '$VAR:h', mode: 'exp' },
+                        { id: 'csh-subst-tail', icon: 'file-import', label: '$VAR:t', code: '$VAR:t', mode: 'exp' },
+                        { id: 'csh-subst-ext', icon: 'file-code', label: '$VAR:e', code: '$VAR:e', mode: 'exp' },
+                        { id: 'csh-subst-quote', icon: 'quote-left', label: '$VAR:q', code: '$VAR:q', mode: 'exp' },
+                        { id: 'csh-subst-global', icon: 'globe', label: '$VAR:g', code: '$VAR:g', mode: 'exp' },
+                        { id: 'csh-subst-replace', icon: 'exchange-alt', label: '$VAR:s/a/b/', code: '$VAR:s/a/b/', mode: 'exp' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-control',
+                category: 'Control',
+                category_i18n: { zh: '控制' },
+                icon: 'code-branch',
+                collapsed: false,
+                subgroups: {
+                    none: [
+                        { id: 'sh-break', icon: 'stop', label: 'break', code: 'break', mode: 'line' },
+                        { id: 'sh-continue', icon: 'forward', label: 'continue', code: 'continue', mode: 'line' },
+                    ],
+                    'sh-cond': [
+                        { id: 'sh-if', icon: 'code-branch', label: 'if [ ... ]; then ... fi', code: 'if [ cond ]; then\n    \nfi', mode: 'line' },
+                        { id: 'sh-if-else', icon: 'code-branch', label: 'if ... else ... fi', code: 'if [ cond ]; then\n    \nelse\n    \nfi', mode: 'line' },
+                        { id: 'sh-if-elif', icon: 'code-branch', label: 'if ... elif ... else ... fi', code: 'if [ cond ]; then\n    \nelif [ cond2 ]; then\n    \nelse\n    \nfi', mode: 'line' },
+                        { id: 'sh-if-ext', icon: 'code-branch', label: 'if [[ ... ]]; then ... fi', code: 'if [[ cond ]]; then\n    \nfi', mode: 'line' },
+                        { id: 'sh-case', icon: 'code-branch', label: 'case ... in ... esac', code: 'case "$VAR" in\n    start)\n        \n        ;;\n    stop)\n        \n        ;;\n    *)\n        \n        ;;\nesac', mode: 'line' },
+                    ],
+                    'sh-loop': [
+                        { id: 'sh-for', icon: 'rotate-left', label: 'for x in ...; do ... done', code: 'for x in list; do\n    \ndone', mode: 'line' },
+                        { id: 'sh-for-array', icon: 'rotate-left', label: 'for x in "${arr[@]}"; do ... done', code: 'for x in "${arr[@]}"; do\n    \ndone', mode: 'line' },
+                        { id: 'sh-while', icon: 'rotate-left', label: 'while ...; do ... done', code: 'while [ cond ]; do\n    \ndone', mode: 'line' },
+                        { id: 'sh-until', icon: 'rotate-left', label: 'until ...; do ... done', code: 'until [ cond ]; do\n    \ndone', mode: 'line' },
+                    ],
+                    'csh-cond': [
+                        { id: 'csh-if', icon: 'code-branch', label: 'if ( ... ) then ... endif', code: 'if ( cond ) then\n    \nendif', mode: 'line' },
+                        { id: 'csh-if-else', icon: 'code-branch', label: 'if ... else ... endif', code: 'if ( cond ) then\n    \nelse\n    \nendif', mode: 'line' },
+                        { id: 'csh-switch', icon: 'code-branch', label: 'switch ... endsw', code: 'switch ( $var )\n    case x:\n        \n        breaksw\n    default:\n        \n        breaksw\nendsw', mode: 'line' },
+                    ],
+                    'csh-loop': [
+                        { id: 'csh-foreach', icon: 'rotate-left', label: 'foreach x ( ... ) ... end', code: 'foreach x ( a b c )\n    \nend', mode: 'line' },
+                        { id: 'csh-while', icon: 'rotate-left', label: 'while ( ... ) ... end', code: 'while ( cond )\n    \nend', mode: 'line' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-function',
+                category: 'Function',
+                category_i18n: { zh: '函数 / 别名' },
+                icon: 'code',
+                collapsed: false,
+                subgroups: {
+                    'sh-func': [
+                        { id: 'sh-func', icon: 'code', label: 'foo() { ... }', code: 'foo() {\n    \n}', mode: 'line' },
+                        { id: 'sh-func-return', icon: 'sign-out-alt', label: 'return 0', code: 'return 0', mode: 'line' },
+                        { id: 'sh-func-call', icon: 'bolt', label: 'foo "$arg"', code: 'foo "$arg"', mode: 'line' },
+                    ],
+                    'sh-alias': [
+                        { id: 'sh-alias', icon: 'link', label: 'alias name=value', code: 'alias name=value', mode: 'line' },
+                    ],
+                    'csh-alias': [
+                        { id: 'csh-alias', icon: 'link', label: 'alias name "cmd"', code: 'alias name "command"', mode: 'line' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-io',
+                category: 'I/O',
+                category_i18n: { zh: '输入输出' },
+                icon: 'terminal',
+                collapsed: true,
+                subgroups: {
+                    none: [
+                        { id: 'sh-echo', icon: 'print', label: 'echo "text"', code: 'echo "text"', mode: 'line' },
+                        { id: 'sh-echo-var', icon: 'print', label: 'echo "$VAR"', code: 'echo "$VAR"', mode: 'line' },
+                        { id: 'sh-printf', icon: 'print', label: 'printf "%s\\n" "$VAR"', code: 'printf "%s\\n" "$VAR"', mode: 'line' },
+                        { id: 'sh-redirect-out', icon: 'arrow-right', label: '> file', code: '> file', mode: 'exp' },
+                        { id: 'sh-redirect-append', icon: 'arrow-right', label: '>> file', code: '>> file', mode: 'exp' },
+                        { id: 'sh-redirect-in', icon: 'arrow-right', label: '< file', code: '< file', mode: 'exp' },
+                        { id: 'sh-redirect-err', icon: 'exclamation-triangle', label: '2>&1', code: '2>&1', mode: 'exp' },
+                        { id: 'sh-pipe', icon: 'link', label: '| cmd', code: '| command', mode: 'exp' },
+                        { id: 'sh-tee', icon: 'copy', label: 'tee file', code: 'tee file', mode: 'exp' },
+                        { id: 'sh-tee-append', icon: 'copy', label: 'tee -a file', code: 'tee -a file', mode: 'exp' },
+                        { id: 'sh-redirect-null', icon: 'x', label: '2>/dev/null', code: '2>/dev/null', mode: 'exp' },
+                        { id: 'sh-heredoc', icon: 'file-import', label: '<<EOF ... EOF', code: '<<EOF\n\nEOF', mode: 'line' },
+                    ],
+                    'sh-read': [
+                        { id: 'sh-read', icon: 'keyboard', label: 'read -r VAR', code: 'read -r VAR', mode: 'line' },
+                        { id: 'sh-read-prompt', icon: 'keyboard', label: 'read -p "prompt: " VAR', code: 'read -p "prompt: " VAR', mode: 'line' },
+                        { id: 'sh-read-silent', icon: 'keyboard', label: 'read -s VAR', code: 'read -s VAR', mode: 'line' },
+                        { id: 'sh-read-timeout', icon: 'keyboard', label: 'read -t 5 VAR', code: 'read -t 5 VAR', mode: 'line' },
+                    ],
+                    'sh-redirect': [
+                        { id: 'sh-exec-redirect', icon: 'arrow-right', label: 'exec > file 2>&1', code: 'exec > file 2>&1', mode: 'line' },
+                        { id: 'sh-redirect-both', icon: 'arrow-right', label: '&> file', code: '&> file', mode: 'exp' },
+                        { id: 'sh-heredoc-tab', icon: 'file-import', label: '<<-EOF ... EOF', code: '<<-EOF\n\t\nEOF', mode: 'line' },
+                        { id: 'sh-herestring', icon: 'quote-left', label: '<<< "$VAR"', code: '<<< "$VAR"', mode: 'exp' },
+                    ],
+                    'sh-array': [
+                        { id: 'sh-mapfile', icon: 'file-import', label: 'mapfile -t arr < file', code: 'mapfile -t arr < file', mode: 'line' },
+                        { id: 'sh-readarray', icon: 'file-import', label: 'readarray -t arr < file', code: 'readarray -t arr < file', mode: 'line' },
+                    ],
+                    'csh-read': [
+                        { id: 'csh-read-stdin', icon: 'keyboard', label: '$<', code: '$<', mode: 'exp' },
+                    ],
+                }
+            },
+            {
+                id: 'cat-sh-commands',
+                category: 'Commands',
+                category_i18n: { zh: '常用命令' },
+                icon: 'tools',
+                collapsed: false,
+                subgroups: {
+                    file: [
+                        { id: 'sh-ls', icon: 'list', label: 'ls -la', code: 'ls -la', mode: 'line' },
+                        { id: 'sh-cd', icon: 'folder', label: 'cd dir', code: 'cd dir', mode: 'line' },
+                        { id: 'sh-pwd', icon: 'location-arrow', label: 'pwd', code: 'pwd', mode: 'line' },
+                        { id: 'sh-mkdir', icon: 'folder-plus', label: 'mkdir -p dir', code: 'mkdir -p dir', mode: 'line' },
+                        { id: 'sh-rm', icon: 'trash', label: 'rm -rf path', code: 'rm -rf path', mode: 'line' },
+                        { id: 'sh-cp', icon: 'copy', label: 'cp src dst', code: 'cp src dst', mode: 'line' },
+                        { id: 'sh-mv', icon: 'exchange-alt', label: 'mv src dst', code: 'mv src dst', mode: 'line' },
+                        { id: 'sh-chmod', icon: 'stop', label: 'chmod +x file', code: 'chmod +x file', mode: 'line' },
+                        { id: 'sh-basename', icon: 'cut', label: 'basename path', code: 'basename path', mode: 'exp' },
+                        { id: 'sh-dirname', icon: 'folder', label: 'dirname path', code: 'dirname path', mode: 'exp' },
+                        { id: 'sh-realpath', icon: 'location-arrow', label: 'realpath path', code: 'realpath path', mode: 'exp' },
+                    ],
+                    text: [
+                        { id: 'sh-grep', icon: 'search', label: 'grep "pat" file', code: 'grep "pat" file', mode: 'line' },
+                        { id: 'sh-sed', icon: 'exchange-alt', label: "sed -i 's/a/b/g' file", code: "sed -i 's/a/b/g' file", mode: 'line' },
+                        { id: 'sh-awk', icon: 'list', label: "awk '{print $1}' file", code: "awk '{print $1}' file", mode: 'line' },
+                        { id: 'sh-find', icon: 'search', label: 'find . -name "*.txt"', code: 'find . -name "*.txt"', mode: 'line' },
+                        { id: 'sh-head', icon: 'arrow-up', label: 'head -n 10 file', code: 'head -n 10 file', mode: 'line' },
+                        { id: 'sh-tail', icon: 'arrow-down', label: 'tail -n 10 file', code: 'tail -n 10 file', mode: 'line' },
+                        { id: 'sh-tail-f', icon: 'arrow-down', label: 'tail -f file', code: 'tail -f file', mode: 'line' },
+                        { id: 'sh-wc', icon: 'ruler-horizontal', label: 'wc -l file', code: 'wc -l file', mode: 'line' },
+                        { id: 'sh-sort', icon: 'sort', label: 'sort file', code: 'sort file', mode: 'line' },
+                        { id: 'sh-sort-n', icon: 'sort', label: 'sort -n file', code: 'sort -n file', mode: 'line' },
+                        { id: 'sh-sort-r', icon: 'sort', label: 'sort -r file', code: 'sort -r file', mode: 'line' },
+                        { id: 'sh-sort-u', icon: 'sort', label: 'sort -u file', code: 'sort -u file', mode: 'line' },
+                        { id: 'sh-uniq', icon: 'list', label: 'uniq', code: 'uniq', mode: 'exp' },
+                        { id: 'sh-uniq-c', icon: 'list', label: 'uniq -c', code: 'uniq -c', mode: 'exp' },
+                        { id: 'sh-tr', icon: 'exchange-alt', label: "tr 'a-z' 'A-Z'", code: "tr 'a-z' 'A-Z'", mode: 'exp' },
+                        { id: 'sh-cut', icon: 'cut', label: 'cut -d, -f1', code: 'cut -d, -f1', mode: 'exp' },
+                        { id: 'sh-paste', icon: 'link', label: 'paste a b', code: 'paste a b', mode: 'line' },
+                    ],
+                    system: [
+                        { id: 'sh-ps', icon: 'list', label: 'ps aux', code: 'ps aux', mode: 'line' },
+                        { id: 'sh-kill', icon: 'stop', label: 'kill PID', code: 'kill PID', mode: 'line' },
+                        { id: 'sh-kill-9', icon: 'exclamation-triangle', label: 'kill -9 PID', code: 'kill -9 PID', mode: 'line' },
+                        { id: 'sh-df', icon: 'database', label: 'df -h', code: 'df -h', mode: 'line' },
+                        { id: 'sh-du', icon: 'database', label: 'du -sh path', code: 'du -sh path', mode: 'line' },
+                        { id: 'sh-date', icon: 'history', label: 'date +%Y-%m-%d', code: 'date +%Y-%m-%d', mode: 'exp' },
+                        { id: 'sh-sleep', icon: 'circle', label: 'sleep 5', code: 'sleep 5', mode: 'line' },
+                        { id: 'sh-time', icon: 'history', label: 'time cmd', code: 'time command', mode: 'line' },
+                        { id: 'sh-which', icon: 'search', label: 'which cmd', code: 'which command', mode: 'exp' },
+                        { id: 'sh-command-v', icon: 'search', label: 'command -v cmd', code: 'command -v command', mode: 'exp' },
+                        { id: 'sh-type', icon: 'search', label: 'type cmd', code: 'type command', mode: 'exp' },
+                        { id: 'sh-history', icon: 'history', label: 'history', code: 'history', mode: 'line' },
+                        { id: 'sh-source', icon: 'file-import', label: 'source file', code: 'source file', mode: 'line' },
+                        { id: 'sh-dot-source', icon: 'file-import', label: '. file', code: '. file', mode: 'line' },
+                    ],
+                    task: [
+                        { id: 'sh-wait', icon: 'circle', label: 'wait', code: 'wait', mode: 'line' },
+                        { id: 'sh-nohup', icon: 'play', label: 'nohup cmd &', code: 'nohup command &', mode: 'line' },
+                        { id: 'sh-amp', icon: 'play', label: '&', code: '&', mode: 'exp' },
+                        { id: 'sh-jobs', icon: 'list', label: 'jobs', code: 'jobs', mode: 'line' },
+                        { id: 'sh-fg', icon: 'arrow-up', label: 'fg', code: 'fg', mode: 'line' },
+                        { id: 'sh-bg', icon: 'arrow-down', label: 'bg', code: 'bg', mode: 'line' },
+                    ],
+                    archive: [
+                        { id: 'sh-tar-czf', icon: 'database', label: 'tar -czf out.tar.gz dir', code: 'tar -czf out.tar.gz dir', mode: 'line' },
+                        { id: 'sh-tar-xzf', icon: 'file-import', label: 'tar -xzf in.tar.gz', code: 'tar -xzf in.tar.gz', mode: 'line' },
+                    ],
+                    net: [
+                        { id: 'sh-curl', icon: 'globe', label: 'curl URL', code: 'curl URL', mode: 'line' },
+                        { id: 'sh-wget', icon: 'download', label: 'wget URL', code: 'wget URL', mode: 'line' },
+                        { id: 'sh-ssh', icon: 'terminal', label: 'ssh host', code: 'ssh host', mode: 'line' },
+                        { id: 'sh-scp', icon: 'copy', label: 'scp file host:path', code: 'scp file host:path', mode: 'line' },
+                    ],
+                }
+            },
+        ];
+
         // ==================== 纯文本积木（最小可用集合）====================
         // txt 不追求「语法积木」，只给一份打开就能用的文本积木：
         // 注释 / 分隔线 / 标题 / TODO / Note，加日期 / 列表 / 任务 / 代码块。
@@ -4819,6 +5530,7 @@ if (__bootError) {
             verilog: DEFAULT_BLOCKS_VERILOG,
             cpp: DEFAULT_BLOCKS_CPP,
             python: DEFAULT_BLOCKS_PYTHON,
+            shell: DEFAULT_BLOCKS_SH,
             txt: DEFAULT_BLOCKS_TXT
         };
 
@@ -4880,6 +5592,38 @@ def main():
 
 if __name__ == "__main__":
     main()
+`,
+            shell: `#!/bin/bash
+set -e
+
+# Variables
+NAME="World"
+COUNT=3
+
+# Function
+greet() {
+    local who="$1"
+    echo "Hello, $who!"
+}
+
+# Loop
+for i in $(seq 1 $COUNT); do
+    greet "$NAME"
+done
+
+# Condition
+if [ -f "/etc/passwd" ]; then
+    echo "File exists"
+else
+    echo "File not found"
+fi
+
+# Case
+case "$1" in
+    start) echo "starting" ;;
+    stop)  echo "stopping" ;;
+    *)     echo "usage: $0 {start|stop}" ;;
+esac
 `,
             // 纯文本：首屏留空（txt 的默认内容就是「什么都没有」）
             txt: ''
@@ -5030,6 +5774,46 @@ try:
 except ZeroDivisionError:
     print("Cannot divide by zero")
 `,
+            shell: `#!/bin/bash
+# ===== Header =====
+set -euo pipefail
+
+# ===== Variables =====
+NAME="World"
+COUNT=3
+FILES=(a.txt b.txt c.txt)
+
+# ===== Function =====
+greet() {
+    local who="$1"
+    echo "Hello, $who!"
+}
+
+# ===== Condition =====
+if [ -f "/etc/passwd" ]; then
+    echo "File exists"
+elif [ -d "/etc" ]; then
+    echo "/etc exists"
+else
+    echo "Neither"
+fi
+
+# ===== Loop =====
+for i in $(seq 1 $COUNT); do
+    greet "$NAME"
+done
+
+for f in "\${FILES[@]}"; do
+    echo "Processing $f"
+done
+
+# ===== Case =====
+case "$1" in
+    start) echo "starting" ;;
+    stop)  echo "stopping" ;;
+    *)     echo "usage: $0 {start|stop}" ;;
+esac
+`,
             txt: `Text mode — plain text, no syntax highlighting.
 
 Everything here is literal: what you type is what you see.
@@ -5074,7 +5858,7 @@ TODO: replace this sample with your own notes.
         // 与界面语言（app-lang-v1：zh/en）无关，这里只决定编辑器处理哪种代码。
         // txt 是「纯文本模式」：没有语法高亮，但积木 / 缩进 / 查找替换 / 保存打开一样不少。
         const EDITOR_LANG_KEY = 'editor-language-v1';
-        const EDITOR_LANGS = ['verilog', 'cpp', 'python', 'txt'];
+        const EDITOR_LANGS = ['verilog', 'cpp', 'python', 'shell', 'txt'];
         let currentEditorLang = 'verilog';   // 由 init() 从存储恢复
 
         // 语言相关存储键统一用 `{base}.{lang}` 形式
@@ -5227,11 +6011,20 @@ TODO: replace this sample with your own notes.
         }
 
         /** 当前语言对应的 Prism grammar 名（切换语言时更新）；纯文本没有 grammar，返回 null */
+        // 编辑语言 → Prism grammar 名。null = 纯文本，不需要 grammar。
+        // 没列出的语言（verilog）用默认 'verilog'。
+        const PRISM_LANG_NAME = {
+            txt: null,
+            cpp: 'cpp',
+            python: 'python',
+            shell: 'bash'   // sh / bash / csh 都用 bash 高亮
+        };
+
         function prismLangName() {
-            if (currentEditorLang === 'txt') return null;
-            if (currentEditorLang === 'cpp') return 'cpp';
-            if (currentEditorLang === 'python') return 'python';
-            return 'verilog';
+            // 用 in 判断而不是 ||：txt 的 value 是 null，会被当假值兜底成 verilog。
+            return (currentEditorLang in PRISM_LANG_NAME)
+                ? PRISM_LANG_NAME[currentEditorLang]
+                : 'verilog';
         }
 
         /**
@@ -5265,7 +6058,13 @@ TODO: replace this sample with your own notes.
             if (!span) {
                 span = document.createElement('span');
                 span.id = 'statusHint';
-                bar.appendChild(span);
+                // 插在 lsUsage 之前（lsUsage 永远最右）
+                const lsEl = document.getElementById('lsUsage');
+                if (lsEl && lsEl.parentNode === bar) {
+                    bar.insertBefore(span, lsEl);
+                } else {
+                    bar.appendChild(span);
+                }
             }
             span.dataset.kind = kind || '';
             span.textContent = text;
@@ -6119,6 +6918,29 @@ TODO: replace this sample with your own notes.
                     { matchPrev: /:[ \t]*(#.*)?$/, delta: 1 }
                 ]
             },
+            // Shell（sh / bash / csh 合并一套）：闭合靠关键字与 }，开块靠 then / do / 行尾 )。
+            shell: {
+                indentUnit: '    ',
+                rules: [
+                    // ===== 闭合形态（判本行）=====
+                    // sh: fi / done / esac；csh: endif / endsw
+                    // 注意 } 必须单独成支：} 是非单词字符，后面跟 \b 永远不成立（行尾没有边界）
+                    { match: /^(fi|done|esac|endif|endsw)\b|^\}/, delta: -1 },
+                    // csh 的裸 end（foreach / while / switch 的闭合）；sh 没有裸 end，极少误命中
+                    { match: /^end\b/, delta: -1 },
+
+                    // ===== 开启形态（判上一行）=====
+                    // sh: then / do / else / {；csh: then / else（csh 的 then 常与 if (...) 同行）
+                    // { 必须单独成支：{ 是非单词字符，\b\{ 永远不成立（前面是空格或行首都没有边界）
+                    { matchPrev: /\b(then|do|else)\s*$|\{\s*$/, delta: 1 },
+                    // sh: case ... in
+                    { matchPrev: /\b(case)\b.*\bin\s*$/, delta: 1 },
+                    // csh: foreach x ( ... ) / while ( ... ) 结尾是 ')'
+                    { matchPrev: /\b(foreach|while)\b.*\)\s*$/, delta: 1 },
+                    // csh: switch ( ... ) 结尾
+                    { matchPrev: /\bswitch\b.*\)\s*$/, delta: 1 }
+                ]
+            },
             // 纯文本：rules 为空 → ruleDelta 恒为 0，Enter 保持当前行缩进，不增不减。
             // Tab / Shift+Tab 仍按 indentUnit 机械增删一级，缩进完全由用户手动控制。
             // 默认 4 空格：loadIndentConfig() 会按这里的 indentUnit 长度回落（全局兜底是 3）。
@@ -6128,7 +6950,7 @@ TODO: replace this sample with your own notes.
             }
         };
         // 编辑语言 → LANG_RULES 里的键。C++ 复用 C 的缩进规则（大括号语义相同）
-        const LANG_RULE_KEY = { verilog: 'verilog', cpp: 'c', python: 'python', txt: 'txt' };
+        const LANG_RULE_KEY = { verilog: 'verilog', cpp: 'c', python: 'python', shell: 'shell', txt: 'txt' };
 
         function getLangRules() {
             const key = LANG_RULE_KEY[currentEditorLang] || 'verilog';
@@ -6452,6 +7274,14 @@ TODO: replace this sample with your own notes.
             schedulePushHistory();
         }
 
+        // 行内光标后面已有闭合关键字时，Enter 不再加深（拆分 begin | end 的场景）。
+        // 语言 → 判断函数；没列出的语言不检查。
+        // shell 不需要：then / do 后面紧跟闭合词的情况极少，行内拆分 shell 块不常见。
+        const ENTER_CLOSER_CHECK = {
+            cpp: (rest) => rest.startsWith('}'),
+            verilog: (rest) => /^(end|endmodule|endcase|endfunction|endtask|endgenerate|endprimitive|join|join_any|join_none)\b/.test(rest)
+        };
+
         function handleEnter() {
             const text = codeInput.value;
             const selStart = codeInput.selectionStart;
@@ -6473,8 +7303,8 @@ TODO: replace this sample with your own notes.
             // 行内光标后面已经有闭合关键字时不加深（Enter 拆分 begin | end 的场景）
             const afterCursorTrimmed = afterCursorInLine.trim();
             if (delta > 0) {
-                if (currentEditorLang === 'cpp' && afterCursorTrimmed.startsWith('}')) delta = 0;
-                if (currentEditorLang === 'verilog' && /^(end|endmodule|endcase|endfunction|endtask|endgenerate|endprimitive|join|join_any|join_none)\b/.test(afterCursorTrimmed)) delta = 0;
+                const closerCheck = ENTER_CLOSER_CHECK[currentEditorLang];
+                if (closerCheck && closerCheck(afterCursorTrimmed)) delta = 0;
             }
 
             const nextIndent = applyDelta(currentIndent, delta, indentUnit());
@@ -6614,9 +7444,25 @@ TODO: replace this sample with your own notes.
             return template;
         }
 
+        /**
+         * 把积木 code 里的 {{DATE}} / {{TIME}} 换成插入时的本地日期时间。
+         * 只在插入这一刻替换：面板 label 不替换（否则列表里会显示一堆时间戳），
+         * 代码里想输出字面量大括号可以写 {DATE} 或 {{ DATE }}（带空格，不匹配）。
+         * 格式：2026-11-14 / 15:30:45。
+         */
+        function substituteDateTime(str) {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const date = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+            const time = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+            return String(str)
+                .replace(/\{\{DATE\}\}/g, date)
+                .replace(/\{\{TIME\}\}/g, time);
+        }
+
         function insertCode(template, mode, targetOffset) {
             mode = normalizeMode(mode);   // 兜底：'lc' 等历史值统一为 'exp'
-            let snippet = renderCode(template);
+            let snippet = substituteDateTime(renderCode(template));
             const text = codeInput.value;
             const caretOffset = targetOffset !== undefined ? targetOffset : (codeInput.selectionStart || 0);
 
@@ -7143,6 +7989,7 @@ TODO: replace this sample with your own notes.
             verilog: '.v,.va,.vams,.sv,.svh,.vh,.txt',
             cpp: '.cpp,.cc,.cxx,.c,.h,.hpp,.hxx,.txt',
             python: '.py,.pyw,.pyi,.txt',
+            shell: '.sh,.bash,.zsh,.csh,.tcsh,.ksh,.txt',
             txt: '.txt,.log,.md,.csv,.json,.xml,.yml,.yaml,.ini,.conf,.cfg,.text'
         };
 
@@ -7298,16 +8145,24 @@ TODO: replace this sample with your own notes.
             if (!ok) console.warn('[blocks] 配置未能写入 localStorage（存储不可用或已满），本次改动仅保留在内存中');
         }
 
-        // 子类别固定顺序：Verilog 用 none/v/va，C++ 用 none/c/cpp，Python 用 none/py，
-        // 纯文本只有「通用」。但这里只是「预置键」，用户自定义的子组照常通过 subKeysForCat 列出。
+        // 按编辑语言给「语言专属子类别键」（不含 none——none 恒有，由 blockSubs 拼上）。
+        // 这份数据同时驱动两处：
+        //   1. 添加积木 / 快速生成弹窗里出现哪些子类别 radio（none、custom 由渲染层统一加）
+        //   2. 积木面板里子组标签的样式类（键名 = 类名，见 CSS .subgroup-label.<key>）
+        // 加语言只加一行；加子类别只改对应语言的数组。不在当前语言数组里的键走 'custom'。
         const BLOCK_SUBS_BY_LANG = {
-            verilog: ['none', 'v', 'va'],
-            cpp: ['none', 'c', 'cpp'],
-            python: ['none', 'py'],
-            txt: ['none']
+            verilog: ['v', 'va'],
+            cpp: ['c', 'cpp'],
+            python: ['py'],
+            // shell 的默认子类别就 sh / csh 两个：内置数据里那些 sh-set / csh-cond / file / net
+            // 属于细分分组，不在语言表里 → 标签走 custom 色，弹窗里也不单列 radio
+            //（要往里加积木就在「自定义」里填同一个键名）。
+            shell: ['sh', 'csh'],
+            txt: []
         };
         function blockSubs() {
-            return BLOCK_SUBS_BY_LANG[currentEditorLang] || BLOCK_SUBS_BY_LANG.verilog;
+            const std = BLOCK_SUBS_BY_LANG[currentEditorLang] || BLOCK_SUBS_BY_LANG.verilog;
+            return ['none'].concat(std);
         }
 
         /** 结构校验：宽松通过（允许缺 subgroup 键），真正的修补交给 normalizeBlockStructure */
@@ -7724,14 +8579,17 @@ TODO: replace this sample with your own notes.
             return div;
         }
 
-        // none 不显示标签；v/va/c/cpp 用专属样式，其余（自定义子组）原样显示键名 + custom 样式。
-        // 不按编辑语言分支：导入的数据里 v/va 与 c/cpp 可能同时存在，按语言分支会让另一半显示错色。
+        // 积木面板里的子组标签：none 不显示（通用组不加标题），其余键名原样显示。
         function getSubLabel(subKey) {
             return subKey === 'none' ? '' : subKey;
         }
 
+        // 子组标签样式：键在当前语言的 BLOCK_SUBS_BY_LANG 数组里 → 用该键的类（当前 CSS 只有默认色）；
+        // 其余（自建的 string / pin，shell 那套细分的 sh-set / csh-cond / file / net）一律 'custom' 色。
+        // 键名即类名，CSS 只分「默认色」和「custom 色」两种，保留键名是为了将来想给某个键加专属色时只改 CSS。
         function getSubLabelClass(subKey) {
-            return (subKey === 'v' || subKey === 'va' || subKey === 'c' || subKey === 'cpp') ? subKey : 'custom';
+            const langKeys = BLOCK_SUBS_BY_LANG[currentEditorLang];
+            return (langKeys && langKeys.indexOf(subKey) >= 0) ? subKey : 'custom';
         }
 
         function renderBlocksPanel() {
@@ -8003,37 +8861,18 @@ TODO: replace this sample with your own notes.
         }
 
         // ==================== 新增积木弹窗 ====================
-        /**
-         * 弹窗里的子类别单选按编辑语言重建：Verilog → 通用 / v / va，C++ → 通用 / c / cpp。
-         * 值必须跟着换：C++ 的子类别键是 c/cpp，继续用 v/va 会写进一个不存在的分组。
-         * 文案不走 i18n（v / va / c / cpp 是语言记号，不翻译），「通用」「自定义」照常翻译。
-         * @param {string} containerId 容器 id（两个弹窗共用这段渲染逻辑）
-         */
-        /** 分类里出现过的子类别键：标准键（none/v/va 或 none/c/cpp）在前，其余按出现顺序；
-         *  不传 catId 就取全部分类的并集。这样导入数据里的 c/cpp、string/pin 等也能被选中 */
-        function subKeysForCat(catId) {
-            const std = blockSubs();
-            const cats = catId ? [findCategory(catId)] : BLOCKS;
-            const extra = [];
-            cats.forEach(cat => {
-                if (!cat || !cat.subgroups) return;
-                Object.keys(cat.subgroups).forEach(k => {
-                    if (k !== 'none' && std.indexOf(k) < 0 && extra.indexOf(k) < 0) extra.push(k);
-                });
-            });
-            return std.concat(extra);
-        }
-
+        // 子类别单选按编辑语言重建（Verilog → 通用 / v / va，C++ → 通用 / c / cpp），
+        // 值必须跟着换：C++ 的子类别键是 c/cpp，继续用 v/va 会写进一个不存在的分组。
+        // 添加积木弹窗里的子类别 radio 文字：只有 none 要显示成「通用 / General」，
+        // 其余键名（v / va / c / cpp / py / sh / csh ...）本身就是显示文字，不用 i18n。
         function subRadioLabel(key) {
-            if (key === 'none') return t('subGeneral');
-            if (key === 'v') return t('subV');
-            if (key === 'va') return t('subVa');
-            if (key === 'c') return t('subC');
-            if (key === 'cpp') return t('subCpp');
-            if (key === 'py') return t('subPy');
-            return key;    // 自定义子组原样显示键名
+            return key === 'none' ? t('subGeneral') : key;
         }
 
+        // 子类别 radio 的键：语言默认键（none + BLOCK_SUBS_BY_LANG），后面由调用方补一个 custom。
+        // 不从分类数据里扫子组键 —— 导入 JSON 里的细分分组（sh-set / file / 甚至叫 custom 的）
+        // 已经按子组标题显示在面板里，不该各自变成一个 radio；要往里加积木就在「自定义」里填同一个名字。
+        // catId 保留参数位：两个弹窗（新增 / 快速生成）共用同一套键，调用点不用改。
         function renderAddBlockSubRadios(containerId, catId) {
             const wrap = document.getElementById(containerId || 'addBlockSubRadioGroup');
             if (!wrap) return;
@@ -8053,7 +8892,7 @@ TODO: replace this sample with your own notes.
                 wrap.appendChild(labelEl);
                 return radio;
             };
-            const keys = subKeysForCat(catId);
+            const keys = blockSubs().slice();
             keys.forEach(k => make(k, subRadioLabel(k)));
             make('custom', t('subCustom'));
             const first = wrap.querySelector('input[type="radio"]');
@@ -9744,6 +10583,7 @@ TODO: replace this sample with your own notes.
             verilog: ['.v', '.va', '.vams', '.sv', '.svh', '.vh', '.txt'],
             cpp: ['.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.hxx', '.txt'],
             python: ['.py', '.pyw', '.pyi', '.txt'],
+            shell: ['.sh', '.bash', '.zsh', '.csh', '.tcsh', '.ksh', '.txt'],
             txt: ['.txt', '.log', '.md', '.csv', '.json', '.xml', '.yml', '.yaml', '.ini', '.conf', '.cfg']
         };
         function getSaveExts() {
@@ -10376,29 +11216,48 @@ TODO: replace this sample with your own notes.
                 const row = document.createElement('div');
                 row.className = 'snapshot-item';
 
+                // 第一行：时间（左）+ 大小（右）
+                const metaEl = document.createElement('div');
+                metaEl.className = 'snapshot-meta';
+
                 const timeEl = document.createElement('span');
                 timeEl.className = 'snapshot-time';
                 timeEl.textContent = formatSnapshotTime(snap.time);
-
-                const nameEl = document.createElement('span');
-                nameEl.className = 'snapshot-name';
-                nameEl.textContent = snap.fileName || 'untitled';
-                nameEl.title = snap.fileName || 'untitled';
+                metaEl.appendChild(timeEl);
 
                 const sizeEl = document.createElement('span');
                 sizeEl.className = 'snapshot-size';
                 sizeEl.textContent = formatSnapshotSize(snap.size);
                 sizeEl.title = String(snap.size || 0) + ' bytes';
+                metaEl.appendChild(sizeEl);
 
-                const btn = document.createElement('button');
-                btn.className = 'snapshot-restore-btn';
-                btn.textContent = t('snapRestore');
-                btn.addEventListener('click', () => restoreSnapshot(snap));
+                row.appendChild(metaEl);
 
-                row.appendChild(timeEl);
-                row.appendChild(nameEl);
-                row.appendChild(sizeEl);   // 放在「恢复」前面
-                row.appendChild(btn);
+                // 第二行：文件名 + 恢复 + 删除
+                const infoEl = document.createElement('div');
+                infoEl.className = 'snapshot-info';
+
+                const nameEl = document.createElement('span');
+                nameEl.className = 'snapshot-name';
+                nameEl.textContent = snap.fileName || 'untitled';
+                nameEl.title = snap.fileName || 'untitled';
+                infoEl.appendChild(nameEl);
+
+                const restoreBtn = document.createElement('button');
+                restoreBtn.className = 'snapshot-restore-btn';
+                restoreBtn.textContent = t('snapRestore');
+                restoreBtn.addEventListener('click', () => restoreSnapshot(snap));
+                infoEl.appendChild(restoreBtn);
+
+                // 单条删除：只删这一条，不影响其他（不弹确认，直接删）
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'snapshot-delete-btn';
+                deleteBtn.textContent = t('snapDelete');
+                deleteBtn.title = t('snapDeleteTitle');
+                deleteBtn.addEventListener('click', () => deleteSnapshot(snap));
+                infoEl.appendChild(deleteBtn);
+
+                row.appendChild(infoEl);
                 list.appendChild(row);
             });
         }
@@ -10423,6 +11282,21 @@ TODO: replace this sample with your own notes.
             pushHistoryImmediate();
             closeSnapshotModal();
             flashStatus(t('snapRestored'));
+        }
+
+        /**
+         * 单条删除快照：只从数组里摘掉这一条，其他原样保留。
+         * 不弹确认——快照是「可再生的历史」，误删最多丢一个时间点；
+         * 全局清空（snapshotClearBtn）仍然有 confirm 把关。
+         */
+        function deleteSnapshot(snap) {
+            if (!snap) return;
+            const idx = snapshots.indexOf(snap);
+            if (idx < 0) return;
+            snapshots.splice(idx, 1);
+            saveSnapshots();
+            renderSnapshotList();
+            flashStatus(t('snapDeleted'));
         }
 
         function openSnapshotSettings() {
@@ -11158,6 +12032,9 @@ TODO: replace this sample with your own notes.
             // 快照：加载历史、按设置启动定时器（设置默认开启，60 秒一条）
             loadSnapshots();
             startSnapshotTimer();
+
+            // 状态栏 localStorage 用量（首屏算一次，之后由 SafeStore 写入触发防抖更新）
+            updateLsUsage();
 
             // 命令行启动（scratchverilog.cmd）通过 ?file=file:///... 传入要打开的文件。
             // 需要 --allow-file-access-from-files，否则 file:// 的 fetch 会被拦，这里走 catch。

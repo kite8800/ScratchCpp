@@ -46,10 +46,6 @@ Writing C/C++ from scratch is intimidating for beginners — one missing semicol
 
 Open `ScratchCpp.html` in a modern browser (Chrome, Edge, Firefox, Safari). Prism.js is loaded from CDN.
 
-## Commit and publish
-
-Run `./commitpush.sh` to convert CRLF line endings to LF in all repository HTML files, commit all repository changes, and push the current branch to `origin`. Pushing the configured Pages source branch triggers the normal GitHub Pages deployment.
-
 ----
 
 # 积木 C/C++ 编辑器
