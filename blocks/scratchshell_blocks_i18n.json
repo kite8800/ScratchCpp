@@ -1,0 +1,535 @@
+[
+  {
+    "id": "cat-sh-header",
+    "category": "Header",
+    "category_i18n": { "zh": "脚本头" },
+    "icon": "terminal",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sh-exit-0", "icon": "sign-out-alt", "label": "exit 0", "code": "exit 0", "mode": "line" },
+        { "id": "sh-exit-1", "icon": "sign-out-alt", "label": "exit 1", "code": "exit 1", "mode": "line" },
+        { "id": "sh-true", "icon": "check", "label": "true", "code": "true", "mode": "line" },
+        { "id": "sh-false", "icon": "x", "label": "false", "code": "false", "mode": "line" }
+      ],
+      "sh-shebang": [
+        { "id": "sh-shebang-bash", "icon": "terminal", "label": "#!/bin/bash", "code": "#!/bin/bash", "mode": "line" },
+        { "id": "sh-shebang-sh", "icon": "terminal", "label": "#!/bin/sh", "code": "#!/bin/sh", "mode": "line" }
+      ],
+      "sh-set": [
+        { "id": "sh-set-e", "icon": "bolt", "label": "set -e", "code": "set -e", "mode": "line" },
+        { "id": "sh-set-u", "icon": "bolt", "label": "set -u", "code": "set -u", "mode": "line" },
+        { "id": "sh-set-euo", "icon": "bolt", "label": "set -euo pipefail", "code": "set -euo pipefail", "mode": "line" },
+        { "id": "sh-set-pipefail", "icon": "bolt", "label": "set -o pipefail", "code": "set -o pipefail", "mode": "line" },
+        { "id": "sh-set-x", "icon": "terminal", "label": "set -x", "code": "set -x", "mode": "line" },
+        { "id": "sh-set-plus-x", "icon": "terminal", "label": "set +x", "code": "set +x", "mode": "line" }
+      ],
+      "sh-trap": [
+        { "id": "sh-trap-exit", "icon": "stop", "label": "trap 'cleanup' EXIT", "code": "trap 'cleanup' EXIT", "mode": "line" },
+        { "id": "sh-trap-int", "icon": "exclamation-triangle", "label": "trap 'handler' INT", "code": "trap 'handler' INT", "mode": "line" },
+        { "id": "sh-trap-clear", "icon": "rotate-left", "label": "trap - EXIT", "code": "trap - EXIT", "mode": "line" }
+      ],
+      "csh-shebang": [
+        { "id": "csh-shebang", "icon": "terminal", "label": "#!/bin/csh", "code": "#!/bin/csh", "mode": "line" }
+      ],
+      "csh-onintr": [
+        { "id": "csh-onintr", "icon": "exclamation-triangle", "label": "onintr handler", "code": "onintr handler", "mode": "line" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-args",
+    "category": "Args",
+    "category_i18n": { "zh": "参数" },
+    "icon": "list",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        { "id": "sh-arg-0", "icon": "terminal", "label": "$0", "code": "$0", "mode": "exp" },
+        { "id": "sh-arg-1", "icon": "arrow-right", "label": "$1", "code": "$1", "mode": "exp" },
+        { "id": "sh-arg-2", "icon": "arrow-right", "label": "$2", "code": "$2", "mode": "exp" },
+        { "id": "sh-arg-3", "icon": "arrow-right", "label": "$3", "code": "$3", "mode": "exp" },
+        { "id": "sh-arg-star", "icon": "cubes", "label": "$*", "code": "$*", "mode": "exp" },
+        { "id": "sh-shift", "icon": "rotate-left", "label": "shift", "code": "shift", "mode": "line" },
+        { "id": "sh-shift-2", "icon": "rotate-left", "label": "shift 2", "code": "shift 2", "mode": "line" },
+        { "id": "sh-arg-pid", "icon": "hashtag", "label": "$$", "code": "$$", "mode": "exp" },
+        { "id": "sh-arg-bgpid", "icon": "hashtag", "label": "$!", "code": "$!", "mode": "exp" }
+      ],
+      "sh-positional": [
+        { "id": "sh-arg-10", "icon": "arrow-right", "label": "${10}", "code": "${10}", "mode": "exp" },
+        { "id": "sh-arg-count", "icon": "hashtag", "label": "$#", "code": "$#", "mode": "exp" },
+        { "id": "sh-arg-at", "icon": "cubes", "label": "$@", "code": "$@", "mode": "exp" },
+        { "id": "sh-arg-at-quoted", "icon": "quote-left", "label": "\"$@\"", "code": "\"$@\"", "mode": "exp" }
+      ],
+      "sh-set": [
+        { "id": "sh-set-positional", "icon": "equals", "label": "set -- a b c", "code": "set -- a b c", "mode": "line" }
+      ],
+      "sh-getopts": [
+        { "id": "sh-getopts", "icon": "keyboard", "label": "getopts \"ab:c\" opt", "code": "getopts \"ab:c\" opt", "mode": "line" },
+        { "id": "sh-getopts-while", "icon": "rotate-left", "label": "while getopts ...; do ... done", "code": "while getopts \"ab:c\" opt; do\n    case \"$opt\" in\n        a) ;;\n        b) ;;\n        *) ;;\n    esac\ndone", "mode": "line" }
+      ],
+      "sh-special": [
+        { "id": "sh-special-status", "icon": "exclamation-triangle", "label": "$?", "code": "$?", "mode": "exp" },
+        { "id": "sh-special-underscore", "icon": "arrow-right", "label": "$_", "code": "$_", "mode": "exp" },
+        { "id": "sh-special-flags", "icon": "terminal", "label": "$-", "code": "$-", "mode": "exp" }
+      ],
+      "csh-argv": [
+        { "id": "csh-argv", "icon": "list", "label": "$argv", "code": "$argv", "mode": "exp" },
+        { "id": "csh-argv-count", "icon": "hashtag", "label": "$#argv", "code": "$#argv", "mode": "exp" },
+        { "id": "csh-argv-1", "icon": "arrow-right", "label": "$argv[1]", "code": "$argv[1]", "mode": "exp" }
+      ],
+      "csh-special": [
+        { "id": "csh-special-status", "icon": "exclamation-triangle", "label": "$status", "code": "$status", "mode": "exp" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-variables",
+    "category": "Variables",
+    "category_i18n": { "zh": "变量" },
+    "icon": "database",
+    "collapsed": false,
+    "subgroups": {
+      "sh-local": [
+        { "id": "sh-var-assign", "icon": "equals", "label": "VAR=value", "code": "VAR=value", "mode": "line" },
+        { "id": "sh-var-local", "icon": "location-arrow", "label": "local VAR=value", "code": "local VAR=value", "mode": "line" },
+        { "id": "sh-var-declare", "icon": "code", "label": "declare VAR=value", "code": "declare VAR=value", "mode": "line" },
+        { "id": "sh-var-declare-i", "icon": "calculator", "label": "declare -i n=10", "code": "declare -i n=10", "mode": "line" },
+        { "id": "sh-var-unset", "icon": "x", "label": "unset VAR", "code": "unset VAR", "mode": "line" }
+      ],
+      "sh-readonly": [
+        { "id": "sh-var-readonly", "icon": "stop", "label": "readonly VAR", "code": "readonly VAR", "mode": "line" },
+        { "id": "sh-var-readonly-assign", "icon": "stop", "label": "readonly VAR=value", "code": "readonly VAR=value", "mode": "line" },
+        { "id": "sh-var-declare-r", "icon": "stop", "label": "declare -r VAR=value", "code": "declare -r VAR=value", "mode": "line" }
+      ],
+      "csh-local": [
+        { "id": "csh-var-set", "icon": "equals", "label": "set VAR = value", "code": "set VAR = value", "mode": "line" },
+        { "id": "csh-var-unset", "icon": "x", "label": "unset VAR", "code": "unset VAR", "mode": "line" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-env",
+    "category": "Env",
+    "category_i18n": { "zh": "环境变量" },
+    "icon": "globe",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sh-env-home", "icon": "folder", "label": "$HOME", "code": "$HOME", "mode": "exp" },
+        { "id": "sh-env-path", "icon": "link", "label": "$PATH", "code": "$PATH", "mode": "exp" },
+        { "id": "sh-env-pwd", "icon": "location-arrow", "label": "$PWD", "code": "$PWD", "mode": "exp" },
+        { "id": "sh-env-user", "icon": "globe", "label": "$USER", "code": "$USER", "mode": "exp" },
+        { "id": "sh-env-shell", "icon": "terminal", "label": "$SHELL", "code": "$SHELL", "mode": "exp" },
+        { "id": "sh-env-lang", "icon": "globe", "label": "$LANG", "code": "$LANG", "mode": "exp" },
+        { "id": "sh-env-term", "icon": "terminal", "label": "$TERM", "code": "$TERM", "mode": "exp" }
+      ],
+      "sh-env": [
+        { "id": "sh-var-export", "icon": "upload", "label": "export VAR=value", "code": "export VAR=value", "mode": "line" },
+        { "id": "sh-var-export-alone", "icon": "upload", "label": "export VAR", "code": "export VAR", "mode": "line" },
+        { "id": "sh-var-declare-x", "icon": "upload", "label": "declare -x VAR", "code": "declare -x VAR", "mode": "line" },
+        { "id": "sh-env", "icon": "list", "label": "env", "code": "env", "mode": "line" },
+        { "id": "sh-printenv", "icon": "list", "label": "printenv", "code": "printenv", "mode": "line" },
+        { "id": "sh-printenv-var", "icon": "list", "label": "printenv VAR", "code": "printenv VAR", "mode": "line" },
+        { "id": "sh-env-cmd", "icon": "terminal", "label": "env VAR=value cmd", "code": "env VAR=value command", "mode": "line" }
+      ],
+      "sh-env-vars": [
+        { "id": "sh-env-uid", "icon": "globe", "label": "$UID", "code": "$UID", "mode": "exp" },
+        { "id": "sh-env-hostname", "icon": "globe", "label": "$HOSTNAME", "code": "$HOSTNAME", "mode": "exp" },
+        { "id": "sh-env-random", "icon": "star", "label": "$RANDOM", "code": "$RANDOM", "mode": "exp" },
+        { "id": "sh-env-seconds", "icon": "circle", "label": "$SECONDS", "code": "$SECONDS", "mode": "exp" },
+        { "id": "sh-env-lineno", "icon": "hashtag", "label": "$LINENO", "code": "$LINENO", "mode": "exp" }
+      ],
+      "csh-env": [
+        { "id": "csh-var-setenv", "icon": "upload", "label": "setenv VAR value", "code": "setenv VAR value", "mode": "line" },
+        { "id": "csh-var-unsetenv", "icon": "x", "label": "unsetenv VAR", "code": "unsetenv VAR", "mode": "line" }
+      ],
+      "csh-env-vars": [
+        { "id": "csh-env-user", "icon": "globe", "label": "$user", "code": "$user", "mode": "exp" },
+        { "id": "csh-env-shell", "icon": "terminal", "label": "$shell", "code": "$shell", "mode": "exp" },
+        { "id": "csh-env-cwd", "icon": "location-arrow", "label": "$cwd", "code": "$cwd", "mode": "exp" },
+        { "id": "csh-env-owd", "icon": "location-arrow", "label": "$owd", "code": "$owd", "mode": "exp" },
+        { "id": "csh-env-uid", "icon": "globe", "label": "$uid", "code": "$uid", "mode": "exp" },
+        { "id": "csh-env-host", "icon": "globe", "label": "$host", "code": "$host", "mode": "exp" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-arrays",
+    "category": "Arrays",
+    "category_i18n": { "zh": "数组 / 列表" },
+    "icon": "list",
+    "collapsed": true,
+    "subgroups": {
+      "sh-indexed": [
+        { "id": "sh-arr-assign", "icon": "list", "label": "arr=(a b c)", "code": "arr=(a b c)", "mode": "line" },
+        { "id": "sh-arr-index", "icon": "arrow-right", "label": "${arr[0]}", "code": "${arr[0]}", "mode": "exp" },
+        { "id": "sh-arr-all", "icon": "cubes", "label": "${arr[@]}", "code": "${arr[@]}", "mode": "exp" },
+        { "id": "sh-arr-all-joined", "icon": "cubes", "label": "${arr[*]}", "code": "${arr[*]}", "mode": "exp" },
+        { "id": "sh-arr-count", "icon": "hashtag", "label": "${#arr[@]}", "code": "${#arr[@]}", "mode": "exp" },
+        { "id": "sh-arr-slice", "icon": "cut", "label": "${arr[@]:1:2}", "code": "${arr[@]:1:2}", "mode": "exp" },
+        { "id": "sh-arr-append", "icon": "plus", "label": "arr+=(d)", "code": "arr+=(d)", "mode": "line" },
+        { "id": "sh-arr-unset-index", "icon": "x", "label": "unset arr[1]", "code": "unset arr[1]", "mode": "line" },
+        { "id": "sh-arr-unset", "icon": "trash", "label": "unset arr", "code": "unset arr", "mode": "line" },
+        { "id": "sh-arr-declare", "icon": "code", "label": "declare -a arr", "code": "declare -a arr", "mode": "line" }
+      ],
+      "sh-assoc": [
+        { "id": "sh-assoc-declare", "icon": "database", "label": "declare -A map", "code": "declare -A map", "mode": "line" },
+        { "id": "sh-assoc-set", "icon": "equals", "label": "map[key]=value", "code": "map[key]=value", "mode": "line" },
+        { "id": "sh-assoc-get", "icon": "arrow-right", "label": "${map[key]}", "code": "${map[key]}", "mode": "exp" }
+      ],
+      "sh-io": [
+        { "id": "sh-arr-mapfile", "icon": "file-import", "label": "mapfile -t arr < file", "code": "mapfile -t arr < file", "mode": "line" },
+        { "id": "sh-arr-readarray", "icon": "file-import", "label": "readarray -t arr < file", "code": "readarray -t arr < file", "mode": "line" }
+      ],
+      "sh-loop": [
+        { "id": "sh-arr-for", "icon": "rotate-left", "label": "for x in \"${arr[@]}\"; do ... done", "code": "for x in \"${arr[@]}\"; do\n    \ndone", "mode": "line" }
+      ],
+      "csh-list": [
+        { "id": "csh-arr-set", "icon": "list", "label": "set arr = (a b c)", "code": "set arr = (a b c)", "mode": "line" },
+        { "id": "csh-arr-index", "icon": "arrow-right", "label": "$arr[1]", "code": "$arr[1]", "mode": "exp" },
+        { "id": "csh-arr-all", "icon": "cubes", "label": "$arr[*]", "code": "$arr[*]", "mode": "exp" },
+        { "id": "csh-arr-count", "icon": "hashtag", "label": "$#arr", "code": "$#arr", "mode": "exp" },
+        { "id": "csh-arr-append", "icon": "plus", "label": "set arr = ($arr d)", "code": "set arr = ($arr d)", "mode": "line" },
+        { "id": "csh-arr-shift", "icon": "rotate-left", "label": "shift arr", "code": "shift arr", "mode": "line" },
+        { "id": "csh-arr-foreach", "icon": "rotate-left", "label": "foreach x ( $arr ) ... end", "code": "foreach x ( $arr )\n    \nend", "mode": "line" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-operators",
+    "category": "Operators",
+    "category_i18n": { "zh": "运算符 / 测试" },
+    "icon": "calculator",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        { "id": "sh-op-add", "icon": "plus", "label": "a + b", "code": "a + b", "mode": "exp" },
+        { "id": "sh-op-sub", "icon": "minus", "label": "a - b", "code": "a - b", "mode": "exp" },
+        { "id": "sh-op-mul", "icon": "times", "label": "a * b", "code": "a * b", "mode": "exp" },
+        { "id": "sh-op-div", "icon": "divide", "label": "a / b", "code": "a / b", "mode": "exp" },
+        { "id": "sh-op-mod", "icon": "percent", "label": "a % b", "code": "a % b", "mode": "exp" },
+        { "id": "sh-op-eq", "icon": "equals", "label": "a == b", "code": "a == b", "mode": "exp" },
+        { "id": "sh-op-neq", "icon": "equals", "label": "a != b", "code": "a != b", "mode": "exp" },
+        { "id": "sh-op-lt", "icon": "arrow-down", "label": "a < b", "code": "a < b", "mode": "exp" },
+        { "id": "sh-op-gt", "icon": "arrow-up", "label": "a > b", "code": "a > b", "mode": "exp" },
+        { "id": "sh-op-and", "icon": "code-branch", "label": "a && b", "code": "a && b", "mode": "exp" },
+        { "id": "sh-op-or", "icon": "code-branch", "label": "a || b", "code": "a || b", "mode": "exp" },
+        { "id": "sh-op-not", "icon": "exclamation-triangle", "label": "! a", "code": "! a", "mode": "exp" }
+      ],
+      "sh-arith": [
+        { "id": "sh-arith-add", "icon": "plus", "label": "$((a + b))", "code": "$((a + b))", "mode": "exp" },
+        { "id": "sh-arith-sub", "icon": "minus", "label": "$((a - b))", "code": "$((a - b))", "mode": "exp" },
+        { "id": "sh-arith-mul", "icon": "times", "label": "$((a * b))", "code": "$((a * b))", "mode": "exp" },
+        { "id": "sh-arith-div", "icon": "divide", "label": "$((a / b))", "code": "$((a / b))", "mode": "exp" },
+        { "id": "sh-arith-mod", "icon": "percent", "label": "$((a % b))", "code": "$((a % b))", "mode": "exp" },
+        { "id": "sh-arith-pow", "icon": "superscript", "label": "$((a ** b))", "code": "$((a ** b))", "mode": "exp" },
+        { "id": "sh-arith-hex", "icon": "hashtag", "label": "$((16#ff))", "code": "$((16#ff))", "mode": "exp" },
+        { "id": "sh-arith-inc-post", "icon": "plus", "label": "$((i++))", "code": "$((i++))", "mode": "exp" },
+        { "id": "sh-arith-inc-pre", "icon": "plus", "label": "$((++i))", "code": "$((++i))", "mode": "exp" },
+        { "id": "sh-arith-dec-post", "icon": "minus", "label": "$((i--))", "code": "$((i--))", "mode": "exp" },
+        { "id": "sh-arith-dec-pre", "icon": "minus", "label": "$((--i))", "code": "$((--i))", "mode": "exp" },
+        { "id": "sh-let-add", "icon": "calculator", "label": "let \"x = a + b\"", "code": "let \"x = a + b\"", "mode": "line" },
+        { "id": "sh-dparen-inc", "icon": "plus", "label": "((i++))", "code": "((i++))", "mode": "line" },
+        { "id": "sh-dparen-dec", "icon": "minus", "label": "((i--))", "code": "((i--))", "mode": "line" },
+        { "id": "sh-dparen-add", "icon": "plus", "label": "((i += 1))", "code": "((i += 1))", "mode": "line" },
+        { "id": "sh-dparen-sub", "icon": "minus", "label": "((i -= 1))", "code": "((i -= 1))", "mode": "line" }
+      ],
+      "sh-test-file": [
+        { "id": "sh-test-e", "icon": "search", "label": "[ -e path ]", "code": "[ -e path ]", "mode": "exp" },
+        { "id": "sh-test-f", "icon": "file-import", "label": "[ -f file ]", "code": "[ -f file ]", "mode": "exp" },
+        { "id": "sh-test-d", "icon": "folder", "label": "[ -d dir ]", "code": "[ -d dir ]", "mode": "exp" },
+        { "id": "sh-test-r", "icon": "search", "label": "[ -r file ]", "code": "[ -r file ]", "mode": "exp" },
+        { "id": "sh-test-w", "icon": "save", "label": "[ -w file ]", "code": "[ -w file ]", "mode": "exp" },
+        { "id": "sh-test-x", "icon": "play", "label": "[ -x file ]", "code": "[ -x file ]", "mode": "exp" },
+        { "id": "sh-test-s", "icon": "database", "label": "[ -s file ]", "code": "[ -s file ]", "mode": "exp" },
+        { "id": "sh-test-L", "icon": "link", "label": "[ -L path ]", "code": "[ -L path ]", "mode": "exp" },
+        { "id": "sh-test-h", "icon": "link", "label": "[ -h path ]", "code": "[ -h path ]", "mode": "exp" },
+        { "id": "sh-test-p", "icon": "link", "label": "[ -p path ]", "code": "[ -p path ]", "mode": "exp" },
+        { "id": "sh-test-S", "icon": "link", "label": "[ -S path ]", "code": "[ -S path ]", "mode": "exp" },
+        { "id": "sh-test-b", "icon": "database", "label": "[ -b path ]", "code": "[ -b path ]", "mode": "exp" },
+        { "id": "sh-test-c", "icon": "terminal", "label": "[ -c path ]", "code": "[ -c path ]", "mode": "exp" },
+        { "id": "sh-test-t", "icon": "terminal", "label": "[ -t fd ]", "code": "[ -t fd ]", "mode": "exp" },
+        { "id": "sh-test-nt", "icon": "arrow-up", "label": "[ file1 -nt file2 ]", "code": "[ file1 -nt file2 ]", "mode": "exp" },
+        { "id": "sh-test-ot", "icon": "arrow-down", "label": "[ file1 -ot file2 ]", "code": "[ file1 -ot file2 ]", "mode": "exp" },
+        { "id": "sh-test-ef", "icon": "equals", "label": "[ file1 -ef file2 ]", "code": "[ file1 -ef file2 ]", "mode": "exp" }
+      ],
+      "sh-test-string": [
+        { "id": "sh-test-z", "icon": "circle", "label": "[ -z \"$VAR\" ]", "code": "[ -z \"$VAR\" ]", "mode": "exp" },
+        { "id": "sh-test-n", "icon": "circle", "label": "[ -n \"$VAR\" ]", "code": "[ -n \"$VAR\" ]", "mode": "exp" },
+        { "id": "sh-test-str-eq", "icon": "equals", "label": "[ \"$a\" = \"$b\" ]", "code": "[ \"$a\" = \"$b\" ]", "mode": "exp" },
+        { "id": "sh-test-str-neq", "icon": "equals", "label": "[ \"$a\" != \"$b\" ]", "code": "[ \"$a\" != \"$b\" ]", "mode": "exp" }
+      ],
+      "sh-test-num": [
+        { "id": "sh-test-num-eq", "icon": "equals", "label": "[ \"$a\" -eq \"$b\" ]", "code": "[ \"$a\" -eq \"$b\" ]", "mode": "exp" },
+        { "id": "sh-test-num-neq", "icon": "equals", "label": "[ \"$a\" -ne \"$b\" ]", "code": "[ \"$a\" -ne \"$b\" ]", "mode": "exp" },
+        { "id": "sh-test-num-lt", "icon": "arrow-down", "label": "[ \"$a\" -lt \"$b\" ]", "code": "[ \"$a\" -lt \"$b\" ]", "mode": "exp" },
+        { "id": "sh-test-num-gt", "icon": "arrow-up", "label": "[ \"$a\" -gt \"$b\" ]", "code": "[ \"$a\" -gt \"$b\" ]", "mode": "exp" },
+        { "id": "sh-test-num-le", "icon": "arrow-down", "label": "[ \"$a\" -le \"$b\" ]", "code": "[ \"$a\" -le \"$b\" ]", "mode": "exp" },
+        { "id": "sh-test-num-ge", "icon": "arrow-up", "label": "[ \"$a\" -ge \"$b\" ]", "code": "[ \"$a\" -ge \"$b\" ]", "mode": "exp" }
+      ],
+      "sh-test-ext": [
+        { "id": "sh-ext-str-eq", "icon": "equals", "label": "[[ \"$a\" == \"$b\" ]]", "code": "[[ \"$a\" == \"$b\" ]]", "mode": "exp" },
+        { "id": "sh-ext-str-neq", "icon": "equals", "label": "[[ \"$a\" != \"$b\" ]]", "code": "[[ \"$a\" != \"$b\" ]]", "mode": "exp" },
+        { "id": "sh-ext-regex", "icon": "search", "label": "[[ \"$a\" =~ regex ]]", "code": "[[ \"$a\" =~ regex ]]", "mode": "exp" },
+        { "id": "sh-ext-lt", "icon": "arrow-down", "label": "[[ \"$a\" < \"$b\" ]]", "code": "[[ \"$a\" < \"$b\" ]]", "mode": "exp" },
+        { "id": "sh-ext-gt", "icon": "arrow-up", "label": "[[ \"$a\" > \"$b\" ]]", "code": "[[ \"$a\" > \"$b\" ]]", "mode": "exp" },
+        { "id": "sh-ext-and", "icon": "code-branch", "label": "[[ -f file && -d dir ]]", "code": "[[ -f file && -d dir ]]", "mode": "exp" },
+        { "id": "sh-ext-or", "icon": "code-branch", "label": "[[ -f file || -d dir ]]", "code": "[[ -f file || -d dir ]]", "mode": "exp" }
+      ],
+      "csh-arith": [
+        { "id": "csh-arith-add", "icon": "plus", "label": "@ x = $a + $b", "code": "@ x = $a + $b", "mode": "line" },
+        { "id": "csh-arith-sub", "icon": "minus", "label": "@ x = $a - $b", "code": "@ x = $a - $b", "mode": "line" },
+        { "id": "csh-arith-mul", "icon": "times", "label": "@ x = $a * $b", "code": "@ x = $a * $b", "mode": "line" },
+        { "id": "csh-arith-div", "icon": "divide", "label": "@ x = $a / $b", "code": "@ x = $a / $b", "mode": "line" },
+        { "id": "csh-arith-mod", "icon": "percent", "label": "@ x = $a % $b", "code": "@ x = $a % $b", "mode": "line" },
+        { "id": "csh-arith-inc", "icon": "plus", "label": "@ x++", "code": "@ x++", "mode": "line" },
+        { "id": "csh-arith-dec", "icon": "minus", "label": "@ x--", "code": "@ x--", "mode": "line" },
+        { "id": "csh-arith-add-assign", "icon": "plus", "label": "@ x += 1", "code": "@ x += 1", "mode": "line" },
+        { "id": "csh-arith-sub-assign", "icon": "minus", "label": "@ x -= 1", "code": "@ x -= 1", "mode": "line" },
+        { "id": "csh-arith-mul-assign", "icon": "times", "label": "@ x *= 2", "code": "@ x *= 2", "mode": "line" },
+        { "id": "csh-arith-div-assign", "icon": "divide", "label": "@ x /= 2", "code": "@ x /= 2", "mode": "line" }
+      ],
+      "csh-test-file": [
+        { "id": "csh-test-e", "icon": "search", "label": "if ( -e path )", "code": "if ( -e path )", "mode": "exp" },
+        { "id": "csh-test-f", "icon": "file-import", "label": "if ( -f file )", "code": "if ( -f file )", "mode": "exp" },
+        { "id": "csh-test-d", "icon": "folder", "label": "if ( -d dir )", "code": "if ( -d dir )", "mode": "exp" },
+        { "id": "csh-test-r", "icon": "search", "label": "if ( -r file )", "code": "if ( -r file )", "mode": "exp" },
+        { "id": "csh-test-w", "icon": "save", "label": "if ( -w file )", "code": "if ( -w file )", "mode": "exp" },
+        { "id": "csh-test-x", "icon": "play", "label": "if ( -x file )", "code": "if ( -x file )", "mode": "exp" }
+      ],
+      "csh-test-string": [
+        { "id": "csh-test-z", "icon": "circle", "label": "if ( -z \"$VAR\" )", "code": "if ( -z \"$VAR\" )", "mode": "exp" },
+        { "id": "csh-test-n", "icon": "circle", "label": "if ( -n \"$VAR\" )", "code": "if ( -n \"$VAR\" )", "mode": "exp" },
+        { "id": "csh-test-str-eq", "icon": "equals", "label": "if ( \"$a\" == \"$b\" )", "code": "if ( \"$a\" == \"$b\" )", "mode": "exp" },
+        { "id": "csh-test-str-neq", "icon": "equals", "label": "if ( \"$a\" != \"$b\" )", "code": "if ( \"$a\" != \"$b\" )", "mode": "exp" }
+      ],
+      "csh-test-num": [
+        { "id": "csh-test-num-eq", "icon": "equals", "label": "if ( $a == $b )", "code": "if ( $a == $b )", "mode": "exp" },
+        { "id": "csh-test-num-neq", "icon": "equals", "label": "if ( $a != $b )", "code": "if ( $a != $b )", "mode": "exp" },
+        { "id": "csh-test-num-lt", "icon": "arrow-down", "label": "if ( $a < $b )", "code": "if ( $a < $b )", "mode": "exp" },
+        { "id": "csh-test-num-gt", "icon": "arrow-up", "label": "if ( $a > $b )", "code": "if ( $a > $b )", "mode": "exp" },
+        { "id": "csh-test-num-le", "icon": "arrow-down", "label": "if ( $a <= $b )", "code": "if ( $a <= $b )", "mode": "exp" },
+        { "id": "csh-test-num-ge", "icon": "arrow-up", "label": "if ( $a >= $b )", "code": "if ( $a >= $b )", "mode": "exp" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-subst",
+    "category": "Substitution",
+    "category_i18n": { "zh": "替换 / 展开" },
+    "icon": "exchange-alt",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        { "id": "sh-subst-var", "icon": "arrow-right", "label": "$VAR", "code": "$VAR", "mode": "exp" },
+        { "id": "sh-subst-var-brace", "icon": "arrow-right", "label": "${VAR}", "code": "${VAR}", "mode": "exp" },
+        { "id": "sh-subst-cmd-old", "icon": "terminal", "label": "`cmd`", "code": "`command`", "mode": "exp" }
+      ],
+      "sh-default": [
+        { "id": "sh-subst-default", "icon": "equals", "label": "${VAR:-default}", "code": "${VAR:-default}", "mode": "exp" },
+        { "id": "sh-subst-assign-default", "icon": "equals", "label": "${VAR:=default}", "code": "${VAR:=default}", "mode": "exp" },
+        { "id": "sh-subst-required", "icon": "exclamation-triangle", "label": "${VAR:?msg}", "code": "${VAR:?msg}", "mode": "exp" },
+        { "id": "sh-subst-alt", "icon": "equals", "label": "${VAR:+alt}", "code": "${VAR:+alt}", "mode": "exp" }
+      ],
+      "sh-string": [
+        { "id": "sh-subst-length", "icon": "hashtag", "label": "${#VAR}", "code": "${#VAR}", "mode": "exp" },
+        { "id": "sh-subst-trim-prefix-short", "icon": "cut", "label": "${VAR#prefix}", "code": "${VAR#prefix}", "mode": "exp" },
+        { "id": "sh-subst-trim-prefix-long", "icon": "cut", "label": "${VAR##prefix}", "code": "${VAR##prefix}", "mode": "exp" },
+        { "id": "sh-subst-trim-suffix-short", "icon": "cut", "label": "${VAR%suffix}", "code": "${VAR%suffix}", "mode": "exp" },
+        { "id": "sh-subst-trim-suffix-long", "icon": "cut", "label": "${VAR%%suffix}", "code": "${VAR%%suffix}", "mode": "exp" },
+        { "id": "sh-subst-replace-first", "icon": "exchange-alt", "label": "${VAR/a/b}", "code": "${VAR/a/b}", "mode": "exp" },
+        { "id": "sh-subst-replace-all", "icon": "exchange-alt", "label": "${VAR//a/b}", "code": "${VAR//a/b}", "mode": "exp" },
+        { "id": "sh-subst-substr", "icon": "cut", "label": "${VAR:offset:len}", "code": "${VAR:offset:len}", "mode": "exp" },
+        { "id": "sh-subst-upper", "icon": "font", "label": "${VAR^^}", "code": "${VAR^^}", "mode": "exp" },
+        { "id": "sh-subst-lower", "icon": "font", "label": "${VAR,,}", "code": "${VAR,,}", "mode": "exp" }
+      ],
+      "sh-cmd": [
+        { "id": "sh-subst-cmd", "icon": "terminal", "label": "$(cmd)", "code": "$(command)", "mode": "exp" },
+        { "id": "sh-subst-arith", "icon": "calculator", "label": "$((expr))", "code": "$(( a + b ))", "mode": "exp" },
+        { "id": "sh-subst-hex", "icon": "hashtag", "label": "$((16#ff))", "code": "$((16#ff))", "mode": "exp" }
+      ],
+      "csh-mod": [
+        { "id": "csh-subst-root", "icon": "cut", "label": "$VAR:r", "code": "$VAR:r", "mode": "exp" },
+        { "id": "csh-subst-head", "icon": "folder", "label": "$VAR:h", "code": "$VAR:h", "mode": "exp" },
+        { "id": "csh-subst-tail", "icon": "file-import", "label": "$VAR:t", "code": "$VAR:t", "mode": "exp" },
+        { "id": "csh-subst-ext", "icon": "file-code", "label": "$VAR:e", "code": "$VAR:e", "mode": "exp" },
+        { "id": "csh-subst-quote", "icon": "quote-left", "label": "$VAR:q", "code": "$VAR:q", "mode": "exp" },
+        { "id": "csh-subst-global", "icon": "globe", "label": "$VAR:g", "code": "$VAR:g", "mode": "exp" },
+        { "id": "csh-subst-replace", "icon": "exchange-alt", "label": "$VAR:s/a/b/", "code": "$VAR:s/a/b/", "mode": "exp" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-control",
+    "category": "Control",
+    "category_i18n": { "zh": "控制" },
+    "icon": "code-branch",
+    "collapsed": false,
+    "subgroups": {
+      "none": [
+        { "id": "sh-break", "icon": "stop", "label": "break", "code": "break", "mode": "line" },
+        { "id": "sh-continue", "icon": "forward", "label": "continue", "code": "continue", "mode": "line" }
+      ],
+      "sh-cond": [
+        { "id": "sh-if", "icon": "code-branch", "label": "if [ ... ]; then ... fi", "code": "if [ cond ]; then\n    \nfi", "mode": "line" },
+        { "id": "sh-if-else", "icon": "code-branch", "label": "if ... else ... fi", "code": "if [ cond ]; then\n    \nelse\n    \nfi", "mode": "line" },
+        { "id": "sh-if-elif", "icon": "code-branch", "label": "if ... elif ... else ... fi", "code": "if [ cond ]; then\n    \nelif [ cond2 ]; then\n    \nelse\n    \nfi", "mode": "line" },
+        { "id": "sh-if-ext", "icon": "code-branch", "label": "if [[ ... ]]; then ... fi", "code": "if [[ cond ]]; then\n    \nfi", "mode": "line" },
+        { "id": "sh-case", "icon": "code-branch", "label": "case ... in ... esac", "code": "case \"$VAR\" in\n    start)\n        \n        ;;\n    stop)\n        \n        ;;\n    *)\n        \n        ;;\nesac", "mode": "line" }
+      ],
+      "sh-loop": [
+        { "id": "sh-for", "icon": "rotate-left", "label": "for x in ...; do ... done", "code": "for x in list; do\n    \ndone", "mode": "line" },
+        { "id": "sh-for-array", "icon": "rotate-left", "label": "for x in \"${arr[@]}\"; do ... done", "code": "for x in \"${arr[@]}\"; do\n    \ndone", "mode": "line" },
+        { "id": "sh-while", "icon": "rotate-left", "label": "while ...; do ... done", "code": "while [ cond ]; do\n    \ndone", "mode": "line" },
+        { "id": "sh-until", "icon": "rotate-left", "label": "until ...; do ... done", "code": "until [ cond ]; do\n    \ndone", "mode": "line" }
+      ],
+      "csh-cond": [
+        { "id": "csh-if", "icon": "code-branch", "label": "if ( ... ) then ... endif", "code": "if ( cond ) then\n    \nendif", "mode": "line" },
+        { "id": "csh-if-else", "icon": "code-branch", "label": "if ... else ... endif", "code": "if ( cond ) then\n    \nelse\n    \nendif", "mode": "line" },
+        { "id": "csh-switch", "icon": "code-branch", "label": "switch ... endsw", "code": "switch ( $var )\n    case x:\n        \n        breaksw\n    default:\n        \n        breaksw\nendsw", "mode": "line" }
+      ],
+      "csh-loop": [
+        { "id": "csh-foreach", "icon": "rotate-left", "label": "foreach x ( ... ) ... end", "code": "foreach x ( a b c )\n    \nend", "mode": "line" },
+        { "id": "csh-while", "icon": "rotate-left", "label": "while ( ... ) ... end", "code": "while ( cond )\n    \nend", "mode": "line" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-function",
+    "category": "Function",
+    "category_i18n": { "zh": "函数 / 别名" },
+    "icon": "code",
+    "collapsed": false,
+    "subgroups": {
+      "sh-func": [
+        { "id": "sh-func", "icon": "code", "label": "foo() { ... }", "code": "foo() {\n    \n}", "mode": "line" },
+        { "id": "sh-func-return", "icon": "sign-out-alt", "label": "return 0", "code": "return 0", "mode": "line" },
+        { "id": "sh-func-call", "icon": "bolt", "label": "foo \"$arg\"", "code": "foo \"$arg\"", "mode": "line" }
+      ],
+      "sh-alias": [
+        { "id": "sh-alias", "icon": "link", "label": "alias name=value", "code": "alias name=value", "mode": "line" }
+      ],
+      "csh-alias": [
+        { "id": "csh-alias", "icon": "link", "label": "alias name \"cmd\"", "code": "alias name \"command\"", "mode": "line" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-io",
+    "category": "I/O",
+    "category_i18n": { "zh": "输入输出" },
+    "icon": "terminal",
+    "collapsed": true,
+    "subgroups": {
+      "none": [
+        { "id": "sh-echo", "icon": "print", "label": "echo \"text\"", "code": "echo \"text\"", "mode": "line" },
+        { "id": "sh-echo-var", "icon": "print", "label": "echo \"$VAR\"", "code": "echo \"$VAR\"", "mode": "line" },
+        { "id": "sh-printf", "icon": "print", "label": "printf \"%s\\n\" \"$VAR\"", "code": "printf \"%s\\n\" \"$VAR\"", "mode": "line" },
+        { "id": "sh-redirect-out", "icon": "arrow-right", "label": "> file", "code": "> file", "mode": "exp" },
+        { "id": "sh-redirect-append", "icon": "arrow-right", "label": ">> file", "code": ">> file", "mode": "exp" },
+        { "id": "sh-redirect-in", "icon": "arrow-right", "label": "< file", "code": "< file", "mode": "exp" },
+        { "id": "sh-redirect-err", "icon": "exclamation-triangle", "label": "2>&1", "code": "2>&1", "mode": "exp" },
+        { "id": "sh-pipe", "icon": "link", "label": "| cmd", "code": "| command", "mode": "exp" },
+        { "id": "sh-tee", "icon": "copy", "label": "tee file", "code": "tee file", "mode": "exp" },
+        { "id": "sh-tee-append", "icon": "copy", "label": "tee -a file", "code": "tee -a file", "mode": "exp" },
+        { "id": "sh-redirect-null", "icon": "x", "label": "2>/dev/null", "code": "2>/dev/null", "mode": "exp" },
+        { "id": "sh-heredoc", "icon": "file-import", "label": "<<EOF ... EOF", "code": "<<EOF\n\nEOF", "mode": "line" }
+      ],
+      "sh-read": [
+        { "id": "sh-read", "icon": "keyboard", "label": "read -r VAR", "code": "read -r VAR", "mode": "line" },
+        { "id": "sh-read-prompt", "icon": "keyboard", "label": "read -p \"prompt: \" VAR", "code": "read -p \"prompt: \" VAR", "mode": "line" },
+        { "id": "sh-read-silent", "icon": "keyboard", "label": "read -s VAR", "code": "read -s VAR", "mode": "line" },
+        { "id": "sh-read-timeout", "icon": "keyboard", "label": "read -t 5 VAR", "code": "read -t 5 VAR", "mode": "line" }
+      ],
+      "sh-redirect": [
+        { "id": "sh-exec-redirect", "icon": "arrow-right", "label": "exec > file 2>&1", "code": "exec > file 2>&1", "mode": "line" },
+        { "id": "sh-redirect-both", "icon": "arrow-right", "label": "&> file", "code": "&> file", "mode": "exp" },
+        { "id": "sh-heredoc-tab", "icon": "file-import", "label": "<<-EOF ... EOF", "code": "<<-EOF\n\t\nEOF", "mode": "line" },
+        { "id": "sh-herestring", "icon": "quote-left", "label": "<<< \"$VAR\"", "code": "<<< \"$VAR\"", "mode": "exp" }
+      ],
+      "sh-array": [
+        { "id": "sh-mapfile", "icon": "file-import", "label": "mapfile -t arr < file", "code": "mapfile -t arr < file", "mode": "line" },
+        { "id": "sh-readarray", "icon": "file-import", "label": "readarray -t arr < file", "code": "readarray -t arr < file", "mode": "line" }
+      ],
+      "csh-read": [
+        { "id": "csh-read-stdin", "icon": "keyboard", "label": "$<", "code": "$<", "mode": "exp" }
+      ]
+    }
+  },
+  {
+    "id": "cat-sh-commands",
+    "category": "Commands",
+    "category_i18n": { "zh": "常用命令" },
+    "icon": "tools",
+    "collapsed": false,
+    "subgroups": {
+      "file": [
+        { "id": "sh-ls", "icon": "list", "label": "ls -la", "code": "ls -la", "mode": "line" },
+        { "id": "sh-cd", "icon": "folder", "label": "cd dir", "code": "cd dir", "mode": "line" },
+        { "id": "sh-pwd", "icon": "location-arrow", "label": "pwd", "code": "pwd", "mode": "line" },
+        { "id": "sh-mkdir", "icon": "folder-plus", "label": "mkdir -p dir", "code": "mkdir -p dir", "mode": "line" },
+        { "id": "sh-rm", "icon": "trash", "label": "rm -rf path", "code": "rm -rf path", "mode": "line" },
+        { "id": "sh-cp", "icon": "copy", "label": "cp src dst", "code": "cp src dst", "mode": "line" },
+        { "id": "sh-mv", "icon": "exchange-alt", "label": "mv src dst", "code": "mv src dst", "mode": "line" },
+        { "id": "sh-chmod", "icon": "stop", "label": "chmod +x file", "code": "chmod +x file", "mode": "line" },
+        { "id": "sh-basename", "icon": "cut", "label": "basename path", "code": "basename path", "mode": "exp" },
+        { "id": "sh-dirname", "icon": "folder", "label": "dirname path", "code": "dirname path", "mode": "exp" },
+        { "id": "sh-realpath", "icon": "location-arrow", "label": "realpath path", "code": "realpath path", "mode": "exp" }
+      ],
+      "text": [
+        { "id": "sh-grep", "icon": "search", "label": "grep \"pat\" file", "code": "grep \"pat\" file", "mode": "line" },
+        { "id": "sh-sed", "icon": "exchange-alt", "label": "sed -i 's/a/b/g' file", "code": "sed -i 's/a/b/g' file", "mode": "line" },
+        { "id": "sh-awk", "icon": "list", "label": "awk '{print $1}' file", "code": "awk '{print $1}' file", "mode": "line" },
+        { "id": "sh-find", "icon": "search", "label": "find . -name \"*.txt\"", "code": "find . -name \"*.txt\"", "mode": "line" },
+        { "id": "sh-head", "icon": "arrow-up", "label": "head -n 10 file", "code": "head -n 10 file", "mode": "line" },
+        { "id": "sh-tail", "icon": "arrow-down", "label": "tail -n 10 file", "code": "tail -n 10 file", "mode": "line" },
+        { "id": "sh-tail-f", "icon": "arrow-down", "label": "tail -f file", "code": "tail -f file", "mode": "line" },
+        { "id": "sh-wc", "icon": "ruler-horizontal", "label": "wc -l file", "code": "wc -l file", "mode": "line" },
+        { "id": "sh-sort", "icon": "sort", "label": "sort file", "code": "sort file", "mode": "line" },
+        { "id": "sh-sort-n", "icon": "sort", "label": "sort -n file", "code": "sort -n file", "mode": "line" },
+        { "id": "sh-sort-r", "icon": "sort", "label": "sort -r file", "code": "sort -r file", "mode": "line" },
+        { "id": "sh-sort-u", "icon": "sort", "label": "sort -u file", "code": "sort -u file", "mode": "line" },
+        { "id": "sh-uniq", "icon": "list", "label": "uniq", "code": "uniq", "mode": "exp" },
+        { "id": "sh-uniq-c", "icon": "list", "label": "uniq -c", "code": "uniq -c", "mode": "exp" },
+        { "id": "sh-tr", "icon": "exchange-alt", "label": "tr 'a-z' 'A-Z'", "code": "tr 'a-z' 'A-Z'", "mode": "exp" },
+        { "id": "sh-cut", "icon": "cut", "label": "cut -d, -f1", "code": "cut -d, -f1", "mode": "exp" },
+        { "id": "sh-paste", "icon": "link", "label": "paste a b", "code": "paste a b", "mode": "line" }
+      ],
+      "system": [
+        { "id": "sh-ps", "icon": "list", "label": "ps aux", "code": "ps aux", "mode": "line" },
+        { "id": "sh-kill", "icon": "stop", "label": "kill PID", "code": "kill PID", "mode": "line" },
+        { "id": "sh-kill-9", "icon": "exclamation-triangle", "label": "kill -9 PID", "code": "kill -9 PID", "mode": "line" },
+        { "id": "sh-df", "icon": "database", "label": "df -h", "code": "df -h", "mode": "line" },
+        { "id": "sh-du", "icon": "database", "label": "du -sh path", "code": "du -sh path", "mode": "line" },
+        { "id": "sh-date", "icon": "history", "label": "date +%Y-%m-%d", "code": "date +%Y-%m-%d", "mode": "exp" },
+        { "id": "sh-sleep", "icon": "circle", "label": "sleep 5", "code": "sleep 5", "mode": "line" },
+        { "id": "sh-time", "icon": "history", "label": "time cmd", "code": "time command", "mode": "line" },
+        { "id": "sh-which", "icon": "search", "label": "which cmd", "code": "which command", "mode": "exp" },
+        { "id": "sh-command-v", "icon": "search", "label": "command -v cmd", "code": "command -v command", "mode": "exp" },
+        { "id": "sh-type", "icon": "search", "label": "type cmd", "code": "type command", "mode": "exp" },
+        { "id": "sh-history", "icon": "history", "label": "history", "code": "history", "mode": "line" },
+        { "id": "sh-source", "icon": "file-import", "label": "source file", "code": "source file", "mode": "line" },
+        { "id": "sh-dot-source", "icon": "file-import", "label": ". file", "code": ". file", "mode": "line" }
+      ],
+      "task": [
+        { "id": "sh-wait", "icon": "circle", "label": "wait", "code": "wait", "mode": "line" },
+        { "id": "sh-nohup", "icon": "play", "label": "nohup cmd &", "code": "nohup command &", "mode": "line" },
+        { "id": "sh-amp", "icon": "play", "label": "&", "code": "&", "mode": "exp" },
+        { "id": "sh-jobs", "icon": "list", "label": "jobs", "code": "jobs", "mode": "line" },
+        { "id": "sh-fg", "icon": "arrow-up", "label": "fg", "code": "fg", "mode": "line" },
+        { "id": "sh-bg", "icon": "arrow-down", "label": "bg", "code": "bg", "mode": "line" }
+      ],
+      "archive": [
+        { "id": "sh-tar-czf", "icon": "database", "label": "tar -czf out.tar.gz dir", "code": "tar -czf out.tar.gz dir", "mode": "line" },
+        { "id": "sh-tar-xzf", "icon": "file-import", "label": "tar -xzf in.tar.gz", "code": "tar -xzf in.tar.gz", "mode": "line" }
+      ],
+      "net": [
+        { "id": "sh-curl", "icon": "globe", "label": "curl URL", "code": "curl URL", "mode": "line" },
+        { "id": "sh-wget", "icon": "download", "label": "wget URL", "code": "wget URL", "mode": "line" },
+        { "id": "sh-ssh", "icon": "terminal", "label": "ssh host", "code": "ssh host", "mode": "line" },
+        { "id": "sh-scp", "icon": "copy", "label": "scp file host:path", "code": "scp file host:path", "mode": "line" }
+      ]
+    }
+  }
+]
