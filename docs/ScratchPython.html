@@ -2005,9 +2005,21 @@ if (__bootError) {
         }
         .status-bar .icon { color: var(--success); }
 
+        /* execTime 是 flashStatus 的临时提示位：长文字（如「保存失败：存储已满…」）
+           截断成一行，完整内容看 title，不挤最右的 LS / IDB。
+           它自己 flex:1 占满中间剩余空间，所以状态栏里不需要再放占位 spacer。 */
+        .status-bar #execTime {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* 存储用量：状态栏最右，只显示当前后端那一个。两种后端格式统一：
            「LS 1.2M / 10M (12%)」「IDB 1.2M / 10.0G (0%)」——已用 / 总容量 (比例)。
-           超精简只留比例：LS 12% / IDB 0%。超 80% 黄色，超 95% 红色。窄屏（<600px）隐藏。
+           超精简只留比例：LS 12% / IDB 0%。超 80% 黄色，超 95% 红色。
+           任何宽度都显示：长提示文字由左边的 #execTime 截断，不动这里。
            前缀文本由 JS 按 blockStoreKind 写，.ls-prefix / .ls-full / .ls-pct 三个类名沿用。
            IDB 的「已用」是自己累加的内容字节数（不用浏览器统计，那个有滞后且会被压缩），
            总额是 origin 配额，所以比例通常只有零点几。 */
@@ -2045,10 +2057,6 @@ if (__bootError) {
         body.ultra-compact-toolbar .ls-usage .ls-full { display: none; }
         body.ultra-compact-toolbar .ls-usage .ls-pct { display: inline; }
         .ls-usage .ls-pct { display: none; }
-        /* 窄屏隐藏 */
-        @media (max-width: 600px) {
-            .ls-usage { display: none; }
-        }
 
         /* ==================== 帮助弹窗（快捷键与功能）====================
            居中 / 遮罩 / 宽度上限全交给 .modal-overlay + .modal，这里只写内容样式 */
@@ -2902,7 +2910,6 @@ if (__bootError) {
     <div class="status-bar">
         <span data-i18n="statusReady"><svg class="icon"><use href="#icon-check"/></svg> 就绪</span>
         <span id="execTime"></span>
-        <span style="flex:1"></span>
         <span id="lsUsage" class="ls-usage" title="">
             <svg class="icon" aria-hidden="true"><use href="#icon-database"/></svg>
             <span class="ls-prefix">LS</span>
@@ -7037,18 +7044,31 @@ TODO: replace this sample with your own notes.
 
         function scheduleIdle(key, fn) {
             if (idleEntries.has(key)) return;   // 已排队：合并成一次，等那一帧一次性做
-            const entry = { handle: 0, fn };
+            const entry = { handle: 0, kind: 'idle', fn };
             const run = () => {
                 if (idleEntries.get(key) !== entry) return;   // 已被 flush / cancel
                 idleEntries.delete(key);
                 fn();
             };
             if (typeof requestIdleCallback === 'function') {
+                entry.kind = 'idle';
                 entry.handle = requestIdleCallback(run, { timeout: HL_IDLE_TIMEOUT });
             } else {
+                entry.kind = 'timeout';
                 entry.handle = setTimeout(run, 16);
             }
             idleEntries.set(key, entry);
+        }
+
+        /** 丢掉一条排队的句柄。
+         *  必须按种类分别取消：requestIdleCallback 的句柄和 setTimeout 的句柄是两套独立编号，
+         *  拿 idle 句柄去 clearTimeout 会误杀「撞号」的定时器（Worker 8s 握手超时就被这样干掉过）。 */
+        function dropIdleHandle(entry) {
+            if (entry.kind === 'timeout') {
+                try { clearTimeout(entry.handle); } catch (e) { }
+            } else {
+                try { cancelIdleCallback(entry.handle); } catch (e) { }
+            }
         }
 
         /** 丢弃排队（不执行） */
@@ -7056,8 +7076,7 @@ TODO: replace this sample with your own notes.
             const entry = idleEntries.get(key);
             if (!entry) return;
             idleEntries.delete(key);
-            try { cancelIdleCallback(entry.handle); } catch (e) { }
-            try { clearTimeout(entry.handle); } catch (e) { }
+            dropIdleHandle(entry);
         }
 
         /** 立即执行排队中的任务（没排队就什么都不做） */
@@ -7065,8 +7084,7 @@ TODO: replace this sample with your own notes.
             const entry = idleEntries.get(key);
             if (!entry) return;
             idleEntries.delete(key);
-            try { cancelIdleCallback(entry.handle); } catch (e) { }
-            try { clearTimeout(entry.handle); } catch (e) { }
+            dropIdleHandle(entry);
             entry.fn();
         }
 
@@ -11780,9 +11798,11 @@ TODO: replace this sample with your own notes.
             const el = document.getElementById('execTime');
             if (!el) return;
             el.textContent = msg;
+            el.title = msg;   // 文字被 CSS 截断时，hover / 长按能看全
             if (statusFlashTimer) clearTimeout(statusFlashTimer);
             statusFlashTimer = setTimeout(() => {
                 el.textContent = '';
+                el.title = '';
                 statusFlashTimer = null;
             }, 2600);
         }
