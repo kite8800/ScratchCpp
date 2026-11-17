@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#dff0ff">
+<title>MC MINI STORY READER · MC小作文阅读器</title>
+<style>
+:root{
+  --cream:#fbf7ec; --paper:#fffdf6; --ink:#2f2418; --ink2:#6b5a45;
+  --grass:#6cbf4a; --grass-d:#4e9b32; --gold:#f2b53c;
+  --shadow:0 5px 0 rgba(47,36,24,.15);
+  --pixel:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:var(--ink); background:var(--cream);
+  background-image:radial-gradient(rgba(47,36,24,.055) 1px,transparent 1px);
+  background-size:16px 16px; -webkit-font-smoothing:antialiased; padding-bottom:40px;
+}
+button{font-family:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:820px;margin:0 auto;padding:0 14px}
+
+/* HERO */
+.hero{position:relative;overflow:hidden;background:linear-gradient(#c9e8ff 0%,#e3f4ff 58%,#f4fbf0 100%)}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:16px 14px 14px}
+/* 头像按钮：默认苦力怕；点击循环 */
+.creeper{
+  width:56px;height:56px;flex:none;display:grid;
+  grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+  border:3px solid var(--ink);border-radius:4px;
+  box-shadow:4px 4px 0 rgba(47,36,24,.18);
+  overflow:hidden;animation:bob 3s ease-in-out infinite;
+  padding:0;background:#cfe8c8;
+  transition:transform .12s;
+}
+.creeper:hover{transform:translateY(-2px) scale(1.03)}
+.creeper:active{transform:scale(.94)}
+.creeper.pop{animation:pop .32s ease, bob 3s ease-in-out infinite}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
+.creeper i{display:block;width:100%;height:100%}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.hero-text{flex:1;min-width:0}
+h1{margin:0 0 3px;font-family:var(--pixel);font-weight:900;font-size:clamp(17px,3.2vw,25px);line-height:1.05;letter-spacing:.01em;color:#fff;text-shadow:2px 2px 0 var(--grass-d),4px 4px 0 rgba(47,36,24,.16)}
+h1 .h1-sub{display:block;font-size:.56em;margin-top:5px;text-shadow:1.5px 1.5px 0 var(--grass-d),3px 3px 0 rgba(47,36,24,.14)}
+.grass-strip{height:14px;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 10px,transparent 10px 20px),linear-gradient(#7cc94f,#5aa93a);border-top:3px solid #3f8a2a;border-bottom:3px solid var(--ink)}
+
+main{padding-top:14px}
+
+/* 粘贴框 */
+.paste-box{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);padding:12px;margin-bottom:12px}
+.paste-box textarea{
+  width:100%; min-height:140px; resize:vertical;
+  border:2.5px solid var(--ink); border-radius:10px; padding:10px 12px;
+  font-family:inherit; font-size:14px; line-height:1.6; color:var(--ink); background:#fff; outline:none;
+}
+.paste-box textarea:focus{border-color:var(--grass-d); box-shadow:0 0 0 3px rgba(108,191,74,.2)}
+.paste-help{
+  margin-top:8px; font-size:11.5px; color:var(--ink2); line-height:1.6;
+  padding:8px 10px; background:#fffdf3; border:2px dashed rgba(47,36,24,.18); border-radius:9px;
+}
+.paste-help b{color:var(--ink)}
+
+/* 操作区 */
+.action-row{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  margin-top:10px;
+}
+.sw{
+  display:inline-flex;align-items:center;gap:5px;padding:7px 13px;
+  border:2.5px solid var(--ink);border-radius:10px;background:#fff;
+  font-size:13px;font-weight:800;box-shadow:0 3px 0 rgba(47,36,24,.15);
+  transition:.12s;white-space:nowrap;
+}
+.sw:hover{transform:translateY(-1px)}
+.sw:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(47,36,24,.15)}
+.sw.primary{background:var(--grass);color:#fff;border-color:var(--grass-d);box-shadow:0 3px 0 var(--grass-d)}
+.sw.on{background:#eaf7e2;border-color:var(--grass-d);color:#3c6b2a}
+.sw.off{color:#8b7a67}
+
+.lang-select{
+  display:inline-flex;align-items:center;gap:5px;
+  border:2.5px solid var(--ink);border-radius:10px;background:#fff;
+  padding:0 8px; box-shadow:0 3px 0 rgba(47,36,24,.15);
+  height:36px; font-size:13px; font-weight:800;
+}
+.lang-select select{
+  border:0; outline:0; background:transparent; font-family:inherit;
+  font-size:13px; font-weight:800; color:var(--ink); padding:6px 2px;
+  cursor:pointer; appearance:none; -webkit-appearance:none;
+}
+.lang-select::after{content:"▾";font-size:11px;color:var(--ink2);margin-left:2px}
+.action-label{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;margin-right:2px}
+
+#report{
+  display:none; margin-top:10px; padding:9px 12px;
+  background:#eaf7e2; border:2.5px solid var(--grass-d); border-radius:10px;
+  font-size:12.5px; font-weight:700; color:#3c6b2a; line-height:1.5;
+}
+#report.show{display:block}
+#report b{font-family:var(--pixel);}
+
+/* 阅读器 */
+.reader-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.reader-head h2{margin:0;font-family:var(--pixel);font-size:17px;flex:1}
+.reader-body{
+  background:var(--paper);border:3px solid var(--ink);border-radius:14px;
+  box-shadow:var(--shadow);padding:6px;min-height:120px;
+}
+.reader-body .title-line{
+  padding:10px 12px 6px; font-family:var(--pixel); font-weight:900;
+  font-size:15px; color:var(--ink); border-bottom:2px dashed rgba(47,36,24,.15);
+  margin-bottom:4px;
+}
+.sent{
+  display:block; width:100%; text-align:left;
+  padding:9px 12px; margin:2px 0;
+  border:0; border-radius:8px; background:transparent;
+  font-family:inherit; font-size:15.5px; line-height:1.55; color:var(--ink);
+  cursor:pointer; transition:background .12s;
+}
+.sent:hover{background:#fff6dc}
+.sent.active{background:#ffe9a8; box-shadow:inset 0 0 0 2px #f2b53c}
+.sent .line{display:block}
+.sent .line + .line{margin-top:3px}
+.sent .main-line{font-weight:400}
+.sent .alt-line{font-size:12.5px;color:var(--ink2);font-weight:600;line-height:1.4;display:none}
+body[data-trans="none"] .sent .alt-line{display:none}
+body[data-trans="cur"] .sent.active .alt-line{display:block}
+body[data-trans="all"] .sent .alt-line{display:block}
+.sent .num{
+  display:inline-block; min-width:22px; font-family:var(--pixel);
+  font-size:11px; color:var(--ink2); font-weight:700; margin-right:4px;
+}
+
+/* 播放条 */
+.player-bar{
+  position:sticky;bottom:10px;z-index:30;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:12px;padding:10px 12px;
+  background:rgba(251,247,236,.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);
+}
+.player-bar .sw{font-size:13px;padding:7px 12px}
+.player-bar .sw.on{background:var(--grass);color:#fff;border-color:var(--grass-d)}
+#progress{font-family:var(--pixel);font-size:12px;font-weight:700;margin-left:auto;white-space:nowrap}
+.rate-wrap{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--ink2)}
+#rateInput{width:72px;accent-color:var(--grass-d)}
+#rateLabel{font-family:var(--pixel);font-size:11px;min-width:36px;text-align:right}
+
+#soundHint{display:flex;align-items:center;gap:9px;margin:10px 0 2px;padding:10px 12px;background:#fff6dc;border:2.5px solid var(--ink);border-radius:12px;box-shadow:var(--shadow);font-size:13px;line-height:1.4}
+#soundHint[hidden]{display:none}
+#soundHintText{flex:1;min-width:0}
+#soundHintBtn{flex:none;padding:6px 13px;font-size:13px;font-weight:800;background:var(--grass);color:#fff;border:2.5px solid var(--ink);border-radius:8px;box-shadow:0 3px 0 rgba(47,36,24,.28)}
+#soundHintBtn:active{transform:translateY(2px);box-shadow:none}
+#soundHintClose{flex:none;width:26px;height:26px;padding:0;font-size:12px;background:transparent;border:none;color:var(--ink2)}
+
+footer{max-width:820px;margin:22px auto 0;padding:14px;text-align:center;font-size:12px;color:var(--ink2);line-height:1.7}
+footer b{color:var(--ink)}
+footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);letter-spacing:.04em;font-size:12.5px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,18px);background:var(--ink);color:#fff;font-weight:700;font-size:13px;padding:9px 16px;border-radius:11px;opacity:0;pointer-events:none;transition:.25s;z-index:9999}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:720px){
+  .hero-inner{padding:12px;gap:10px}
+  .creeper{width:48px;height:48px}
+  .wrap{padding:0 10px}
+  .sent{font-size:15px;padding:8px 10px}
+  .player-bar{gap:6px;padding:8px 10px}
+  .player-bar .sw{font-size:12px;padding:6px 9px}
+  #rateInput{width:56px}
+  .action-row{gap:6px}
+  .action-label{width:100%;margin:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-trans="cur">
+
+<header class="hero">
+  <div class="hero-inner">
+    <button class="creeper" id="creeper" aria-label="切换音色" title="点击切换：自动 / 男声(Steve) / 女声(Alex)&#10;Author: Hayden KWOK, Version 0.9"></button>
+    <div class="hero-text">
+      <h1>MC MINI STORY READER<span class="h1-sub">MC小作文阅读器 | Kite, Ver0.9</span></h1>
+    </div>
+  </div>
+  <div class="grass-strip"></div>
+</header>
+
+<main class="wrap">
+  <div id="soundHint" hidden>
+    <span id="soundHintText">👆 点一下开启声音</span>
+    <button id="soundHintBtn" type="button">🔊 试试</button>
+    <button id="soundHintClose" type="button" aria-label="关闭提示">✕</button>
+  </div>
+
+  <div class="paste-box">
+    <textarea id="inputBox" placeholder="把文章粘贴到这里，格式随意：
+
+· 纯英文段落 → 自动按 . ! ? 断句
+· 每行一句
+· 英文一行 + 中文一行（自动配对）
+· 中文一行 + 英文一行（自动配对）
+· 带 1. 2. 序号
+· 中英混排
+
+会自动判断先英还是先中。"></textarea>
+
+    <div class="paste-help">
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；右上「译文」切换三态（不显示 / 当前句 / 全文）；点头像切换音色。
+    </div>
+
+    <div class="action-row">
+      <span class="action-label">朗读：</span>
+      <label class="lang-select" title="选择朗读语言顺序">
+        <select id="langMode">
+          <option value="en">只读英文</option>
+          <option value="zh">只读中文</option>
+          <option value="en-zh">英文 → 中文</option>
+          <option value="zh-en">中文 → 英文</option>
+        </select>
+      </label>
+      <button class="sw primary" id="parseBtn">✂️ 识别并断句</button>
+      <button class="sw" id="clearBtn">清空</button>
+      <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
+      <button class="sw" id="soundBtn" title="音效开关">🔊</button>
+    </div>
+
+    <div id="report"></div>
+  </div>
+
+  <div id="reader" hidden>
+    <div class="reader-head">
+      <h2 id="readerTitle">📖 阅读</h2>
+      <span class="sw" id="sentCount" style="cursor:default">0 句</span>
+    </div>
+    <div class="reader-body" id="readerBody"></div>
+    <div class="player-bar">
+      <button id="prevBtn" class="sw" title="上一句">⏮</button>
+      <button id="playBtn" class="sw on" title="播放/暂停">▶ 播放</button>
+      <button id="nextBtn" class="sw" title="下一句">⏭</button>
+      <span id="progress">0 / 0</span>
+      <div class="rate-wrap">
+        <span>🐢</span>
+        <input id="rateInput" type="range" min="0.5" max="1.4" step="0.05" value="0.85" aria-label="语速">
+        <span id="rateLabel">0.85x</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="foot-title">MC MINI STORY READER · MC小作文阅读器</div>
+  <div>粘贴即读的英语小作文朗读器</div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* ========================= 工具 ========================= */
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+  });
+}
+function load(k,d){ try{ var v=localStorage.getItem("mcr_"+k); return v===null?d:JSON.parse(v);}catch(e){return d;} }
+function save(k,v){ try{ localStorage.setItem("mcr_"+k, JSON.stringify(v)); }catch(e){} }
+
+/* ========================= 音效 ========================= */
+var actx=null;
+function ac(){
+  if(!actx){
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return null;
+    try{ actx=new AC(); }catch(e){ return null; }
+  }
+  return actx;
+}
+function unlockAudio(){
+  var c=ac(); if(!c) return;
+  var on=function(){
+    try{ var b=c.createBuffer(1,1,22050),s=c.createBufferSource(); s.buffer=b; s.connect(c.destination); s.start(0); }catch(e){}
+  };
+  if(c.state==="running"){ on(); }
+  else if(c.resume){ c.resume().then(on).catch(function(){on();}); }
+  else{ on(); }
+}
+function tone(freq,dur,type,vol){
+  if(state.muted) return;
+  var c=ac(); if(!c) return;
+  var play=function(){
+    try{
+      var t=c.currentTime+.005,o=c.createOscillator(),g=c.createGain();
+      o.type=type||"square"; o.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(vol||.03,t+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.03);
+    }catch(e){}
+  };
+  if(c.state==="running"){ play(); }
+  else if(c.resume){ c.resume().then(play).catch(function(){}); }
+}
+function click(){ tone(560,.05,"square",.022); }
+
+/* ========================= 朗读 + 音色 ========================= */
+var voices=[],ttsPrimed=false,ttsWarned=false,hintTimer=null;
+function hasTTS(){ return ("speechSynthesis" in window) && (typeof SpeechSynthesisUtterance==="function"); }
+function loadVoices(){ try{ voices=hasTTS()?(speechSynthesis.getVoices()||[]):[]; }catch(e){ voices=[]; } }
+if(hasTTS()){ loadVoices(); try{ speechSynthesis.onvoiceschanged=loadVoices; }catch(e){} }
+
+/* ---------- 语音挑选：一律只用「本地语音」，绝不去碰 Google 联网语音 ----------
+   原因：Chrome 会把 Google US English 之类的远程语音塞进列表，国内连不上就静默无声。
+   好消息：Windows 自带的中文语音（Huihui / Yaoyao / Kangkang）念英文完全没问题，
+           所以缺英文本地语音也不影响英文朗读——有本地英文语音时自然优先用它。 */
+
+function isLocalVoice(v){ return !!v && v.localService !== false; }
+function langIs(v,p){ return (v.lang||"").toLowerCase().indexOf(p) === 0; }
+/* 本机是否装了「该语言的本地语音」——决定要不要给 lang 提示 */
+function hasLocalLang(lang){
+  var i, p = (lang==="zh") ? "zh" : "en";
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],p) && isLocalVoice(voices[i])) return true;
+  return false;
+}
+
+/* 按语言挑最合适的本地语音 */
+function bestVoiceFor(lang){
+  if(!voices.length) loadVoices();
+  var i, p = (lang==="zh") ? "zh" : "en";
+
+  if(p === "en"){
+    var prefEn = ["Samantha","Microsoft Aria","Microsoft Zira","Microsoft Jenny","Karen","Moira","Daniel","Alex","Microsoft David","Microsoft Mark","Microsoft Guy"];
+    for(i=0;i<prefEn.length;i++){
+      for(var j=0;j<voices.length;j++){
+        if((voices[j].name||"").indexOf(prefEn[i])>=0 && isLocalVoice(voices[j])) return voices[j];
+      }
+    }
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"en") && isLocalVoice(voices[i])) return voices[i];
+    /* 没有本地英文语音 → 用本机中文语音念英文（实测完全可读） */
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh") && isLocalVoice(voices[i])) return voices[i];
+    /* 再退：任意本地语音（总比联网语音强，联网在国内直接静音） */
+    for(i=0;i<voices.length;i++) if(isLocalVoice(voices[i])) return voices[i];
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"en")) return voices[i];
+    return voices[0] || null;
+  }
+
+  /* 中文：优先本地中文 */
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh") && isLocalVoice(voices[i])) return voices[i];
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh")) return voices[i];
+  for(i=0;i<voices.length;i++) if(isLocalVoice(voices[i])) return voices[i];
+  return voices[0] || null;
+}
+
+/* 判断一个语音是不是「专用男音」 */
+var FEMALE_NAME = /female|woman|girl|huihui|yaoyao|xiaoxiao|xiaoyi|xiaomo|ting-ting|mei-jia|zira|aria|jenny|samantha|karen|moira|susan|hazel/i;
+var MALE_NAME   = /kangkang|yunxi|yunjian|yunyang|yunxia|yunfeng|david|mark|guy|ryan|george|fred|tom|daniel|\bmale\b|\bman\b/i;
+function isMaleVoice(v){
+  var n = (v && v.name) || "";
+  if(FEMALE_NAME.test(n)) return false;
+  return MALE_NAME.test(n);
+}
+/* 找专用男音：只认「本地」男音（Google UK English Male 之类是联网语音，国内静音）；
+   同语言没有就用中文本地男音念英文；再没有返回 null → 走降调兜底 */
+function findMaleVoice(lang){
+  var i, p = (lang==="zh") ? "zh" : "en";
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],p) && isLocalVoice(voices[i]) && isMaleVoice(voices[i])) return voices[i];
+  if(p === "en"){
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh") && isLocalVoice(voices[i]) && isMaleVoice(voices[i])) return voices[i];
+  }
+  for(i=0;i<voices.length;i++) if(isLocalVoice(voices[i]) && isMaleVoice(voices[i])) return voices[i];
+  return null;
+}
+
+/* 音色策略（2026-11-17 定稿）
+   · 苦力怕 creeper(auto) ：【绝不指定引擎】u.voice 不设，完全交给平台默认语音
+                            —— 这样 iPad / 安卓 / Mac / 各浏览器都一定念得出来，
+                               是整套音色的兜底。pitch 也保持默认 1.0。
+   · Alex  female         ：指定本地语音，音调 1.5
+   · Steve male           ：本机有专用男音（如 Kangkang）→ 直接用它，pitch 1.0；
+                            没有专用男音 → 用默认语音把音调压到 0.5
+   ⚠️ 指定 voice 在个别平台（老 iPad / 某些安卓）可能静音，所以只有 Alex/Steve 才指定；
+      若指定后 2.2 秒没出声，speakOne 会自动退回「不指定引擎」重试一次（等价于 creeper 的用法）。
+   ⚠️ Windows + Chromium 朗读中文时会把 pitch 吞掉（只传语速），本机听感可能变化不明显；
+      换到支持 pitch 的浏览器/系统上，这几个值会真正生效。 */
+function pickVoice(pref, lang){
+  if(!voices.length) loadVoices();
+
+  /* creeper：默认语音，什么都不指定（跨平台最稳） */
+  if(pref !== "male" && pref !== "female"){
+    return { voice: null, pitch: 1.0, fallbackMsg: "" };
+  }
+  var base = bestVoiceFor(lang);
+
+  if(pref === "male"){
+    var mv = findMaleVoice(lang);
+    if(mv) return { voice: mv, pitch: 1.0, fallbackMsg: "" };
+    return { voice: base, pitch: 0.5, fallbackMsg: "没有专用男音，已压低音调模拟" };
+  }
+  /* female */
+  return { voice: base, pitch: 1.5, fallbackMsg: "" };
+}
+
+function showHint(msg,sticky){
+  var el=$("#soundHint"); if(!el) return;
+  $("#soundHintText").textContent=msg; el.hidden=false; el.classList.add("show");
+  clearTimeout(hintTimer); if(!sticky) hintTimer=setTimeout(hideHint,9000);
+}
+function hideHint(){
+  var el=$("#soundHint"); if(!el) return;
+  clearTimeout(hintTimer); el.classList.remove("show");
+  hintTimer=setTimeout(function(){ el.hidden=true; },260);
+}
+function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true); }
+
+/* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色 */
+function speakOne(text, lang, rate, onDone){
+  if(state.muted){ onDone&&onDone(); return; }
+  if(!hasTTS()){ warnOnce("这个浏览器不支持朗读"); return; }
+  var c=ac(); if(c && c.state==="suspended" && c.resume) c.resume().catch(function(){});
+
+  var pick = pickVoice(state.voicePref, lang);
+  var textLang = (lang==="zh") ? "zh-CN" : "en-US";
+  /* lang 只在「本机真有该语言本地语音」时才给；否则留空走平台默认，
+     免得 Chrome 按 en-US 去找 Google 联网语音而静音 */
+  var safeLang = hasLocalLang(lang) ? textLang : "";
+  var u=new SpeechSynthesisUtterance(text);
+  u.rate = rate||.85;
+  u.pitch = pick.pitch;
+  u.volume = 1;
+
+  if(pick.voice){
+    /* 指定引擎；lang 跟随该语音（中文语音念英文时 lang=zh-CN 也正常） */
+    u.voice = pick.voice;
+    u.lang  = pick.voice.lang || textLang;
+  } else {
+    /* creeper：不指定引擎，lang 也尽量不指定 → 纯平台默认 */
+    u.lang  = safeLang;
+  }
+
+  var done=false, started=false, wakeTimer=null;
+  function finish(){
+    if(done) return;
+    done=true;
+    clearTimeout(wakeTimer);
+    clearTimeout(player.timer);
+    onDone&&onDone();
+  }
+  u.onstart=function(){ started=true; clearTimeout(wakeTimer); ttsPrimed=true; ttsWarned=false; hideHint(); };
+  u.onend=finish;
+  u.onerror=function(ev){
+    var e=(ev&&ev.error)||"";
+    if(e==="interrupted"||e==="canceled") return;
+    if(e==="not-allowed"||e==="NotAllowedError"){ showHint("浏览器拦住了播放，请再点一次播放按钮 👆"); return; }
+    /* 语音/网络异常 → 不指定引擎（用系统默认）再来一次，音调沿用 */
+    if(/synthesis|voice|audio|network/i.test(e)){
+      try{
+        var u2=new SpeechSynthesisUtterance(text);
+        u2.lang = safeLang;
+        u2.rate = rate||.85; u2.pitch = pick.pitch; u2.volume = 1;
+        u2.onend = finish;
+        speechSynthesis.speak(u2);
+      }catch(x){ finish(); }
+      return;
+    }
+    finish();
+  };
+  try{
+    if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel();
+    /* Chrome 刚 cancel 完立刻 speak 会被丢弃，隔 90ms 更稳 */
+    setTimeout(function(){
+      try{
+        speechSynthesis.speak(u);
+        /* Chrome 引擎会「假死」：speak 了不出声，resume() 能唤醒 */
+        setTimeout(function(){ try{ speechSynthesis.resume(); }catch(e){} }, 320);
+      }catch(e){ finish(); }
+    }, 90);
+  }catch(e){ finish(); return; }
+
+  /* 2.2 秒还没开声 → 换系统默认语音重试一次（不指定 voice，兼容性最高） */
+  wakeTimer=setTimeout(function(){
+    if(started || done) return;
+    try{ speechSynthesis.cancel(); }catch(e){}
+    try{
+      var u3=new SpeechSynthesisUtterance(text);
+      u3.lang = safeLang;
+      u3.rate = rate||.85; u3.pitch = pick.pitch; u3.volume = 1;
+      u3.onstart=function(){ started=true; clearTimeout(wakeTimer); };
+      u3.onend=finish;
+      u3.onerror=function(){ finish(); };
+      speechSynthesis.speak(u3);
+      setTimeout(function(){ try{ speechSynthesis.resume(); }catch(e){} }, 300);
+    }catch(e){}
+  }, 2200);
+
+  var est=Math.max(1500,text.length*220/(rate||.85));
+  player.timer=setTimeout(finish, est+3500);
+}
+
+var toastTimer;
+function toast(msg){
+  var el=$("#toast"); el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ el.classList.remove("show"); },1700);
+}
+
+/* ========================= 头像（苦力怕 / Steve / Alex） =========================
+   全部 8×8。Steve/Alex 用 grid 逐格真实取色；苦力怕用 map+color。
+   每格都填可见色，绝不透明。
+   ========================================================= */
+var FACES = {
+  auto: { /* 苦力怕 */
+    bg: "#cfe8c8",
+    map: [
+      "........",
+      ".XX..XX.",
+      ".XX..XX.",
+      "...XX...",
+      "..XXXX..",
+      ".XXXXXX.",
+      ".XX..XX.",
+      ".XX..XX."
+    ],
+    color: function(ch,x,y){
+      if(ch==="X") return "#123d15";
+      return ["#5aa832","#64b23a","#549e2e"][(x+y)%3];
+    }
+  },
+  male: { /* Steve：8×8 逐格取色还原自原图 */
+    bg: "#22191b",
+    grid: [
+      ["#22191b","#221a1c","#20181b","#221a1b","#23191a","#221819","#231a1b","#22191b"],
+      ["#201919","#23191b","#221a1b","#241b1b","#241a1a","#23191a","#21181a","#24191c"],
+      ["#1f1919","#b98d66","#d09a72","#d19b73","#d09872","#d19a72","#b97956","#322628"],
+      ["#b77754","#ba8b62","#bb7a55","#b98d86","#946b61","#cf9771","#946b57","#926a57"],
+      ["#b88e65","#f7fafa","#3d439b","#c37d71","#cf9975","#3f4499","#f9fdfd","#bb7f5c"],
+      ["#a2664c","#b77959","#b58b89","#8a5252","#7c4946","#ba9072","#b97b59","#b07758"],
+      ["#906957","#9d6750","#5d282a","#77423e","#75413e","#642b2e","#906958","#936b57"],
+      ["#8f593a","#935c41","#602a28","#65312e","#673530","#602a28","#926a5a","#93634f"]
+    ]
+  },
+  female: { /* Alex：8×8 逐格取色还原自原图 */
+    bg: "#ea944a",
+    grid: [
+      ["#ea944a","#f7b05a","#d79246","#fbb458","#eb954c","#db9549","#f8b25c","#ec974e"],
+      ["#d89447","#f4b056","#e69448","#dd9547","#ea954d","#e8944a","#d8934c","#f3ae55"],
+      ["#d89543","#e29349","#d69144","#ea944a","#e1ca9b","#e1ca9a","#e8954b","#da9348"],
+      ["#d89647","#d99446","#e9964c","#f1d9b9","#f0dcbe","#f1ddc0","#eedbc0","#ed964f"],
+      ["#efddc3","#f7fbf9","#1f744c","#ecdcc1","#efdec2","#247d52","#f8fefe","#f1dec2"],
+      ["#f1dec0","#f1ddc1","#f1dcc0","#f1dcc1","#f2ddc1","#f0ddc1","#f1dec2","#f1ddc2"],
+      ["#efddc2","#f0dec3","#f2dcc2","#eac6c4","#eac6c5","#efdcc2","#edddc4","#f0dcc3"],
+      ["#f1ddc1","#f1ddc2","#f1dcc1","#f0dcc3","#f0dbc2","#f2dcc1","#f0dcc2","#e9d4b0"]
+    ]
+  }
+};
+
+function buildFace(kind){
+  try{
+    var f = FACES[kind] || FACES.auto;
+    var html = "";
+    if(f.grid){
+      /* 8×8 真实色块矩阵，每格已是最终颜色 */
+      for(var gy=0;gy<8;gy++){
+        var grow = f.grid[gy];
+        for(var gx=0;gx<8;gx++){
+          html += '<i style="background:' + (grow[gx] || f.bg) + '"></i>';
+        }
+      }
+    }else{
+      for(var y=0;y<8;y++){
+        var row = f.map[y] || "........";
+        for(var x=0;x<8;x++){
+          var ch = row.charAt(x) || ".";
+          html += '<i style="background:' + f.color(ch, x, y) + '"></i>';
+        }
+      }
+    }
+    var el = $("#creeper");
+    el.innerHTML = html;
+    el.style.background = f.bg;
+  }catch(e){
+    $("#creeper").innerHTML = '<i style="background:#6cbf4a;grid-column:1/9;grid-row:1/9"></i>';
+    console.error("buildFace error:", e);
+  }
+}
+
+function nextPref(p){ return p==="auto" ? "male" : (p==="male" ? "female" : "auto"); }
+var PREF_LABEL = { auto:"自动", male:"男声", female:"女声" };
+function applyPref(pref){
+  state.voicePref = pref;
+  buildFace(pref);
+  save("voicePref", pref);
+}
+
+/* ========================= 状态 ========================= */
+var state={ muted:false, langMode:"en", trans:"cur", voicePref:"auto" };
+var currentSentences=[];
+var player={ playing:false, current:0, rate:0.85, timer:null };
+
+var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
+var TRANS_ORDER = ["cur","all","none"];
+
+/* =========================================================
+   格式识别 + 断句（原样保留）
+   ========================================================= */
+function isCJK(ch){ return /[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch); }
+function cjkRatio(s){
+  if(!s) return 0; var cjk=0,total=0;
+  for(var i=0;i<s.length;i++){ var ch=s[i]; if(/\s/.test(ch)) continue; total++; if(isCJK(ch)) cjk++; }
+  return total?cjk/total:0;
+}
+function enWordCount(s){ var m=s.match(/[A-Za-z][A-Za-z'’-]*/g); return m?m.length:0; }
+function stripBullet(line){
+  var t=line.trim();
+  t=t.replace(/^[\(\[（【]?\s*\d+\s*[\)\]）】\.、．]\s*/,"");
+  t=t.replace(/^[\(\[（【]?\s*[一二三四五六七八九十百]+\s*[\)\]）】\.、．]\s*/,"");
+  t=t.replace(/^[①-⑳]\s*/,"");
+  t=t.replace(/^[-–—•·*]+\s*/,"");
+  return t.trim();
+}
+function looksLikeTitle(line){
+  var t=line.trim(); if(!t) return false;
+  if(/^#{1,6}\s+/.test(t)) return true;
+  if(t.length<=40 && !/[.!?。！？]$/.test(t) && (t===t.toUpperCase()) && /[A-Z]/.test(t)) return true;
+  return false;
+}
+var ABBR=/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|vs|etc|e\.g|i\.e|U\.S|U\.K|No|Fig|al)\./gi;
+function splitEnglish(text){
+  var t=text.replace(ABBR,function(m){return m.replace(/\./g,"\u0001");});
+  t=t.replace(/(\d)\.(\d)/g,"$1\u0002$2");
+  var parts=t.match(/[^.!?…]+[.!?…]+["'”’)\]]*/g)||[t];
+  parts=parts.map(function(s){return s.replace(/\u0001/g,".").replace(/\u0002/g,".").trim();}).filter(function(s){return s.length>0;});
+  return parts;
+}
+function splitChinese(text){
+  var parts=text.match(/[^。！？；…]+[。！？；…]+["'”’）】」』]*/g)||[text];
+  return parts.map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
+}
+
+function parseText(raw){
+  var lines=raw.replace(/\r\n/g,"\n").split("\n");
+  var stats={en:0,zh:0,mix:0,title:0,other:0};
+  var classified=lines.map(function(line){
+    var t=stripBullet(line);
+    if(!t) return {type:"blank",text:""};
+    if(looksLikeTitle(line)){stats.title++;return{type:"title",text:line.replace(/^#+\s*/,"")};}
+    var r=cjkRatio(t),w=enWordCount(t);
+    if(r>=0.5){stats.zh++;return{type:"zh",text:t};}
+    if(r>0&&w>=1){stats.mix++;return{type:"mix",text:t};}
+    if(w>=1){stats.en++;return{type:"en",text:t};}
+    stats.other++;return{type:"other",text:t};
+  });
+
+  var order="en-first";
+  for(var i=0;i<classified.length;i++){
+    var c=classified[i];
+    if(c.type==="blank"||c.type==="title") continue;
+    order = c.type==="zh" ? "zh-first" : "en-first";
+    break;
+  }
+
+  var items=[],titles=[],pendingEn=[],pendingZh=[];
+  function pushEnglish(text){
+    var sents=splitEnglish(text);
+    if(order==="zh-first"&&pendingZh.length){
+      sents.forEach(function(s){
+        var zh=pendingZh.shift()||"";
+        items.push({en:s,zh:zh});
+      });
+    } else {
+      sents.forEach(function(s){ items.push({en:s,zh:""}); pendingEn.push(items.length-1); });
+    }
+  }
+  function pushChinese(text){
+    var zhList=splitChinese(text);
+    if(order==="en-first"){
+      zhList.forEach(function(zh){
+        var idx=pendingEn.shift();
+        if(idx!=null&&!items[idx].zh) items[idx].zh=zh;
+      });
+    } else {
+      zhList.forEach(function(zh){ pendingZh.push(zh); });
+    }
+  }
+
+  classified.forEach(function(c){
+    if(c.type==="blank") return;
+    if(c.type==="title"){ titles.push(c.text); return; }
+    if(c.type==="zh"){ pushChinese(c.text); return; }
+    if(c.type==="en"){ pushEnglish(c.text); return; }
+    if(c.type==="mix"){
+      var parts=c.text.split(/([\u4e00-\u9fff\u3400-\u4dbf。！？；，、…（）【】「」『』]+)/);
+      var enBuf="",zhBuf="";
+      parts.forEach(function(p){
+        if(!p) return;
+        if(/[\u4e00-\u9fff\u3400-\u4dbf]/.test(p)) zhBuf+=p; else enBuf+=p;
+      });
+      if(order==="zh-first"){
+        if(zhBuf.trim()) pushChinese(zhBuf.trim());
+        if(enBuf.trim()) pushEnglish(enBuf.trim());
+      } else {
+        if(enBuf.trim()) pushEnglish(enBuf.trim());
+        if(zhBuf.trim()) pushChinese(zhBuf.trim());
+      }
+      return;
+    }
+    if(enWordCount(c.text)>0) pushEnglish(c.text);
+  });
+
+  items=items.filter(function(it){return it.en&&it.en.trim();});
+  return {items:items,order:order,stats:stats,titles:titles};
+}
+
+/* =========================================================
+   渲染（原样）
+   ========================================================= */
+function firstLangByMode(mode){
+  if(mode==="zh" || mode==="zh-en") return "zh";
+  return "en";
+}
+
+function renderSentences(result){
+  currentSentences=result.items;
+  player.current=0;
+  stopPlayback();
+
+  var first = firstLangByMode(state.langMode);
+
+  var html="";
+  if(result.titles&&result.titles.length){
+    html+='<div class="title-line">'+result.titles.map(esc).join(" · ")+'</div>';
+  }
+  html+=result.items.map(function(s,i){
+    var mainText = first==="zh" ? (s.zh||"") : (s.en||"");
+    var altText  = first==="zh" ? (s.en||"") : (s.zh||"");
+    if(!mainText){ mainText = altText; altText = ""; }
+    return '<button class="sent" data-idx="'+i+'">'+
+      '<span class="line main-line"><span class="num">'+(i+1)+'.</span>'+esc(mainText)+'</span>'+
+      (altText ? '<span class="line alt-line">'+esc(altText)+'</span>' : '')+
+    '</button>';
+  }).join("");
+  $("#readerBody").innerHTML=html;
+  $("#reader").hidden=false;
+  $("#sentCount").textContent=result.items.length+" 句";
+  updateProgress();
+}
+function updateProgress(){
+  $("#progress").textContent=(currentSentences.length?(player.current+1):0)+" / "+currentSentences.length;
+}
+function highlightSentence(idx){
+  $$(".sent").forEach(function(el){el.classList.remove("active");});
+  var el=document.querySelector('.sent[data-idx="'+idx+'"]');
+  if(el){el.classList.add("active");el.scrollIntoView({behavior:"smooth",block:"center"});}
+  updateProgress();
+}
+
+/* =========================================================
+   播放器（原样）
+   ========================================================= */
+function playSentence(idx){
+  if(idx<0 || idx>=currentSentences.length){ stopPlayback(); return; }
+  player.current=idx; player.playing=true;
+  $("#playBtn").textContent="⏸ 暂停"; $("#playBtn").classList.add("on");
+  highlightSentence(idx);
+
+  var s=currentSentences[idx];
+  var mode=state.langMode;
+  var rate=player.rate;
+  var enText=s.en||"", zhText=s.zh||"";
+
+  var goNext=function(){
+    if(!player.playing) return;
+    if(player.current+1<currentSentences.length) playSentence(player.current+1);
+    else stopPlayback();
+  };
+
+  if(mode==="en"){
+    if(!enText){ goNext(); return; }
+    speakOne(enText,"en",rate,goNext);
+  } else if(mode==="zh"){
+    if(!zhText){ goNext(); return; }
+    speakOne(zhText,"zh",rate,goNext);
+  } else if(mode==="en-zh"){
+    if(!enText && !zhText){ goNext(); return; }
+    if(enText){
+      speakOne(enText,"en",rate,function(){
+        if(!player.playing) return;
+        if(zhText) speakOne(zhText,"zh",rate,goNext);
+        else goNext();
+      });
+    } else {
+      speakOne(zhText,"zh",rate,goNext);
+    }
+  } else if(mode==="zh-en"){
+    if(!enText && !zhText){ goNext(); return; }
+    if(zhText){
+      speakOne(zhText,"zh",rate,function(){
+        if(!player.playing) return;
+        if(enText) speakOne(enText,"en",rate,goNext);
+        else goNext();
+      });
+    } else {
+      speakOne(enText,"en",rate,goNext);
+    }
+  }
+}
+function stopPlayback(){
+  player.playing=false; clearTimeout(player.timer);
+  try{ speechSynthesis.cancel(); }catch(e){}
+  $("#playBtn").textContent="▶ 播放"; $("#playBtn").classList.remove("on");
+  $$(".sent").forEach(function(el){el.classList.remove("active");});
+}
+
+/* =========================================================
+   译文三态（原样）
+   ========================================================= */
+function applyTrans(){
+  document.body.setAttribute("data-trans", state.trans);
+  $("#transBtn").textContent = "译文：" + TRANS_LABEL[state.trans];
+  $("#transBtn").classList.toggle("on", state.trans!=="none");
+  $("#transBtn").classList.toggle("off", state.trans==="none");
+}
+function cycleTrans(){
+  var i = TRANS_ORDER.indexOf(state.trans);
+  state.trans = TRANS_ORDER[(i+1) % TRANS_ORDER.length];
+  save("trans", state.trans);
+  applyTrans();
+}
+
+/* ========================= 绑定 ========================= */
+function bind(){
+  /* 头像：切换音色 + 试听 */
+  $("#creeper").addEventListener("click", function(){
+    unlockAudio();
+    var next = nextPref(state.voicePref);
+    applyPref(next);
+
+    this.classList.remove("pop");
+    void this.offsetWidth;
+    this.classList.add("pop");
+
+    var wasPlaying = player.playing;
+    var resumeAt = player.current;
+    stopPlayback();
+
+    var lang = (state.langMode==="zh" || state.langMode==="zh-en") ? "zh" : "en";
+    var line = "";
+    if(lang==="zh"){
+      line = next==="male" ? "你好，我是 Steve。我们一起读故事吧。"
+           : next==="female" ? "你好，我是 Alex。我们一起读故事吧。"
+           : "你好，我们一起读故事吧。";
+    } else {
+      line = next==="male" ? "Hello! I am Steve. Let's read together."
+           : next==="female" ? "Hi! I am Alex. Let's read together."
+           : "Hello! Let's read a story.";
+    }
+
+    var pick = pickVoice(next, lang);
+    if(pick.fallbackMsg){ toast(pick.fallbackMsg); }
+    else { toast("已切换到" + PREF_LABEL[next] + "音色"); }
+
+    speakOne(line, lang, player.rate, function(){
+      if(wasPlaying && currentSentences.length){
+        playSentence(Math.min(resumeAt, currentSentences.length-1));
+      }
+    });
+  });
+
+  $("#parseBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    var raw=$("#inputBox").value;
+    if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return; }
+    var result=parseText(raw);
+    if(!result.items.length){ toast("没找到能读的英文句子"); return; }
+    $("#readerTitle").textContent="📖 阅读 · "+result.items.length+" 句";
+    renderSentences(result);
+
+    var s=result.stats;
+    var orderTxt=result.order==="zh-first"?"先中文后英文":"先英文后中文";
+    var html="识别结果：<b>"+orderTxt+"</b><br>"+
+      "英文行 <b>"+s.en+"</b> · 中文行 <b>"+s.zh+"</b> · 混排行 <b>"+s.mix+"</b>"+
+      (s.title?" · 标题 <b>"+s.title+"</b>":"")+
+      " → 共 <b>"+result.items.length+"</b> 句";
+    var rp=$("#report"); rp.innerHTML=html; rp.classList.add("show");
+
+    window.scrollTo({top:$("#reader").offsetTop-70,behavior:"smooth"});
+  });
+
+  $("#clearBtn").addEventListener("click", function(){
+    click(); stopPlayback();
+    $("#inputBox").value="";
+    $("#reader").hidden=true;
+    currentSentences=[];
+    $("#report").classList.remove("show");
+  });
+
+  $("#langMode").addEventListener("change", function(e){
+    state.langMode=e.target.value;
+    save("langMode", state.langMode);
+    click();
+    if(currentSentences.length){
+      var keep = currentSentences.map(function(x){return {en:x.en,zh:x.zh};});
+      renderSentences({items:keep, titles:[]});
+      $("#sentCount").textContent=keep.length+" 句";
+    }
+  });
+
+  $("#transBtn").addEventListener("click", function(){
+    click(); cycleTrans();
+  });
+
+  $("#playBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    if(!currentSentences.length){ toast("先粘贴文章并断句"); return; }
+    if(player.playing) stopPlayback();
+    else playSentence(player.current);
+  });
+
+  $("#prevBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    if(!currentSentences.length) return;
+    var was=player.playing; stopPlayback();
+    player.current=Math.max(0, player.current-1);
+    if(was) playSentence(player.current);
+    else highlightSentence(player.current);
+  });
+
+  $("#nextBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    if(!currentSentences.length) return;
+    var was=player.playing; stopPlayback();
+    player.current=Math.min(currentSentences.length-1, player.current+1);
+    if(was) playSentence(player.current);
+    else highlightSentence(player.current);
+  });
+
+  $("#rateInput").addEventListener("input", function(e){
+    player.rate=Number(e.target.value);
+    $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+    save("rate", player.rate);
+  });
+
+  $("#readerBody").addEventListener("click", function(e){
+    var btn=e.target.closest(".sent");
+    if(!btn) return;
+    unlockAudio(); click(); stopPlayback();
+    playSentence(Number(btn.getAttribute("data-idx")));
+  });
+
+  $("#soundBtn").addEventListener("click", function(){
+    unlockAudio(); state.muted=!state.muted; save("muted", state.muted);
+    this.textContent=state.muted?"🔇":"🔊";
+    this.classList.toggle("off", state.muted);
+    if(!state.muted) tone(880,.07,"triangle",.03);
+    else if(hasTTS()){ try{ speechSynthesis.cancel(); }catch(e){} }
+  });
+
+  var hb=$("#soundHintBtn");
+  if(hb) hb.addEventListener("click", function(){
+    unlockAudio(); hideHint();
+    if(state.muted){ state.muted=false; $("#soundBtn").textContent="🔊"; $("#soundBtn").classList.remove("off"); }
+    speakOne("Hello! Let us read a story.","en",.85,function(){});
+  });
+  var hc=$("#soundHintClose");
+  if(hc) hc.addEventListener("click", hideHint);
+}
+
+/* ========================= 启动 ========================= */
+function init(){
+  state.muted=load("muted",false);
+  $("#soundBtn").textContent=state.muted?"🔇":"🔊";
+  if(state.muted) $("#soundBtn").classList.add("off");
+
+  state.trans=load("trans","cur");
+  if(TRANS_ORDER.indexOf(state.trans)<0) state.trans="cur";
+  applyTrans();
+
+  state.langMode=load("langMode","en");
+  $("#langMode").value=state.langMode;
+
+  state.voicePref=load("voicePref","auto");
+  applyPref(state.voicePref);
+
+  player.rate=load("rate",0.85);
+  $("#rateInput").value=player.rate;
+  $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+
+  bind();
+
+  ["pointerdown","touchstart","touchend"].forEach(function(t){
+    document.addEventListener(t, unlockAudio, {passive:true});
+  });
+
+  var isTouch=("ontouchstart" in window)||(navigator.maxTouchPoints>0);
+  if(isTouch){
+    setTimeout(function(){
+      if(ttsPrimed) return;
+      if(!hasTTS()){ showHint("这个浏览器不支持朗读，建议用 Chrome 或 Safari 打开", true); return; }
+      loadVoices();
+      var hasEn=!voices.length || voices.some(function(v){ return /^en([-_]|$)/i.test(v.lang||""); });
+      if(!hasEn) showHint("这台设备没装英文语音包，朗读会没声音。设置里添加英文语音后重开本页", true);
+      else showHint("👆 点一下开启声音（手机需先点一次才能朗读）", false);
+    }, 1200);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
