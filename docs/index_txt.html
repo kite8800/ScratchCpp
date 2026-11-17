@@ -1080,6 +1080,8 @@ if (__bootError) {
         .ultra-menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
 
         .ultra-menu-sep { height: 1px; background: var(--border); margin: 4px 6px; }
+        .speech-menu { width: 232px; min-width: min(200px, calc(100vw - 16px)); max-width: calc(100vw - 16px); }
+        .speech-menu-trigger .speech-chevron { width: 0.75em; height: 0.75em; }
 
         /* 窄屏（约 1100px）下第一行会被语言按钮挤到第二行：略收 gap 和内边距，
            大约省出 90px，让「[精简][主题][语言]」留在同一行。宽屏走原样式，视觉不变 */
@@ -2615,6 +2617,8 @@ if (__bootError) {
         <symbol id="icon-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
         <symbol id="icon-equals" viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></symbol>
         <symbol id="icon-play" viewBox="0 0 24 24"><path d="M6 4v16l14-8z"/></symbol>
+        <symbol id="icon-volume-up" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+        <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
         <symbol id="icon-file-signature" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 15c1.5-1.5 2.5 1.5 4 0s2.5 1.5 4 0"/></symbol>
         <symbol id="icon-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
         <symbol id="icon-sign-out-alt" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
@@ -2710,6 +2714,41 @@ if (__bootError) {
             <button class="ultra-menu-item" data-action="file" data-target="exampleBtn"><svg class="icon"><use href="#icon-lightbulb"/></svg> <span data-i18n="btnExample">示例</span></button>
         </div>
 
+        <!-- 朗读设置 -->
+        <div class="modal-overlay" id="speechSettingsModal">
+            <div class="modal" style="width: 400px;">
+                <h3 data-i18n="speechSettingsTitle"><svg class="icon"><use href="#icon-volume-up"/></svg> 朗读设置</h3>
+                <div class="field">
+                    <label for="speechVoiceSelect" data-i18n="speechVoiceLabel">语音</label>
+                    <select id="speechVoiceSelect">
+                        <option value="" data-i18n="speechVoiceAuto">系统自动</option>
+                    </select>
+                    <span class="hint" data-i18n="speechVoiceHint">可用语音由浏览器和操作系统提供</span>
+                </div>
+                <div class="field">
+                    <label for="speechLanguageSelect" data-i18n="speechLanguageLabel">朗读语言</label>
+                    <select id="speechLanguageSelect">
+                        <option value="auto" data-i18n="speechLanguageAuto">自动（按句子判断）</option>
+                        <option value="zh" data-i18n="speechLanguageChinese">中文</option>
+                        <option value="en" data-i18n="speechLanguageEnglish">English</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="speechRateInput" data-i18n="speechRateLabel">语速</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input id="speechRateInput" type="range" min="0.5" max="1.5" step="0.05" value="0.9" style="flex:1; accent-color:var(--accent);">
+                        <span id="speechRateValue" class="hint" style="min-width:42px; text-align:right;">0.90x</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="speechPreviewBtn" data-i18n="speechPreview">试听</button>
+                    <span style="flex:1"></span>
+                    <button id="speechCancelBtn" data-i18n="btnCancel">取消</button>
+                    <button id="speechSaveBtn" class="primary" data-i18n="btnSave"><svg class="icon"><use href="#icon-check"/></svg> 保存</button>
+                </div>
+            </div>
+        </div>
+
         <div class="ultra-menu" id="ultraEditMenu">
             <button class="ultra-menu-item" data-action="file" data-target="undoBtn"><svg class="icon"><use href="#icon-undo"/></svg> <span data-i18n="btnUndo">撤销</span></button>
             <button class="ultra-menu-item" data-action="file" data-target="redoBtn"><svg class="icon"><use href="#icon-redo"/></svg> <span data-i18n="btnRedo">重做</span></button>
@@ -2732,6 +2771,21 @@ if (__bootError) {
             <button class="ultra-menu-item" id="ultraSnapViewAllBtn"><svg class="icon"><use href="#icon-list"/></svg> <span data-i18n="btnSnapViewAll">查看全部快照</span></button>
             <button class="ultra-menu-item" id="ultraSnapSettingsBtn"><svg class="icon"><use href="#icon-settings"/></svg> <span data-i18n="btnSnapshotSettings">快照设置</span></button>
         </div>
+        <div class="ultra-menu speech-menu" id="speechMenu" role="menu">
+            <button class="ultra-menu-item" id="speechReadItem" role="menuitem">
+                <svg class="icon"><use href="#icon-volume-up"/></svg> <span id="speechReadLabel">朗读全文</span>
+            </button>
+            <button class="ultra-menu-item" id="speechPauseItem" role="menuitem" disabled>
+                <svg class="icon"><use href="#icon-pause"/></svg> <span id="speechPauseLabel">暂停</span>
+            </button>
+            <button class="ultra-menu-item" id="speechStopItem" role="menuitem" disabled>
+                <svg class="icon"><use href="#icon-stop"/></svg> <span data-i18n="speechStop">停止</span>
+            </button>
+            <span class="ultra-menu-sep"></span>
+            <button class="ultra-menu-item" id="speechSettingsItem" role="menuitem">
+                <svg class="icon"><use href="#icon-settings"/></svg> <span data-i18n="speechSettings">朗读设置</span>
+            </button>
+        </div>
     </div>
 
     <div class="toolbar toolbar-second">
@@ -2742,6 +2796,7 @@ if (__bootError) {
         <button id="ultraFileBtn" class="icon-only ultra-only" data-i18n-title="ultraFileTitle" title="文件菜单"><svg class="icon"><use href="#icon-folder-open"/></svg></button>
         <button id="ultraEditBtn" class="icon-only ultra-only" data-i18n-title="ultraEditTitle" title="编辑菜单"><svg class="icon"><use href="#icon-edit-3"/></svg></button>
         <button id="ultraSnapshotBtn" class="icon-only ultra-only" data-i18n-title="ultraSnapshotTitle" title="快照菜单"><svg class="icon"><use href="#icon-history"/></svg></button>
+        <button id="ultraSpeechMenuBtn" class="icon-only ultra-only" data-i18n-title="speechMenuTitle" title="朗读菜单" aria-haspopup="menu" aria-controls="speechMenu" aria-expanded="false"><svg class="icon"><use href="#icon-volume-up"/></svg></button>
         <button id="undoBtn" data-i18n="btnUndo" data-i18n-title="btnUndoTitle" title="撤销 (Ctrl+Z)" disabled><svg class="icon"><use href="#icon-undo"/></svg> 撤销</button>
         <button id="redoBtn" data-i18n="btnRedo" data-i18n-title="btnRedoTitle" title="重做 (Ctrl+Y / Ctrl+Shift+Z)" disabled><svg class="icon"><use href="#icon-redo"/></svg> 重做</button>
         <span class="divider"></span>
@@ -2754,6 +2809,12 @@ if (__bootError) {
         <button id="quickAddBtn" data-i18n="btnQuickAdd" data-i18n-title="btnQuickAddTitle" title="新增积木 (Ctrl+Shift+/)"><svg class="icon"><use href="#icon-cube-plus"/></svg> 新增</button>
         <span class="divider"></span>
         <button id="dabbrevBtn" data-i18n="btnDabbrev" data-i18n-title="btnDabbrevTitle" title="词补全 (Alt+/)"><svg class="icon"><use href="#icon-wand-sparkles"/></svg> 补全</button>
+        <span class="divider" aria-hidden="true"></span>
+        <button id="speechMenuBtn" class="speech-menu-trigger" data-i18n-title="speechMenuTitle" title="朗读菜单" aria-haspopup="menu" aria-controls="speechMenu" aria-expanded="false">
+            <svg class="icon"><use href="#icon-volume-up"/></svg>
+            <span data-i18n="speechMenuLabel">朗读</span>
+            <svg class="icon speech-chevron"><use href="#icon-chevron-down"/></svg>
+        </button>
         <!-- 界面语言 / 主题 / 帮助 / 精简：三档共用同一组按钮，spacer 把它们推到第二行最右 -->
         <span class="spacer"></span>
         <button id="langToggleBtn" class="icon-only" data-i18n-title="langToggleTitle" title="切换语言 / Switch language"><svg class="icon"><use href="#icon-globe"/></svg><span id="langToggleText">中</span></button>
@@ -4122,6 +4183,31 @@ if (__bootError) {
                 dabbrevFieldTitle: 'Alt+/ 词补全（候选词来自编辑器代码）',
                 dabbrevCaseOnTitle: '区分大小写（已开启，点击关闭）',
                 dabbrevCaseOffTitle: '区分大小写（已关闭，点击开启）',
+                speechMenuLabel: '朗读',
+                speechMenuTitle: '朗读菜单',
+                speechReadSelection: '朗读选区',
+                speechReadAll: '朗读全文',
+                speechPause: '暂停',
+                speechResume: '继续',
+                speechStop: '停止',
+                speechSettings: '朗读设置',
+                speechSettingsTitle: '朗读设置',
+                speechVoiceLabel: '语音',
+                speechVoiceAuto: '系统自动',
+                speechVoiceHint: '可用语音由浏览器和操作系统提供',
+                speechLanguageLabel: '朗读语言',
+                speechLanguageAuto: '自动（按句子判断）',
+                speechLanguageChinese: '中文',
+                speechLanguageEnglish: '英文',
+                speechRateLabel: '语速',
+                speechPreview: '试听',
+                speechUnsupported: '此浏览器不支持语音朗读',
+                speechEmpty: '没有可朗读的内容',
+                speechFailed: '语音播放失败',
+                speechSettingsSaved: '朗读设置已保存',
+                speechSettingsNotSaved: '设置仅在当前页面生效，无法保存到本机',
+                speechPreviewZh: '你好，这是语音试听。',
+                speechPreviewEn: 'Hello, this is a voice preview.',
                 pickerNoBlocks: '暂无积木，请在左侧面板添加',
                 pickerFooterNav: '↑↓ 选择',
                 pickerFooterInsert: 'Enter 插入',
@@ -4438,6 +4524,31 @@ if (__bootError) {
                 dabbrevFieldTitle: 'Alt+/ word complete (words come from editor code)',
                 dabbrevCaseOnTitle: 'Match case (on, click to disable)',
                 dabbrevCaseOffTitle: 'Match case (off, click to enable)',
+                speechMenuLabel: 'Read aloud',
+                speechMenuTitle: 'Read aloud menu',
+                speechReadSelection: 'Read selection',
+                speechReadAll: 'Read all',
+                speechPause: 'Pause',
+                speechResume: 'Resume',
+                speechStop: 'Stop',
+                speechSettings: 'Speech settings',
+                speechSettingsTitle: 'Speech Settings',
+                speechVoiceLabel: 'Voice',
+                speechVoiceAuto: 'System default',
+                speechVoiceHint: 'Available voices are provided by your browser and operating system',
+                speechLanguageLabel: 'Language',
+                speechLanguageAuto: 'Auto (detect by sentence)',
+                speechLanguageChinese: 'Chinese',
+                speechLanguageEnglish: 'English',
+                speechRateLabel: 'Rate',
+                speechPreview: 'Preview',
+                speechUnsupported: 'This browser does not support speech synthesis',
+                speechEmpty: 'There is no text to read',
+                speechFailed: 'Speech playback failed',
+                speechSettingsSaved: 'Speech settings saved',
+                speechSettingsNotSaved: 'Settings apply only to this page and could not be saved',
+                speechPreviewZh: '你好，这是语音试听。',
+                speechPreviewEn: 'Hello, this is a voice preview.',
                 pickerNoBlocks: 'No blocks yet. Add them in the left panel',
                 pickerFooterNav: '↑↓ select',
                 pickerFooterInsert: 'Enter insert',
@@ -12400,15 +12511,415 @@ TODO: replace this sample with your own notes.
         // 首帧就套上，避免进页面后工具栏先宽后窄地跳一下
         setCompactMode(getCompactPref(), { persist: false });
 
-        // ==================== 超精简模式：文件 / 编辑 / 快照 三个菜单 ====================
+        // ==================== 文本朗读 ====================
+        const SPEECH_SETTINGS_KEY = 'text-speech-settings-v1';
+        const SPEECH_DEFAULT_SETTINGS = { voiceURI: '', language: 'auto', rate: 0.9 };
+        const speechSettingsModal = document.getElementById('speechSettingsModal');
+        const speechVoiceSelect = document.getElementById('speechVoiceSelect');
+        const speechLanguageSelect = document.getElementById('speechLanguageSelect');
+        const speechRateInput = document.getElementById('speechRateInput');
+        const speechRateValue = document.getElementById('speechRateValue');
+        const speechPreviewBtn = document.getElementById('speechPreviewBtn');
+        let speechVoices = [];
+        let speechChunks = [];
+        let speechChunkIndex = 0;
+        let speechRunId = 0;
+        let speechRunSettings = { ...SPEECH_DEFAULT_SETTINGS };
+        let speechUtteranceActive = false;
+        let speechStartTimer = null;
+        let speechResumeTimer = null;
+        let speechPlaybackState = 'idle';
+
+        function normalizeSpeechSettings(value) {
+            const settings = value && typeof value === 'object' ? value : {};
+            const rate = Number(settings.rate);
+            return {
+                voiceURI: typeof settings.voiceURI === 'string' ? settings.voiceURI : '',
+                language: ['auto', 'zh', 'en'].includes(settings.language) ? settings.language : 'auto',
+                rate: Number.isFinite(rate) ? Math.min(1.5, Math.max(0.5, rate)) : SPEECH_DEFAULT_SETTINGS.rate
+            };
+        }
+
+        function loadSpeechSettings() {
+            const raw = SafeStore.get(SPEECH_SETTINGS_KEY);
+            if (!raw) return { ...SPEECH_DEFAULT_SETTINGS };
+            try {
+                return normalizeSpeechSettings(JSON.parse(raw));
+            } catch (e) {
+                console.warn('[speech] Invalid saved settings; using defaults.', e);
+                return { ...SPEECH_DEFAULT_SETTINGS };
+            }
+        }
+
+        let speechSettings = loadSpeechSettings();
+
+        function hasSpeechSupport() {
+            return typeof window.speechSynthesis !== 'undefined' &&
+                typeof window.SpeechSynthesisUtterance === 'function';
+        }
+
+        function populateSpeechVoiceSelect(preferredURI) {
+            if (!speechVoiceSelect) return;
+            const selectedURI = preferredURI === undefined ? speechVoiceSelect.value : preferredURI;
+            speechVoiceSelect.textContent = '';
+
+            const automatic = document.createElement('option');
+            automatic.value = '';
+            automatic.dataset.i18n = 'speechVoiceAuto';
+            automatic.textContent = t('speechVoiceAuto');
+            speechVoiceSelect.appendChild(automatic);
+
+            const availableVoices = speechVoices.slice().sort((a, b) => {
+                const byLanguage = (a.lang || '').localeCompare(b.lang || '');
+                return byLanguage || (a.name || '').localeCompare(b.name || '');
+            });
+            availableVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.value = voice.voiceURI || voice.name || '';
+                option.textContent = (voice.name || voice.lang || t('speechVoiceAuto')) +
+                    (voice.lang ? ' (' + voice.lang + ')' : '');
+                speechVoiceSelect.appendChild(option);
+            });
+
+            speechVoiceSelect.value = availableVoices.some(v => (v.voiceURI || v.name || '') === selectedURI)
+                ? selectedURI
+                : '';
+        }
+
+        function loadSpeechVoices() {
+            if (!hasSpeechSupport()) return;
+            try {
+                speechVoices = window.speechSynthesis.getVoices() || [];
+                populateSpeechVoiceSelect();
+            } catch (e) {
+                console.warn('[speech] Could not load browser voices.', e);
+                flashStatus(t('speechFailed'));
+            }
+        }
+
+        if (hasSpeechSupport()) {
+            loadSpeechVoices();
+            window.speechSynthesis.onvoiceschanged = loadSpeechVoices;
+        }
+
+        function speechSelection() {
+            const start = codeInput.selectionStart || 0;
+            const end = codeInput.selectionEnd || 0;
+            if (end > start) {
+                const selected = codeInput.value.slice(start, end);
+                if (selected.trim()) return { text: selected, selected: true };
+            }
+            return { text: codeInput.value, selected: false };
+        }
+
+        function speechLanguageFor(text, settings) {
+            if (settings.language === 'zh' || settings.language === 'en') return settings.language;
+            return /[\u3400-\u9fff]/.test(text) ? 'zh' : 'en';
+        }
+
+        function splitLongSpeechChunk(text, limit) {
+            const chunks = [];
+            let remaining = text.trim();
+            while (remaining.length > limit) {
+                let cut = remaining.lastIndexOf(' ', limit);
+                if (cut < Math.floor(limit / 2)) cut = limit;
+                chunks.push(remaining.slice(0, cut).trim());
+                remaining = remaining.slice(cut).trim();
+            }
+            if (remaining) chunks.push(remaining);
+            return chunks;
+        }
+
+        function makeSpeechChunks(text, settings) {
+            const chunks = [];
+            text.replace(/\r\n?/g, '\n').split(/\n+/).forEach((line) => {
+                const sentences = line.match(/[^.!?。！？；;]+[.!?。！？；;]*/g) || [line];
+                sentences.forEach((sentence) => {
+                    splitLongSpeechChunk(sentence, 280).forEach((part) => {
+                        if (part) chunks.push({
+                            text: part,
+                            language: speechLanguageFor(part, settings)
+                        });
+                    });
+                });
+            });
+            return chunks;
+        }
+
+        function speechVoiceFor(language, settings) {
+            const preferred = settings.voiceURI && speechVoices.find(v =>
+                (v.voiceURI || v.name || '') === settings.voiceURI);
+            if (preferred) return preferred;
+            const prefix = language === 'zh' ? 'zh' : 'en';
+            return speechVoices.find(v =>
+                v.localService !== false && (v.lang || '').toLowerCase().startsWith(prefix)) || null;
+        }
+
+        function createSpeechUtterance(text, language, settings) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = speechVoiceFor(language, settings);
+            utterance.rate = settings.rate;
+            if (voice) {
+                utterance.voice = voice;
+                utterance.lang = voice.lang || (language === 'zh' ? 'zh-CN' : 'en-US');
+            } else {
+                const hasLocalLanguageVoice = speechVoices.some(v =>
+                    v.localService !== false &&
+                    (v.lang || '').toLowerCase().startsWith(language === 'zh' ? 'zh' : 'en'));
+                utterance.lang = hasLocalLanguageVoice ? (language === 'zh' ? 'zh-CN' : 'en-US') : '';
+            }
+            return utterance;
+        }
+
+        function updateSpeechMenu() {
+            const selection = speechSelection();
+            const readItem = document.getElementById('speechReadItem');
+            const readLabel = document.getElementById('speechReadLabel');
+            const pauseItem = document.getElementById('speechPauseItem');
+            const pauseLabel = document.getElementById('speechPauseLabel');
+            const stopItem = document.getElementById('speechStopItem');
+            const pauseIcon = pauseItem && pauseItem.querySelector('use');
+            if (readLabel) readLabel.textContent = t(selection.selected ? 'speechReadSelection' : 'speechReadAll');
+            if (readItem) readItem.disabled = !selection.text.trim();
+            if (pauseLabel) pauseLabel.textContent = t(speechPlaybackState === 'paused' ? 'speechResume' : 'speechPause');
+            if (pauseItem) pauseItem.disabled = speechPlaybackState === 'idle';
+            if (stopItem) stopItem.disabled = speechPlaybackState === 'idle';
+            if (pauseIcon) pauseIcon.setAttribute('href', speechPlaybackState === 'paused' ? '#icon-play' : '#icon-pause');
+
+            [speechMenuBtn, ultraSpeechMenuBtn].forEach((button) => {
+                if (!button) return;
+                button.setAttribute('aria-expanded', String(!!(speechMenu && speechMenu.classList.contains('show'))));
+                button.classList.toggle('active', speechPlaybackState === 'speaking');
+            });
+        }
+
+        function stopSpeechPlayback() {
+            speechRunId++;
+            clearTimeout(speechStartTimer);
+            clearTimeout(speechResumeTimer);
+            speechStartTimer = null;
+            speechResumeTimer = null;
+            speechChunks = [];
+            speechChunkIndex = 0;
+            speechUtteranceActive = false;
+            speechPlaybackState = 'idle';
+            if (hasSpeechSupport()) {
+                try {
+                    window.speechSynthesis.cancel();
+                } catch (e) {
+                    console.warn('[speech] Could not cancel speech.', e);
+                    flashStatus(t('speechFailed'));
+                }
+            }
+            updateSpeechMenu();
+        }
+
+        function playSpeechChunk(runId, settings) {
+            if (runId !== speechRunId || speechPlaybackState !== 'speaking') return;
+            if (speechChunkIndex >= speechChunks.length) {
+                speechChunks = [];
+                speechChunkIndex = 0;
+                speechUtteranceActive = false;
+                speechPlaybackState = 'idle';
+                updateSpeechMenu();
+                return;
+            }
+
+            const chunk = speechChunks[speechChunkIndex];
+            let utterance;
+            try {
+                utterance = createSpeechUtterance(chunk.text, chunk.language, settings);
+            } catch (e) {
+                console.error('[speech] Could not create utterance.', e);
+                stopSpeechPlayback();
+                flashStatus(t('speechFailed'));
+                return;
+            }
+
+            utterance.onend = () => {
+                if (runId !== speechRunId || speechPlaybackState !== 'speaking') return;
+                clearTimeout(speechResumeTimer);
+                speechResumeTimer = null;
+                speechUtteranceActive = false;
+                speechChunkIndex++;
+                playSpeechChunk(runId, settings);
+            };
+            utterance.onerror = (event) => {
+                if (runId !== speechRunId || event.error === 'canceled' || event.error === 'interrupted') return;
+                speechUtteranceActive = false;
+                stopSpeechPlayback();
+                flashStatus(t('speechFailed'));
+            };
+
+            speechStartTimer = setTimeout(() => {
+                speechStartTimer = null;
+                if (runId !== speechRunId || speechPlaybackState !== 'speaking') return;
+                try {
+                    speechUtteranceActive = true;
+                    window.speechSynthesis.speak(utterance);
+                    speechResumeTimer = setTimeout(() => {
+                        speechResumeTimer = null;
+                        if (runId === speechRunId && speechPlaybackState === 'speaking') {
+                            try {
+                                window.speechSynthesis.resume();
+                            } catch (e) {
+                                console.warn('[speech] Could not resume synthesis.', e);
+                            }
+                        }
+                    }, 320);
+                } catch (e) {
+                    console.error('[speech] Could not start speech.', e);
+                    stopSpeechPlayback();
+                    flashStatus(t('speechFailed'));
+                }
+            }, 90);
+        }
+
+        function startSpeechReading() {
+            if (!hasSpeechSupport()) {
+                flashStatus(t('speechUnsupported'));
+                return;
+            }
+            const source = speechSelection();
+            if (!source.text.trim()) {
+                flashStatus(t('speechEmpty'));
+                return;
+            }
+
+            stopSpeechPlayback();
+            const settings = { ...speechSettings };
+            speechChunks = makeSpeechChunks(source.text, settings);
+            speechRunSettings = settings;
+            speechChunkIndex = 0;
+            speechPlaybackState = 'speaking';
+            const runId = ++speechRunId;
+            updateSpeechMenu();
+            playSpeechChunk(runId, settings);
+        }
+
+        function toggleSpeechPause() {
+            if (!hasSpeechSupport() || speechPlaybackState === 'idle') return;
+            try {
+                if (speechPlaybackState === 'paused') {
+                    speechPlaybackState = 'speaking';
+                    if (speechUtteranceActive) {
+                        window.speechSynthesis.resume();
+                    } else {
+                        playSpeechChunk(speechRunId, speechRunSettings);
+                    }
+                } else {
+                    if (speechStartTimer) {
+                        clearTimeout(speechStartTimer);
+                        speechStartTimer = null;
+                    } else {
+                        window.speechSynthesis.pause();
+                    }
+                    speechPlaybackState = 'paused';
+                }
+                updateSpeechMenu();
+            } catch (e) {
+                console.error('[speech] Could not change playback state.', e);
+                stopSpeechPlayback();
+                flashStatus(t('speechFailed'));
+            }
+        }
+
+        function readPendingSpeechSettings() {
+            const rate = Number(speechRateInput.value);
+            return normalizeSpeechSettings({
+                voiceURI: speechVoiceSelect.value,
+                language: speechLanguageSelect.value,
+                rate
+            });
+        }
+
+        function updateSpeechRateLabel() {
+            speechRateValue.textContent = Number(speechRateInput.value).toFixed(2) + 'x';
+        }
+
+        function closeSpeechSettings() {
+            speechSettingsModal.classList.remove('show');
+        }
+
+        function openSpeechSettings() {
+            loadSpeechVoices();
+            populateSpeechVoiceSelect(speechSettings.voiceURI);
+            speechLanguageSelect.value = speechSettings.language;
+            speechRateInput.value = String(speechSettings.rate);
+            updateSpeechRateLabel();
+            speechSettingsModal.classList.add('show');
+            speechVoiceSelect.focus();
+        }
+
+        function previewSpeech() {
+            if (!hasSpeechSupport()) {
+                flashStatus(t('speechUnsupported'));
+                return;
+            }
+            const settings = readPendingSpeechSettings();
+            const previewLang = settings.language === 'auto'
+                ? (/^zh/i.test(navigator.language || '') ? 'zh' : 'en')
+                : settings.language;
+            const previewText = t(previewLang === 'zh' ? 'speechPreviewZh' : 'speechPreviewEn');
+
+            stopSpeechPlayback();
+            const runId = ++speechRunId;
+            try {
+                const utterance = createSpeechUtterance(previewText, previewLang, settings);
+                utterance.onerror = (event) => {
+                    if (runId !== speechRunId || event.error === 'canceled' || event.error === 'interrupted') return;
+                    flashStatus(t('speechFailed'));
+                };
+                window.speechSynthesis.speak(utterance);
+                window.speechSynthesis.resume();
+            } catch (e) {
+                console.error('[speech] Could not preview voice.', e);
+                flashStatus(t('speechFailed'));
+            }
+        }
+
+        function saveSpeechSettings() {
+            speechSettings = readPendingSpeechSettings();
+            const saved = SafeStore.set(SPEECH_SETTINGS_KEY, JSON.stringify(speechSettings));
+            closeSpeechSettings();
+            flashStatus(saved ? t('speechSettingsSaved') : t('speechSettingsNotSaved'));
+        }
+
+        speechRateInput.addEventListener('input', updateSpeechRateLabel);
+        speechPreviewBtn.addEventListener('click', previewSpeech);
+        document.getElementById('speechCancelBtn').addEventListener('click', closeSpeechSettings);
+        document.getElementById('speechSaveBtn').addEventListener('click', saveSpeechSettings);
+        speechSettingsModal.addEventListener('click', (event) => {
+            if (event.target === speechSettingsModal) closeSpeechSettings();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape' || !speechSettingsModal.classList.contains('show')) return;
+            event.preventDefault();
+            event.stopPropagation();
+            closeSpeechSettings();
+        }, true);
+
+        codeInput.addEventListener('select', updateSpeechMenu);
+        codeInput.addEventListener('keyup', updateSpeechMenu);
+        codeInput.addEventListener('input', updateSpeechMenu);
+
+        // ==================== 工具栏菜单（含超精简模式菜单）====================
         const ultraFileBtn = document.getElementById('ultraFileBtn');
         const ultraEditBtn = document.getElementById('ultraEditBtn');
         const ultraSnapshotBtn = document.getElementById('ultraSnapshotBtn');
+        const speechMenuBtn = document.getElementById('speechMenuBtn');
+        const ultraSpeechMenuBtn = document.getElementById('ultraSpeechMenuBtn');
         const ultraFileMenu = document.getElementById('ultraFileMenu');
         const ultraEditMenu = document.getElementById('ultraEditMenu');
         const ultraSnapshotMenu = document.getElementById('ultraSnapshotMenu');
-        const ULTRA_MENUS = [ultraFileMenu, ultraEditMenu, ultraSnapshotMenu].filter(Boolean);
-        const ULTRA_BTNS = [ultraFileBtn, ultraEditBtn, ultraSnapshotBtn].filter(Boolean);
+        const speechMenu = document.getElementById('speechMenu');
+        const speechReadItem = document.getElementById('speechReadItem');
+        const speechPauseItem = document.getElementById('speechPauseItem');
+        const speechStopItem = document.getElementById('speechStopItem');
+        const speechSettingsItem = document.getElementById('speechSettingsItem');
+        const ULTRA_MENUS = [ultraFileMenu, ultraEditMenu, ultraSnapshotMenu, speechMenu].filter(Boolean);
+        const ULTRA_BTNS = [ultraFileBtn, ultraEditBtn, ultraSnapshotBtn, speechMenuBtn, ultraSpeechMenuBtn].filter(Boolean);
+        let activeSpeechTrigger = null;
 
         /**
          * 关闭所有 ultra 菜单。
@@ -12417,6 +12928,9 @@ TODO: replace this sample with your own notes.
          */
         function closeAllUltraMenus() {
             document.querySelectorAll('.ultra-menu.show').forEach(m => m.classList.remove('show'));
+            [document.getElementById('speechMenuBtn'), document.getElementById('ultraSpeechMenuBtn')].forEach((button) => {
+                if (button) button.setAttribute('aria-expanded', 'false');
+            });
         }
 
         function positionUltraMenu(menu, btn) {
@@ -12435,6 +12949,30 @@ TODO: replace this sample with your own notes.
             }
         }
 
+        function toggleSpeechMenu(btn) {
+            const willOpen = !speechMenu.classList.contains('show');
+            closeAllUltraMenus();
+            if (!willOpen) return;
+
+            activeSpeechTrigger = btn;
+            updateSpeechMenu();
+            speechMenu.classList.add('show');
+
+            const buttonRect = btn.getBoundingClientRect();
+            const menuWidth = speechMenu.offsetWidth;
+            const menuHeight = speechMenu.offsetHeight;
+            const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - menuWidth - 8));
+            let top = buttonRect.bottom + 4;
+            if (top + menuHeight > window.innerHeight - 8) {
+                top = Math.max(8, buttonRect.top - menuHeight - 4);
+            }
+            speechMenu.style.left = left + 'px';
+            speechMenu.style.top = top + 'px';
+            btn.setAttribute('aria-expanded', 'true');
+            const firstEnabled = speechMenu.querySelector('.ultra-menu-item:not(:disabled)');
+            if (firstEnabled) firstEnabled.focus({ preventScroll: true });
+        }
+
         if (ultraFileBtn && ultraFileMenu) {
             ultraFileBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleUltraMenu(ultraFileMenu, ultraFileBtn); });
         }
@@ -12450,6 +12988,58 @@ TODO: replace this sample with your own notes.
                 toggleUltraMenu(ultraSnapshotMenu, ultraSnapshotBtn);
             });
         }
+        [speechMenuBtn, ultraSpeechMenuBtn].forEach((btn) => {
+            if (btn) btn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleSpeechMenu(btn);
+            });
+        });
+
+        speechMenu.addEventListener('keydown', (event) => {
+            const items = Array.from(speechMenu.querySelectorAll('.ultra-menu-item:not(:disabled)'));
+            const index = items.indexOf(document.activeElement);
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeAllUltraMenus();
+                if (activeSpeechTrigger) activeSpeechTrigger.focus();
+            } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                const delta = event.key === 'ArrowDown' ? 1 : -1;
+                const next = index < 0
+                    ? (delta > 0 ? 0 : items.length - 1)
+                    : (index + delta + items.length) % items.length;
+                if (items[next]) items[next].focus();
+            } else if (event.key === 'Home' || event.key === 'End') {
+                event.preventDefault();
+                const target = event.key === 'Home' ? items[0] : items[items.length - 1];
+                if (target) target.focus();
+            }
+        });
+
+        speechReadItem.addEventListener('click', () => {
+            closeAllUltraMenus();
+            startSpeechReading();
+            if (activeSpeechTrigger) activeSpeechTrigger.focus();
+        });
+        speechPauseItem.addEventListener('click', () => {
+            closeAllUltraMenus();
+            toggleSpeechPause();
+            if (activeSpeechTrigger) activeSpeechTrigger.focus();
+        });
+        speechStopItem.addEventListener('click', () => {
+            closeAllUltraMenus();
+            stopSpeechPlayback();
+            if (activeSpeechTrigger) activeSpeechTrigger.focus();
+        });
+        speechSettingsItem.addEventListener('click', () => {
+            closeAllUltraMenus();
+            openSpeechSettings();
+        });
+
+        speechMenu.addEventListener('click', (event) => {
+            if (event.target === speechMenu) closeAllUltraMenus();
+        });
+        updateSpeechMenu();
 
         // 点菜单外部关闭
         document.addEventListener('click', (e) => {
