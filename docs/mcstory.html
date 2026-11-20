@@ -721,52 +721,62 @@ function parseText(raw){
     break;
   }
 
-  var items=[],titles=[],pendingEn=[],pendingZh=[];
-  function pushEnglish(text){
-    var sents=splitEnglish(text);
-    if(order==="zh-first"&&pendingZh.length){
-      sents.forEach(function(s){
-        var zh=pendingZh.shift()||"";
-        items.push({en:s,zh:zh});
-      });
-    } else {
-      sents.forEach(function(s){ items.push({en:s,zh:""}); pendingEn.push(items.length-1); });
-    }
-  }
-  function pushChinese(text){
-    var zhList=splitChinese(text);
-    if(order==="en-first"){
-      zhList.forEach(function(zh){
-        var idx=pendingEn.shift();
-        if(idx!=null&&!items[idx].zh) items[idx].zh=zh;
-      });
-    } else {
-      zhList.forEach(function(zh){ pendingZh.push(zh); });
-    }
-  }
+  var items=[],titles=[];
 
+  /* ---------- 按「块」配对：相邻的一轮英文行 + 中文行构成一个 chunk ----------
+     块边界有两种：
+       1) 空行 / 标题 / 无法识别的行；
+       2) 语言阶段「回退」——en-first 下中文之后又来英文（或 zh-first 反过来），
+          说明上一组已经结束、这是新的一组。
+     这样句数对不上时，多出来的句子只会留在本块内（中文留空 / 中文被忽略），
+     绝不会串到下一组「一行英文一行中文」去。 */
+  var chunks=[],cur=null;
+  function newChunk(){ var c={enLines:[],zhLines:[]}; chunks.push(c); return c; }
+  function addPart(lang,text){
+    if(!text) return;
+    if(lang==="en" && order==="en-first" && cur && cur.zhLines.length) cur=newChunk();
+    if(lang==="zh" && order==="zh-first" && cur && cur.enLines.length) cur=newChunk();
+    if(!cur) cur=newChunk();
+    if(lang==="en") cur.enLines.push(text); else cur.zhLines.push(text);
+  }
+  var CJK_PUNCT=/[\u4e00-\u9fff\u3400-\u4dbf。！？；，、…（）【】「」『』]/;
   classified.forEach(function(c){
-    if(c.type==="blank") return;
-    if(c.type==="title"){ titles.push(c.text); return; }
-    if(c.type==="zh"){ pushChinese(c.text); return; }
-    if(c.type==="en"){ pushEnglish(c.text); return; }
+    if(c.type==="blank"){ cur=null; return; }
+    if(c.type==="title"){ titles.push(c.text); cur=null; return; }
+    if(c.type==="other"){ cur=null; return; }
+    if(c.type==="en"){ addPart("en",c.text); return; }
+    if(c.type==="zh"){ addPart("zh",c.text); return; }
     if(c.type==="mix"){
       var parts=c.text.split(/([\u4e00-\u9fff\u3400-\u4dbf。！？；，、…（）【】「」『』]+)/);
       var enBuf="",zhBuf="";
       parts.forEach(function(p){
         if(!p) return;
-        if(/[\u4e00-\u9fff\u3400-\u4dbf]/.test(p)) zhBuf+=p; else enBuf+=p;
+        if(CJK_PUNCT.test(p)) zhBuf+=p; else enBuf+=p;
       });
       if(order==="zh-first"){
-        if(zhBuf.trim()) pushChinese(zhBuf.trim());
-        if(enBuf.trim()) pushEnglish(enBuf.trim());
+        if(zhBuf.trim()) addPart("zh",zhBuf.trim());
+        if(enBuf.trim()) addPart("en",enBuf.trim());
       } else {
-        if(enBuf.trim()) pushEnglish(enBuf.trim());
-        if(zhBuf.trim()) pushChinese(zhBuf.trim());
+        if(enBuf.trim()) addPart("en",enBuf.trim());
+        if(zhBuf.trim()) addPart("zh",zhBuf.trim());
       }
       return;
     }
-    if(enWordCount(c.text)>0) pushEnglish(c.text);
+    if(enWordCount(c.text)>0) addPart("en",c.text);
+  });
+
+  /* ---------- 块内各自断句，然后按 max 长度一一配对 ---------- */
+  chunks.forEach(function(ch){
+    var enSents=[];
+    ch.enLines.forEach(function(l){ splitEnglish(l).forEach(function(s){ enSents.push(s); }); });
+    var zhSents=[];
+    ch.zhLines.forEach(function(l){ splitChinese(l).forEach(function(s){ zhSents.push(s); }); });
+    var n=Math.max(enSents.length,zhSents.length);
+    for(var k=0;k<n;k++){
+      var en=enSents[k]||"", zh=zhSents[k]||"";
+      if(!en && !zh) continue;
+      items.push({en:en,zh:zh});
+    }
   });
 
   items=items.filter(function(it){return it.en&&it.en.trim();});
