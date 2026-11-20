@@ -281,6 +281,8 @@ function ac(){
   return actx;
 }
 function unlockAudio(){
+  /* 首次触摸/点击时给微信/iOS 一次「预热」：很多 WebView 此时才挂载 TTS 或加载语音列表 */
+  primeTTS();
   var c=ac(); if(!c) return;
   var on=function(){
     try{ var b=c.createBuffer(1,1,22050),s=c.createBufferSource(); s.buffer=b; s.connect(c.destination); s.start(0); }catch(e){}
@@ -307,11 +309,51 @@ function tone(freq,dur,type,vol){
 }
 function click(){ tone(560,.05,"square",.022); }
 
-/* ========================= 朗读 + 音色 ========================= */
+/* ========================= 朗读 + 音色 =========================
+   微信内置浏览器兼容要点（2026-11-20）：
+   1) 安卓微信 X5 / 老 WebView 可能只暴露带前缀的 webkitSpeechSynthesis，
+      只用标准名做检测会误判成「不支持」；
+   2) iOS 微信（WKWebView）和 X5 要求 speak() 在用户手势里「同步」调用，
+      原先 Chrome 用的 cancel → setTimeout(90ms) → speak 会被直接拒绝；
+   3) 微信里语音列表经常为空或延迟出现，不能在页面加载时据此断言不支持。
+   ================================================================ */
 var voices=[],ttsPrimed=false,ttsWarned=false,hintTimer=null;
-function hasTTS(){ return ("speechSynthesis" in window) && (typeof SpeechSynthesisUtterance==="function"); }
-function loadVoices(){ try{ voices=hasTTS()?(speechSynthesis.getVoices()||[]):[]; }catch(e){ voices=[]; } }
-if(hasTTS()){ loadVoices(); try{ speechSynthesis.onvoiceschanged=loadVoices; }catch(e){} }
+var UA=(navigator.userAgent||""),
+    IS_WECHAT=/MicroMessenger/i.test(UA),
+    IS_IOS=/iPad|iPhone|iPod/i.test(UA)||(/Macintosh/i.test(UA)&&navigator.maxTouchPoints>0),
+    NEED_SYNC_SPEAK=IS_WECHAT||IS_IOS; /* 这些环境必须在事件回调里同步 speak */
+
+/* 运行时解析，兼容带前缀的实现；每次调用都重新探测，避免微信里 API 延迟挂载 */
+function getSynth(){
+  return window.speechSynthesis||window.webkitSpeechSynthesis||
+         window.mozSpeechSynthesis||window.msSpeechSynthesis||null;
+}
+function getUtterCtor(){
+  return window.SpeechSynthesisUtterance||window.webkitSpeechSynthesisUtterance||
+         window.mozSpeechSynthesisUtterance||window.msSpeechSynthesisUtterance||null;
+}
+function newUtt(text){
+  var U=getUtterCtor();
+  if(typeof U==="function") return new U(text);
+  var s=getSynth();
+  if(s && typeof s.SpeechSynthesisUtterance==="function") return new s.SpeechSynthesisUtterance(text);
+  return null;
+}
+function hasTTS(){
+  var s=getSynth(), U=getUtterCtor();
+  return !!s && typeof s.speak==="function" &&
+         (typeof U==="function" || !!(s && typeof s.SpeechSynthesisUtterance==="function"));
+}
+function loadVoices(){ try{ voices=hasTTS()?(getSynth().getVoices()||[]):[]; }catch(e){ voices=[]; } }
+function primeTTS(){
+  if(!hasTTS()) return false;
+  var s=getSynth();
+  try{ if(s.getVoices) s.getVoices(); }catch(e){}
+  if(!voices.length) loadVoices();
+  try{ s.onvoiceschanged=loadVoices; }catch(e){}
+  return true;
+}
+primeTTS();
 
 /* ---------- 语音挑选：一律只用「本地语音」，绝不去碰 Google 联网语音 ----------
    原因：Chrome 会把 Google US English 之类的远程语音塞进列表，国内连不上就静默无声。
@@ -419,7 +461,14 @@ function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true)
 /* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色 */
 function speakOne(text, lang, rate, onDone){
   if(state.muted){ onDone&&onDone(); return; }
-  if(!hasTTS()){ warnOnce("这个浏览器不支持朗读"); return; }
+  /* 每次朗读前重新探测：微信里 API 可能在 WeixinJSBridgeReady / 首次触摸后才出现 */
+  if(!primeTTS()){
+    warnOnce(IS_WECHAT
+      ? "微信内置浏览器没开放朗读，点右上角『…』→ 在浏览器中打开再试"
+      : "这个浏览器暂时不支持朗读，建议用 Chrome 或 Safari 打开");
+    return;
+  }
+  var synth=getSynth(); if(!synth){ warnOnce("当前环境语音接口不完整"); return; }
   var c=ac(); if(c && c.state==="suspended" && c.resume) c.resume().catch(function(){});
 
   var pick = pickVoice(state.voicePref, lang);
@@ -427,7 +476,8 @@ function speakOne(text, lang, rate, onDone){
   /* lang 只在「本机真有该语言本地语音」时才给；否则留空走平台默认，
      免得 Chrome 按 en-US 去找 Google 联网语音而静音 */
   var safeLang = hasLocalLang(lang) ? textLang : "";
-  var u=new SpeechSynthesisUtterance(text);
+  var u=newUtt(text);
+  if(!u){ warnOnce("当前环境语音接口不完整，换个浏览器试试"); return; }
   u.rate = rate||.85;
   u.pitch = pick.pitch;
   u.volume = 1;
@@ -454,46 +504,56 @@ function speakOne(text, lang, rate, onDone){
   u.onerror=function(ev){
     var e=(ev&&ev.error)||"";
     if(e==="interrupted"||e==="canceled") return;
-    if(e==="not-allowed"||e==="NotAllowedError"){ showHint("浏览器拦住了播放，请再点一次播放按钮 👆"); return; }
+    if(e==="not-allowed"||e==="NotAllowedError"){
+      showHint(IS_WECHAT?"微信拦住了声音，请点播放按钮再试一次 👆":"浏览器拦住了播放，请再点一次播放按钮 👆");
+      return;
+    }
     /* 语音/网络异常 → 不指定引擎（用系统默认）再来一次，音调沿用 */
     if(/synthesis|voice|audio|network/i.test(e)){
       try{
-        var u2=new SpeechSynthesisUtterance(text);
+        var u2=newUtt(text);
+        if(!u2){ finish(); return; }
         u2.lang = safeLang;
         u2.rate = rate||.85; u2.pitch = pick.pitch; u2.volume = 1;
         u2.onend = finish;
-        speechSynthesis.speak(u2);
+        synth.speak(u2);
       }catch(x){ finish(); }
       return;
     }
     finish();
   };
   try{
-    if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel();
-    /* Chrome 刚 cancel 完立刻 speak 会被丢弃，隔 90ms 更稳 */
-    setTimeout(function(){
+    if(synth.speaking||synth.pending) synth.cancel();
+    var doSpeak=function(){
       try{
-        speechSynthesis.speak(u);
-        /* Chrome 引擎会「假死」：speak 了不出声，resume() 能唤醒 */
-        setTimeout(function(){ try{ speechSynthesis.resume(); }catch(e){} }, 320);
+        synth.speak(u);
+        /* Chrome 引擎会「假死」：speak 后 resume() 能唤醒；
+           iOS/微信不需要，且在异步 timer 里 resume 可能打断发声 */
+        if(!NEED_SYNC_SPEAK) setTimeout(function(){ try{ synth.resume(); }catch(e){} },320);
       }catch(e){ finish(); }
-    }, 90);
+    };
+    /* iOS 微信 / X5：必须在用户手势回调里同步 speak，不能放进 setTimeout；
+       Chrome：cancel 后立刻 speak 会被丢弃，隔 90ms 更稳 */
+    if(NEED_SYNC_SPEAK) doSpeak(); else setTimeout(doSpeak,90);
   }catch(e){ finish(); return; }
 
   /* 2.2 秒还没开声 → 换系统默认语音重试一次（不指定 voice，兼容性最高） */
   wakeTimer=setTimeout(function(){
     if(started || done) return;
-    try{ speechSynthesis.cancel(); }catch(e){}
+    try{ synth.cancel(); }catch(e){}
     try{
-      var u3=new SpeechSynthesisUtterance(text);
+      var u3=newUtt(text);
+      if(!u3) return;
       u3.lang = safeLang;
       u3.rate = rate||.85; u3.pitch = pick.pitch; u3.volume = 1;
-      u3.onstart=function(){ started=true; clearTimeout(wakeTimer); };
+      u3.onstart=function(){ started=true; clearTimeout(wakeTimer); ttsPrimed=true; hideHint(); };
       u3.onend=finish;
       u3.onerror=function(){ finish(); };
-      speechSynthesis.speak(u3);
-      setTimeout(function(){ try{ speechSynthesis.resume(); }catch(e){} }, 300);
+      synth.speak(u3);
+      if(!NEED_SYNC_SPEAK) setTimeout(function(){ try{ synth.resume(); }catch(e){} },300);
     }catch(e){}
+    /* 微信里语音列表常为空，若同步 speak 被吞掉，给一条可操作的指引而不是说「不支持」 */
+    if(IS_WECHAT && !started) showHint("微信里没听到声音？点右上角『…』→ 在浏览器中打开再试", true);
   }, 2200);
 
   var est=Math.max(1500,text.length*220/(rate||.85));
@@ -808,7 +868,7 @@ function playSentence(idx){
 }
 function stopPlayback(){
   player.playing=false; clearTimeout(player.timer);
-  try{ speechSynthesis.cancel(); }catch(e){}
+  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
   $("#playBtn").textContent="▶ 播放"; $("#playBtn").classList.remove("on");
   $$(".sent").forEach(function(el){el.classList.remove("active");});
 }
@@ -954,12 +1014,13 @@ function bind(){
     this.textContent=state.muted?"🔇":"🔊";
     this.classList.toggle("off", state.muted);
     if(!state.muted) tone(880,.07,"triangle",.03);
-    else if(hasTTS()){ try{ speechSynthesis.cancel(); }catch(e){} }
+    else { try{ var s=getSynth(); if(s) s.cancel(); }catch(e){} }
   });
 
   var hb=$("#soundHintBtn");
   if(hb) hb.addEventListener("click", function(){
-    unlockAudio(); hideHint();
+    /* 用户手势里重新探测 + 立刻试听；不要把 speak 放进延时 */
+    unlockAudio(); primeTTS(); ttsWarned=false; hideHint();
     if(state.muted){ state.muted=false; $("#soundBtn").textContent="🔊"; $("#soundBtn").classList.remove("off"); }
     speakOne("Hello! Let us read a story.","en",.85,function(){});
   });
@@ -989,6 +1050,9 @@ function init(){
 
   bind();
 
+  /* 微信里 TTS 能力可能随 JSBridge 就绪后才挂上，再探测一次 */
+  document.addEventListener("WeixinJSBridgeReady", function(){ primeTTS(); }, false);
+
   ["pointerdown","touchstart","touchend"].forEach(function(t){
     document.addEventListener(t, unlockAudio, {passive:true});
   });
@@ -997,11 +1061,17 @@ function init(){
   if(isTouch){
     setTimeout(function(){
       if(ttsPrimed) return;
-      if(!hasTTS()){ showHint("这个浏览器不支持朗读，建议用 Chrome 或 Safari 打开", true); return; }
-      loadVoices();
-      var hasEn=!voices.length || voices.some(function(v){ return /^en([-_]|$)/i.test(v.lang||""); });
-      if(!hasEn) showHint("这台设备没装英文语音包，朗读会没声音。设置里添加英文语音后重开本页", true);
-      else showHint("👆 点一下开启声音（手机需先点一次才能朗读）", false);
+      primeTTS();
+      /* 关键：页面加载时不再断言「不支持」——微信 X5 常见语音列表为空/API 延迟挂载，
+         提前下结论会把本来能用的环境挡掉。只在用户真正点过且失败后给指引。 */
+      if(!IS_WECHAT && voices.length &&
+         !voices.some(function(v){ return /^en([-_]|$)/i.test(v.lang||""); })){
+        showHint("这台设备没装英文语音包，朗读会没声音。设置里添加英文语音后重开本页", true);
+      } else {
+        showHint(IS_WECHAT
+          ? "👆 点一下开启声音（若没声，点右上角『…』→ 在浏览器中打开）"
+          : "👆 点一下开启声音（手机需先点一次才能朗读）", false);
+      }
     }, 1200);
   }
 }

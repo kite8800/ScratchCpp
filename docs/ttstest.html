@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TTS 诊断</title>
+<style>
+  body{margin:0;background:#fbf7ec;font-family:system-ui,"Microsoft YaHei",sans-serif;color:#2f2418;padding:20px;line-height:1.6}
+  h1{font-size:20px;margin:0 0 4px}
+  .wrap{max-width:820px;margin:0 auto}
+  .box{background:#fff;border:3px solid #2f2418;border-radius:10px;padding:14px;margin:12px 0;box-shadow:5px 5px 0 rgba(47,36,24,.15)}
+  .box h2{font-size:14px;margin:0 0 8px;color:#7a4a22}
+  pre{background:#f5f1e6;border:1px solid #e0d8c4;border-radius:6px;padding:10px;font-size:12px;overflow:auto;max-height:260px;margin:0;white-space:pre-wrap}
+  button{font:inherit;font-weight:700;border:2.5px solid #2f2418;border-radius:8px;background:#fff;padding:8px 14px;margin:4px 6px 4px 0;cursor:pointer}
+  button:hover{background:#f0e8d8}
+  .ok{color:#1a7f37;font-weight:700}
+  .bad{color:#c0392b;font-weight:700}
+  #log{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:10px;min-height:110px;max-height:260px;overflow:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TTS 诊断页（微信兼容版）</h1>
+  <div class="box"><h2>① 环境（含带前缀 API 检测）</h2><pre id="env">读取中…</pre></div>
+  <div class="box"><h2>② 测试（依次点，看哪个听得到声音）</h2>
+    <button id="t1">测试1：同步 speak（微信/iOS 正确姿势）</button>
+    <button id="t2">测试2：cancel 后立刻 speak（旧版逻辑）</button>
+    <button id="t3">测试3：speak + 300ms resume 唤醒</button>
+    <button id="t4">测试4：cancel + 90ms 延迟 speak + 唤醒</button>
+    <button id="t5">测试5：修复版 mcstory 同款（自动前缀 + 同步）</button>
+    <div id="log"></div>
+  </div>
+</div>
+<script>
+var TEXT = "你好，这是一次声音测试。";
+var logEl = document.getElementById("log");
+function log(msg){
+  var t = new Date().toLocaleTimeString();
+  logEl.innerHTML += "[" + t + "] " + msg + "<br>";
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+/* 与 mcstory.html 同一套运行时探测：标准名 + webkit/moz/ms 前缀 */
+function S(){ return window.speechSynthesis||window.webkitSpeechSynthesis||
+                    window.mozSpeechSynthesis||window.msSpeechSynthesis||null; }
+function C(){ return window.SpeechSynthesisUtterance||window.webkitSpeechSynthesisUtterance||
+                     window.mozSpeechSynthesisUtterance||window.msSpeechSynthesisUtterance||null; }
+function newUtt(text){
+  var U=C(); if(typeof U==="function") return new U(text);
+  var s=S(); if(s && typeof s.SpeechSynthesisUtterance==="function") return new s.SpeechSynthesisUtterance(text);
+  return null;
+}
+function usable(){ var s=S(); return !!s && typeof s.speak==="function" &&
+                          (typeof C()==="function" || (s && typeof s.SpeechSynthesisUtterance==="function")); }
+function isWechat(){ return /MicroMessenger/i.test(navigator.userAgent||""); }
+
+/* ---- 环境信息 ---- */
+function dumpEnv(){
+  var s=S(), v=[];
+  try { v = (s && s.getVoices && s.getVoices()) || []; } catch(e){}
+  var muted = null;
+  try { muted = localStorage.getItem("mcr_muted"); } catch(e){}
+  var acState = "n/a";
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) { var c = new AC(); acState = c.state; try{c.close();}catch(e){} }
+  } catch(e){ acState = "err"; }
+
+  var lines = [];
+  lines.push("浏览器: " + navigator.userAgent);
+  lines.push("是否微信内置: " + (isWechat() ? "是" : "否"));
+  lines.push("标准 speechSynthesis: " + (!!window.speechSynthesis));
+  lines.push("webkitSpeechSynthesis: " + (!!window.webkitSpeechSynthesis));
+  lines.push("构造器: 标准=" + (typeof window.SpeechSynthesisUtterance) +
+             " / webkit=" + (typeof window.webkitSpeechSynthesisUtterance));
+  lines.push("解析后可用: " + (usable() ? "是 ✔" : "否 ✘"));
+  lines.push("语音数量 getVoices().length = " + v.length + (v.length ? "" : "   ← 微信里常见为 0，不代表一定不能读"));
+  lines.push("mcr_muted (localStorage) = " + muted);
+  lines.push("AudioContext 初始 state = " + acState);
+  if (s) lines.push("speaking=" + s.speaking + " pending=" + s.pending + " paused=" + s.paused);
+  else lines.push("没有 synth 对象，下面所有测试都会失败");
+  lines.push("");
+  if (v.length) {
+    lines.push("—— 语音列表 ——");
+    v.forEach(function(x,i){
+      lines.push((i+1) + ". " + x.name + "  | lang=" + x.lang + " | local=" + x.localService + (x.default ? " | DEFAULT" : ""));
+    });
+  } else {
+    lines.push("—— 语音列表为空 ——");
+  }
+  document.getElementById("env").textContent = lines.join("\n");
+}
+dumpEnv();
+try { var s0=S(); if(s0) s0.onvoiceschanged = dumpEnv; } catch(e){}
+setTimeout(dumpEnv, 1200);
+setTimeout(dumpEnv, 3000);
+
+/* ---- 工具 ---- */
+function makeU(tag){
+  var u = newUtt(TEXT);
+  if(!u){ log("["+tag+"] <span class='bad'>没有可用的 Utterance 构造器</span>"); return null; }
+  u.lang = "zh-CN";
+  u.rate = 0.85;
+  u.pitch = 1.0;
+  u.volume = 1;
+  var s = S();
+  var vs = (s && s.getVoices && s.getVoices()) || [];
+  var zh = null;
+  for (var i=0;i<vs.length;i++){ if (/^zh/i.test(vs[i].lang||"")) { zh = vs[i]; break; } }
+  if (zh) { u.voice = zh; log("["+tag+"] 使用语音: " + zh.name); }
+  else { log("["+tag+"] 没有中文语音，用默认"); }
+  u.onstart = function(){ log("["+tag+"] <span class='ok'>onstart ✔ 开始发声</span>"); };
+  u.onend   = function(){ log("["+tag+"] onend 结束"); };
+  u.onerror = function(ev){ log("["+tag+"] <span class='bad'>onerror: " + ((ev&&ev.error)||"?") + "</span>"); };
+  return u;
+}
+function begin(){ try{ var s=S(); if(s) s.cancel(); }catch(e){} }
+function doSpeak(u, tag){
+  var s=S();
+  if(!s){ log("["+tag+"] <span class='bad'>没有 synth，无法朗读</span>"); return; }
+  try{ s.speak(u); }catch(e){ log("["+tag+"] <span class='bad'>异常: "+e+"</span>"); }
+}
+
+/* 测试1：同步 speak —— 微信/iOS 唯一可靠姿势 */
+document.getElementById("t1").onclick = function(){
+  log("—— 测试1：同步 speak（用户手势内直接调用）——");
+  begin();
+  var u = makeU("T1"); if(!u) return;
+  doSpeak(u, "T1");
+};
+
+/* 测试2：cancel 后立刻 speak（旧版隐患复刻） */
+document.getElementById("t2").onclick = function(){
+  log("—— 测试2：cancel 后立刻 speak ——");
+  var u = makeU("T2"); if(!u) return;
+  var s=S();
+  try{
+    if (s && (s.speaking || s.pending)) s.cancel();
+    doSpeak(u, "T2");
+  }catch(e){ log("T2 异常:" + e); }
+};
+
+/* 测试3：speak + resume 唤醒 */
+document.getElementById("t3").onclick = function(){
+  log("—— 测试3：speak + 300ms resume ——");
+  begin();
+  var u = makeU("T3"); if(!u) return;
+  setTimeout(function(){
+    doSpeak(u, "T3");
+    setTimeout(function(){
+      try{ var s=S(); if(s){ s.resume(); log("T3 已调用 resume() 唤醒"); } }catch(e){ log("T3 resume 异常:"+e); }
+    }, 300);
+  }, 60);
+};
+
+/* 测试4：Chrome 兜底组合 */
+document.getElementById("t4").onclick = function(){
+  log("—— 测试4：cancel + 90ms 延迟 speak + 唤醒 ——");
+  begin();
+  var u = makeU("T4"); if(!u) return;
+  setTimeout(function(){
+    doSpeak(u, "T4");
+    setTimeout(function(){ try{ var s=S(); if(s) s.resume(); }catch(e){} }, 300);
+  }, 90);
+};
+
+/* 测试5：修复版 mcstory 同款（自动前缀 + 同步 speak + 2.2s 兜底重试） */
+document.getElementById("t5").onclick = function(){
+  log("—— 测试5：修复版同款（自动前缀 + 同步 speak）——");
+  if(!usable()){ log("<span class='bad'>当前环境探测不到可用 TTS；若在微信里，请点右上角『…』→ 在浏览器中打开对比</span>"); return; }
+  begin();
+  var u = makeU("T5"); if(!u) return;
+  var started = false;
+  u.onstart = function(){ started=true; log("["+"T5"+"] <span class='ok'>onstart ✔ 开始发声</span>"); };
+  doSpeak(u, "T5");
+  setTimeout(function(){
+    if(started) return;
+    log("T5: 2.2s 未 onstart，按修复版逻辑换默认语音重试一次");
+    var u2 = newUtt(TEXT); if(!u2) return;
+    u2.lang="zh-CN"; u2.rate=.85; u2.pitch=1; u2.volume=1;
+    u2.onstart=function(){ log("T5 <span class='ok'>重试后 onstart ✔</span>"); };
+    u2.onend=function(){ log("T5 重试结束"); };
+    u2.onerror=function(ev){ log("T5 重试 onerror: "+((ev&&ev.error)||"?")); };
+    doSpeak(u2, "T5重试");
+  }, 2200);
+};
+</script>
+</body>
+</html>
