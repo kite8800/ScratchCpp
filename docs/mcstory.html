@@ -138,6 +138,28 @@ body[data-trans="all"] .sent .alt-line{display:block}
   font-size:11px; color:var(--ink2); font-weight:700; margin-right:4px;
 }
 
+/* 词汇表面板：像句子一样两行显示，只查看不朗读 */
+.vocab-block{
+  background:#fffdf3; border:2px dashed var(--gold); border-radius:10px;
+  padding:7px 10px; margin:2px 2px 8px;
+}
+.vocab-block .vb-head{
+  font-family:var(--pixel); font-weight:900; font-size:12px; color:#8a5a00;
+  letter-spacing:.03em; margin-bottom:4px;
+}
+.vocab-block .vb-row{display:block;padding:5px 8px;margin:2px 0;border-radius:7px;background:#fff;border:1.5px solid rgba(47,36,24,.12)}
+.vocab-block .vb-row .line{display:block;font-size:14px;line-height:1.5}
+.vocab-block .vb-row .line + .line{font-size:12.5px;color:var(--ink2);font-weight:600;margin-top:2px}
+
+/* 单词表命中词：原文下划线 / 译文高亮 / 考试挖空 */
+.sent .vocab .v-blank{display:none;border-bottom:2px solid var(--gold);border-radius:2px}
+.vocab[data-lang="en"] .v-full{text-decoration:underline;text-decoration-color:#BA7517;text-underline-offset:3px}
+.vocab[data-lang="zh"] .v-full{background:#FAC775;color:#412402;padding:0 2px;border-radius:3px}
+body[data-vocab="zh"] .vocab[data-lang="en"] .v-full{display:none}
+body[data-vocab="zh"] .vocab[data-lang="en"] .v-blank{display:inline-block}
+body[data-vocab="en"] .vocab[data-lang="zh"] .v-full{display:none}
+body[data-vocab="en"] .vocab[data-lang="zh"] .v-blank{display:inline-block}
+
 /* 播放条 */
 .player-bar{
   position:sticky;bottom:10px;z-index:30;
@@ -207,7 +229,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body data-trans="cur">
+<body data-trans="cur" data-vocab="all">
 
 <header class="hero">
   <div class="hero-inner">
@@ -239,7 +261,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；右上「译文」切换三态（不显示 / 当前句 / 全文）；点头像切换音色。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。
     </div>
 
     <div class="action-row">
@@ -256,6 +278,8 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       <button class="sw" id="clearBtn">清空</button>
       <div class="row-break"></div>
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
+      <button class="sw on" id="vocabListBtn" title="单词表列表 显示/隐藏">词汇表：显示</button>
+      <button class="sw on" id="vocabBtn" title="单词表记忆模式：全部 / 仅译文 / 仅原文">词汇：全部</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
@@ -709,8 +733,9 @@ function applyPref(pref){
 }
 
 /* ========================= 状态 ========================= */
-var state={ muted:false, langMode:"en", trans:"cur", voicePref:"auto" };
+var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, voicePref:"auto" };
 var currentSentences=[];
+var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
 /* continuous = 用户的「连播意图」，只由播放按钮维护：
    点播放→true（想连播），点暂停→false（人工停止）。
    单句点击是否连播看它，而不是看 player.playing——后者会被
@@ -719,6 +744,9 @@ var player={ playing:false, continuous:false, current:0, rate:0.85, timer:null }
 
 var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
 var TRANS_ORDER = ["cur","all","none"];
+/* 词汇记忆模式：all=原文下划线+译文高亮都显示；zh=只显示译文(原文命中词挖空)；en=只显示原文(译文命中词挖空) */
+var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文" };
+var VOCAB_ORDER = ["all","zh","en"];
 
 /* =========================================================
    格式识别 + 断句（原样保留）
@@ -753,6 +781,19 @@ function splitChinese(text){
 
 function parseText(raw){
   var lines=raw.replace(/\r\n/g,"\n").split("\n");
+  /* 先抽词表行：含 | 且「左英右中」→ 收为词条，并从正文剔除（不计入句子） */
+  var vocab=[];
+  lines=lines.filter(function(line){
+    if(line.indexOf("|")<0) return true;
+    var parts=line.split("|");
+    var en=stripBullet(parts[0]), zh=stripBullet(parts.slice(1).join("|"));
+    if(en && zh && enWordCount(en)>0 && cjkRatio(en)===0 && cjkRatio(zh)>0){
+      if(!vocab.some(function(v){return v.en.toLowerCase()===en.toLowerCase();}))
+        vocab.push({en:en, zh:zh});
+      return false; /* 词表行不进正文 */
+    }
+    return true;
+  });
   var stats={en:0,zh:0,mix:0,other:0};
   var classified=lines.map(function(line){
     var t=stripBullet(line);
@@ -860,7 +901,114 @@ function parseText(raw){
   items=items.filter(function(it){
     return (it.en && it.en.trim()) || (it.zh && it.zh.trim());
   });
-  return {items:items,order:order,stats:stats};
+  return {items:items,order:order,stats:stats,vocab:vocab};
+}
+
+/* =========================================================
+   单词表标注：词形变化 + 命中挖空
+   ========================================================= */
+/* 常用不规则动词：原形 → 不规则变形（第三人称单数/过去式/过去分词/现在分词）。
+   词表写原形即可识别这些变形；不在表里的走下面的规则变化。 */
+var IRREGULAR = {
+  be:["am","is","are","was","were","been","being"],
+  have:["has","had","having"], do:["does","did","done","doing"],
+  go:["goes","went","gone","going"], come:["comes","came","come","coming"],
+  get:["gets","got","gotten","getting"], make:["makes","made","making"],
+  take:["takes","took","taken","taking"], give:["gives","gave","given","giving"],
+  see:["sees","saw","seen","seeing"], know:["knows","knew","known","knowing"],
+  find:["finds","found","finding"], think:["thinks","thought","thinking"],
+  tell:["tells","told","telling"], become:["becomes","became","becoming"],
+  leave:["leaves","left","leaving"], feel:["feels","felt","feeling"],
+  bring:["brings","brought","bringing"], begin:["begins","began","begun","beginning"],
+  keep:["keeps","kept","keeping"], hold:["holds","held","holding"],
+  write:["writes","wrote","written","writing"], stand:["stands","stood","standing"],
+  hear:["hears","heard","hearing"], mean:["means","meant","meaning"],
+  meet:["meets","met","meeting"], run:["runs","ran","run","running"],
+  pay:["pays","paid","paying"], sit:["sits","sat","sitting"],
+  speak:["speaks","spoke","spoken","speaking"], lie:["lies","lay","lain","lying"],
+  lead:["leads","led","leading"], read:["reads","read","reading"],
+  grow:["grows","grew","grown","growing"], lose:["loses","lost","losing"],
+  fall:["falls","fell","fallen","falling"], send:["sends","sent","sending"],
+  build:["builds","built","building"], understand:["understands","understood","understanding"],
+  draw:["draws","drew","drawn","drawing"], break:["breaks","broke","broken","breaking"],
+  spend:["spends","spent","spending"], cut:["cuts","cut","cutting"],
+  rise:["rises","rose","risen","rising"], drive:["drives","drove","driven","driving"],
+  buy:["buys","bought","buying"], wear:["wears","wore","worn","wearing"],
+  choose:["chooses","chose","chosen","choosing"], drink:["drinks","drank","drunk","drinking"],
+  swim:["swims","swam","swum","swimming"], sing:["sings","sang","sung","singing"],
+  fly:["flies","flew","flown","flying"], forget:["forgets","forgot","forgotten","forgetting"],
+  teach:["teaches","taught","teaching"], catch:["catches","caught","catching"],
+  sleep:["sleeps","slept","sleeping"], wake:["wakes","woke","woken","waking"],
+  win:["wins","won","winning"], eat:["eats","ate","eaten","eating"],
+  put:["puts","put","putting"], let:["lets","let","letting"], set:["sets","set","setting"]
+};
+/* 生成一个英文词条的所有变形：
+   先查不规则表；否则走规则 work→works/worked/working、study→studies/studied/studying、
+   like→likes/liked/liking；含空格短语不变化，只精确匹配。 */
+function enForms(w){
+  w=w.trim(); if(!w) return [];
+  if(/\s/.test(w)) return [w]; /* 短语：精确匹配整串 */
+  var out=[w], low=w.toLowerCase();
+  function add(s){ if(s && out.indexOf(s)<0) out.push(s); }
+  if(IRREGULAR[low]){                    /* 常用不规则动词：直接用表 */
+    IRREGULAR[low].forEach(add);
+  } else if(/[^aeiou]y$/i.test(w)){      /* study → studies/studied/studying */
+    var stem=w.slice(0,-1);
+    add(stem+"ies"); add(stem+"ied"); add(w+"ing");
+  } else if(/e$/i.test(w)){              /* like → likes/liked/liking */
+    add(w+"s"); add(w+"d"); add(w.slice(0,-1)+"ing");
+  } else if(/(s|x|ch|sh)$/i.test(w)){    /* watch → watches/watched/watching */
+    add(w+"es"); add(w+"ed"); add(w+"ing");
+  } else {                                /* work → works/worked/working */
+    add(w+"s"); add(w+"ed"); add(w+"ing");
+  }
+  return out;
+}
+function regEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+/* 把一段文本按词表命中包成 <span>：
+   lang=en 原文 → 命中词 v-full 带下划线；lang=zh 译文 → 命中词 v-full 带高亮。
+   同时输出挖空占位 v-blank（默认隐藏，仅由 body[data-vocab] 切换显示）。
+   匹配用「长词优先」避免 work 抢在 working 前面。 */
+function markVocab(text, lang){
+  if(!text) return "";
+  if(!currentVocab.length) return esc(text);
+  var hits=[]; /* {start,end} */
+  if(lang==="en"){
+    var forms=[];
+    currentVocab.forEach(function(v){ enForms(v.en).forEach(function(f){ forms.push(f); }); });
+    forms=forms.filter(function(f){return f;}).sort(function(a,b){return b.length-a.length;});
+    if(forms.length){
+      var re=new RegExp("\\b("+forms.map(regEsc).join("|")+")\\b","gi"), m;
+      while((m=re.exec(text))!==null){ hits.push({start:m.index,end:m.index+m[0].length}); if(m[0].length===0) re.lastIndex++; }
+    }
+  } else {
+    currentVocab.forEach(function(v){
+      var term=v.zh.trim(); if(!term) return;
+      var from=0, idx;
+      while((idx=text.indexOf(term,from))>=0){ hits.push({start:idx,end:idx+term.length}); from=idx+term.length; }
+    });
+  }
+  if(!hits.length) return esc(text);
+  /* 合并重叠区间，避免嵌套 span */
+  hits.sort(function(a,b){return a.start-b.start||b.end-a.end;});
+  var merged=[], last=null;
+  hits.forEach(function(h){
+    if(last && h.start<last.end){ last.end=Math.max(last.end,h.end); }
+    else { last={start:h.start,end:h.end}; merged.push(last); }
+  });
+  var out="", pos=0;
+  merged.forEach(function(h){
+    if(h.start>pos) out+=esc(text.slice(pos,h.start));
+    var word=text.slice(h.start,h.end);
+    var width=Math.max(1, Array.from(word).length);
+    out+='<span class="vocab" data-lang="'+lang+'">'+
+         '<span class="v-full">'+esc(word)+'</span>'+
+         '<span class="v-blank" style="min-width:'+(width*0.9).toFixed(1)+'em">&nbsp;</span>'+
+         '</span>';
+    pos=h.end;
+  });
+  if(pos<text.length) out+=esc(text.slice(pos));
+  return out;
 }
 
 /* =========================================================
@@ -871,6 +1019,23 @@ function firstLangByMode(mode){
   return "en";
 }
 
+/* 词汇表面板：按当前语言顺序像句子一样列出词条，只查看不朗读 */
+function renderVocabBlock(){
+  var box=$("#vocabListBox");
+  if(!box) return;
+  if(!currentVocab.length){ box.innerHTML=""; box.hidden=true; return; }
+  var first=firstLangByMode(state.langMode);
+  var rows=currentVocab.map(function(v){
+    var en=v.en||"", zh=v.zh||"";
+    var main=first==="zh"?zh:en, alt=first==="zh"?en:zh;
+    return '<div class="vb-row">'+
+      '<span class="line">'+esc(main)+'</span>'+
+      (alt?'<span class="line">'+esc(alt)+'</span>':'')+
+    '</div>';
+  }).join("");
+  box.innerHTML='<div class="vocab-block"><div class="vb-head">📒 单词表 · '+currentVocab.length+' 词</div>'+rows+'</div>';
+  box.hidden=!state.vocabList;
+}
 function renderSentences(result){
   currentSentences=result.items;
   player.current=0;
@@ -881,20 +1046,27 @@ function renderSentences(result){
 
   var html="";
   html+=result.items.map(function(s,i){
-    var mainText = first==="zh" ? (s.zh||"") : (s.en||"");
-    var altText  = first==="zh" ? (s.en||"") : (s.zh||"");
-    if(!mainText){ mainText = altText; altText = ""; }
+    /* 显式追踪语言：标注按真实语言走，main/alt 互换时语言也跟着换 */
+    var mainText, altText, mainLang, altLang;
+    if(first==="zh"){
+      mainText=s.zh||""; mainLang="zh"; altText=s.en||""; altLang="en";
+    } else {
+      mainText=s.en||""; mainLang="en"; altText=s.zh||""; altLang="zh";
+    }
+    if(!mainText){ mainText=altText; mainLang=altLang; altText=""; }
     /* # 分段符的小标题：只用于查看，不是按钮、不计句、不影响 data-idx */
     var segHead = s.head
       ? '<div class="seg-head">'+esc(s.head)+'</div>'
       : '';
     return segHead +
       '<button class="sent" data-idx="'+i+'">'+
-      '<span class="line main-line"><span class="num">'+(i+1)+'.</span>'+esc(mainText)+'</span>'+
-      (altText ? '<span class="line alt-line">'+esc(altText)+'</span>' : '')+
+      '<span class="line main-line"><span class="num">'+(i+1)+'.</span>'+markVocab(mainText, mainLang)+'</span>'+
+      (altText ? '<span class="line alt-line">'+markVocab(altText, altLang)+'</span>' : '')+
     '</button>';
   }).join("");
+  html+='<div id="vocabListBox" hidden></div>'; /* 词汇表放在句子列表最后 */
   $("#readerBody").innerHTML=html;
+  renderVocabBlock();
   $("#reader").hidden=false;
   $("#sentCount").textContent=result.items.length+" 句";
   updateProgress();
@@ -983,6 +1155,32 @@ function cycleTrans(){
   applyTrans();
 }
 
+/* 词汇记忆三态：全部 → 仅译文 → 仅原文 → 全部 */
+function applyVocab(){
+  document.body.setAttribute("data-vocab", state.vocab);
+  $("#vocabBtn").textContent = "词汇：" + VOCAB_LABEL[state.vocab];
+  $("#vocabBtn").classList.toggle("on", state.vocab!=="all");
+}
+function cycleVocab(){
+  var i = VOCAB_ORDER.indexOf(state.vocab);
+  if(i<0) i=0;
+  state.vocab = VOCAB_ORDER[(i+1) % VOCAB_ORDER.length];
+  save("vocab", state.vocab);
+  applyVocab();
+}
+/* 词汇表面板：显示/隐藏两态，默认显示 */
+function applyVocabList(){
+  $("#vocabListBtn").textContent = "词汇表：" + (state.vocabList?"显示":"隐藏");
+  $("#vocabListBtn").classList.toggle("on", state.vocabList);
+  var box=$("#vocabListBox");
+  if(box) box.hidden=!state.vocabList;
+}
+function toggleVocabList(){
+  state.vocabList=!state.vocabList;
+  save("vocabList", state.vocabList);
+  applyVocabList();
+}
+
 /* ========================= 历史文章 ========================= */
 var HIST_KEY="history", HIST_QUOTA=5*1024*1024; /* localStorage 通常约 5MB */
 function histGet(){ var a=load(HIST_KEY,null); return (a&&a.length&&Array.isArray(a))?a:[]; }
@@ -1053,14 +1251,16 @@ function doParse(){
   var raw=$("#inputBox").value;
   if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return false; }
   var result=parseText(raw);
-  if(!result.items.length){ toast("没找到能读的句子"); return false; }
+  if(!result.items.length && !(result.vocab&&result.vocab.length)){ toast("没找到能读的句子"); return false; }
+  currentVocab=result.vocab||[];
   $("#readerTitle").textContent="📖 阅读 · "+result.items.length+" 句";
   renderSentences(result);
   var s=result.stats;
   var orderTxt=result.order==="zh-first"?"先中文后英文":"先英文后中文";
   var html="识别结果：<b>"+orderTxt+"</b><br>"+
     "英文行 <b>"+s.en+"</b> · 中文行 <b>"+s.zh+"</b> · 混排行 <b>"+s.mix+"</b>"+
-    " → 共 <b>"+result.items.length+"</b> 句";
+    " → 共 <b>"+result.items.length+"</b> 句"+
+    "<br>单词表 <b>"+currentVocab.length+"</b> 词（格式：英文|中文）";
   var rp=$("#report"); rp.innerHTML=html; rp.classList.add("show");
   window.scrollTo({top:$("#reader").offsetTop-70,behavior:"smooth"});
   return true;
@@ -1165,6 +1365,14 @@ function bind(){
     click(); cycleTrans();
   });
 
+  $("#vocabListBtn").addEventListener("click", function(){
+    click(); toggleVocabList();
+  });
+
+  $("#vocabBtn").addEventListener("click", function(){
+    click(); cycleVocab();
+  });
+
   $("#playBtn").addEventListener("click", function(){
     unlockAudio(); click();
     if(!currentSentences.length){ toast("先粘贴文章并断句"); return; }
@@ -1257,6 +1465,13 @@ function init(){
   state.trans=load("trans","cur");
   if(TRANS_ORDER.indexOf(state.trans)<0) state.trans="cur";
   applyTrans();
+
+  state.vocab=load("vocab","all");
+  if(VOCAB_ORDER.indexOf(state.vocab)<0) state.vocab="all";
+  applyVocab();
+
+  state.vocabList=load("vocabList",true);
+  applyVocabList();
 
   state.langMode=load("langMode","en");
   $("#langMode").value=state.langMode;
