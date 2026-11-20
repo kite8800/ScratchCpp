@@ -166,6 +166,33 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
 #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,18px);background:var(--ink);color:#fff;font-weight:700;font-size:13px;padding:9px 16px;border-radius:11px;opacity:0;pointer-events:none;transition:.25s;z-index:9999}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
+/* 历史文章弹窗 */
+.hist-mask{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(47,36,24,.5)}
+.hist-mask.show{display:flex}
+.hist-panel{width:100%;max-width:560px;max-height:82vh;display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.hist-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:2px dashed rgba(47,36,24,.15)}
+.hist-head h3{margin:0;flex:1;font-family:var(--pixel);font-weight:900;font-size:15px}
+.hist-x{flex:none;width:28px;height:28px;padding:0;border:2px solid var(--ink);border-radius:8px;background:var(--cream);font-weight:900;font-size:15px;line-height:1}
+.hist-store{padding:10px 14px 12px;background:#fffdf3;border-bottom:1px solid rgba(47,36,24,.12)}
+.hist-store .line{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:6px}
+.hist-store .line b{color:var(--ink)}
+.hist-bar{height:9px;border-radius:99px;background:rgba(47,36,24,.12);overflow:hidden}
+.hist-bar i{display:block;height:100%;width:0;background:var(--grass-d);transition:width .2s}
+.hist-bar.warn i{background:#d64545}
+.hist-store .warn-txt{color:#c0392b;font-weight:700}
+.hist-list{flex:1;overflow-y:auto;padding:8px 12px}
+.hist-item{display:flex;align-items:center;gap:8px;padding:9px 10px;margin:6px 0;border:2px solid rgba(47,36,24,.18);border-radius:10px;background:#fff}
+.hist-item .meta{flex:1;min-width:0}
+.hist-item .t{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-item .d{font-size:11.5px;color:var(--ink2);margin-top:3px}
+.hist-item .sw{flex:none;font-size:12px;padding:5px 10px}
+.hist-item .sw.danger{border-color:#d64545;color:#c0392b}
+.hist-empty{padding:34px 10px;text-align:center;color:var(--ink2);font-size:13px}
+.hist-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:2px dashed rgba(47,36,24,.15)}
+.hist-foot .hgroup{display:flex;gap:8px}
+.hist-foot .sw{font-size:12.5px}
+.hist-foot #histClearAll{border-color:#d64545;color:#c0392b}
+
 @media (max-width:720px){
   .hero-inner{padding:12px;gap:10px}
   .creeper{width:48px;height:48px}
@@ -230,6 +257,9 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       <div class="row-break"></div>
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
+      <div class="row-break"></div>
+      <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
+      <button class="sw" id="histOpenBtn" title="查看已保存的文章">📚 打开历史</button>
     </div>
 
     <div id="report"></div>
@@ -259,6 +289,26 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
   <div class="foot-title">MC MINI STORY READER · MC小作文阅读器</div>
   <div>粘贴即读的英语小作文朗读器</div>
 </footer>
+
+<div id="histMask" class="hist-mask" role="dialog" aria-modal="true" aria-label="历史文章">
+  <div class="hist-panel">
+    <div class="hist-head">
+      <h3>📚 历史文章</h3>
+      <button class="hist-x" id="histCloseBtn" title="关闭" aria-label="关闭">✕</button>
+    </div>
+    <div class="hist-store">
+      <div class="line"><span>本地存储：<b id="histUsed">0 KB</b> / 约 5 MB</span><span id="histLeft">剩余约 5 MB</span></div>
+      <div class="hist-bar" id="histBar"><i id="histBarFill"></i></div>
+    </div>
+    <div class="hist-list" id="histList"></div>
+    <div class="hist-foot">
+      <button class="sw" id="histCancelBtn">取消</button>
+      <div class="hgroup">
+        <button class="sw" id="histClearBtn">全部删除</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -933,6 +983,122 @@ function cycleTrans(){
   applyTrans();
 }
 
+/* ========================= 历史文章 ========================= */
+var HIST_KEY="history", HIST_QUOTA=5*1024*1024; /* localStorage 通常约 5MB */
+function histGet(){ var a=load(HIST_KEY,null); return (a&&a.length&&Array.isArray(a))?a:[]; }
+/* 写入返回是否成功，失败通常是 QuotaExceededError */
+function histSet(list){
+  try{ localStorage.setItem("mcr_"+HIST_KEY, JSON.stringify(list)); return true; }
+  catch(e){ return false; }
+}
+/* 估算整个 localStorage 域已用字节（key+value 的 UTF-16 长度 ×2，偏保守） */
+function histUsage(){
+  var chars=0;
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      chars += (k?k.length:0) + (localStorage.getItem(k)||"").length;
+    }
+  }catch(e){}
+  return chars*2;
+}
+function fmtBytes(n){
+  if(n>=1024*1024) return (n/1024/1024).toFixed(1)+" MB";
+  if(n>=1024) return Math.round(n/1024)+" KB";
+  return n+" B";
+}
+/* 标题：首行去 # / 序号 / 列表符，取前 20 字 */
+function histTitle(raw){
+  var first=(raw||"").split("\n").map(function(s){return s.trim();}).filter(Boolean)[0]||"";
+  first=first.replace(/^#{1,6}\s*/,"").replace(/^\d+[.)、]\s*/,"").replace(/^[-*·•]\s*/,"").trim();
+  return first.slice(0,20)||"未命名";
+}
+function histDate(ts){
+  var d=new Date(ts);
+  function p(n){return n<10?"0"+n:""+n;}
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+/* 更新弹窗顶部的存储占用条 */
+function renderHistStore(){
+  var used=histUsage(), left=Math.max(0,HIST_QUOTA-used);
+  var ratio=Math.min(1,used/HIST_QUOTA), low=left/HIST_QUOTA<0.1;
+  $("#histUsed").textContent=fmtBytes(used);
+  $("#histLeft").textContent="剩余约 "+fmtBytes(left);
+  $("#histLeft").classList.toggle("warn-txt",low);
+  $("#histBarFill").style.width=(ratio*100).toFixed(1)+"%";
+  $("#histBar").classList.toggle("warn",low);
+}
+/* 渲染历史列表 */
+function renderHistList(){
+  var list=histGet(), el=$("#histList");
+  if(!list.length){ el.innerHTML='<div class="hist-empty">还没有保存的文章。<br>点上面「💾 保存到历史」把输入框里的文章存起来。</div>'; return; }
+  el.innerHTML=list.map(function(it,i){
+    var chars=(it.raw||"").length;
+    var lineCount=(it.raw||"").split("\n").filter(function(s){return s.trim();}).length;
+    return '<div class="hist-item">'+
+      '<div class="meta"><div class="t">'+esc(histTitle(it.raw))+'</div>'+
+      '<div class="d">'+histDate(it.ts)+' · '+chars+' 字 · '+lineCount+' 行</div></div>'+
+      '<button class="sw" data-open="'+i+'">打开</button>'+
+      '<button class="sw danger" data-delete="'+i+'">删除</button>'+
+    '</div>';
+  }).join("");
+}
+function openHistDialog(){
+  renderHistStore(); renderHistList();
+  $("#histMask").classList.add("show");
+}
+function closeHistDialog(){ $("#histMask").classList.remove("show"); }
+/* 把输入框原文交给现有的断句流程；返回是否成功 */
+function doParse(){
+  var raw=$("#inputBox").value;
+  if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return false; }
+  var result=parseText(raw);
+  if(!result.items.length){ toast("没找到能读的句子"); return false; }
+  $("#readerTitle").textContent="📖 阅读 · "+result.items.length+" 句";
+  renderSentences(result);
+  var s=result.stats;
+  var orderTxt=result.order==="zh-first"?"先中文后英文":"先英文后中文";
+  var html="识别结果：<b>"+orderTxt+"</b><br>"+
+    "英文行 <b>"+s.en+"</b> · 中文行 <b>"+s.zh+"</b> · 混排行 <b>"+s.mix+"</b>"+
+    " → 共 <b>"+result.items.length+"</b> 句";
+  var rp=$("#report"); rp.innerHTML=html; rp.classList.add("show");
+  window.scrollTo({top:$("#reader").offsetTop-70,behavior:"smooth"});
+  return true;
+}
+function histSaveCurrent(){
+  var raw=$("#inputBox").value;
+  if(!raw.trim()){ toast("输入框是空的，没东西可保存 📋"); return; }
+  var list=histGet();
+  list.unshift({ts:Date.now(), raw:raw});
+  if(!histSet(list)){ toast("保存失败：空间不足，请先删除几篇旧文章"); return; }
+  toast("已保存到历史："+histTitle(raw));
+}
+function histOpen(i){
+  var list=histGet(), it=list[i];
+  if(!it) return;
+  $("#inputBox").value=it.raw||"";
+  closeHistDialog();
+  click();
+  doParse();
+  toast("已打开："+histTitle(it.raw));
+}
+function histDelete(i){
+  var list=histGet();
+  if(i<0||i>=list.length) return;
+  list.splice(i,1);
+  histSet(list);
+  renderHistStore(); renderHistList();
+  toast("已删除该文章");
+}
+function histClearAll(){
+  var list=histGet();
+  if(!list.length){ toast("历史已经是空的"); return; }
+  if(!window.confirm("确定要删除全部历史文章吗？此操作不可恢复。")) return;
+  histSet([]);
+  renderHistStore(); renderHistList();
+  toast("已清空全部历史");
+}
+
 /* ========================= 绑定 ========================= */
 function bind(){
   /* 头像：切换音色 + 试听 */
@@ -973,22 +1139,7 @@ function bind(){
   });
 
   $("#parseBtn").addEventListener("click", function(){
-    unlockAudio(); click();
-    var raw=$("#inputBox").value;
-    if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return; }
-    var result=parseText(raw);
-    if(!result.items.length){ toast("没找到能读的英文句子"); return; }
-    $("#readerTitle").textContent="📖 阅读 · "+result.items.length+" 句";
-    renderSentences(result);
-
-    var s=result.stats;
-    var orderTxt=result.order==="zh-first"?"先中文后英文":"先英文后中文";
-    var html="识别结果：<b>"+orderTxt+"</b><br>"+
-      "英文行 <b>"+s.en+"</b> · 中文行 <b>"+s.zh+"</b> · 混排行 <b>"+s.mix+"</b>"+
-      " → 共 <b>"+result.items.length+"</b> 句";
-    var rp=$("#report"); rp.innerHTML=html; rp.classList.add("show");
-
-    window.scrollTo({top:$("#reader").offsetTop-70,behavior:"smooth"});
+    unlockAudio(); click(); doParse();
   });
 
   $("#clearBtn").addEventListener("click", function(){
@@ -1070,6 +1221,20 @@ function bind(){
     this.classList.toggle("off", state.muted);
     if(!state.muted) tone(880,.07,"triangle",.03);
     else { try{ var s=getSynth(); if(s) s.cancel(); }catch(e){} }
+  });
+
+  /* 历史文章 */
+  $("#histSaveBtn").addEventListener("click", function(){ click(); histSaveCurrent(); });
+  $("#histOpenBtn").addEventListener("click", function(){ click(); openHistDialog(); });
+  $("#histCloseBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
+  $("#histCancelBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
+  $("#histClearBtn").addEventListener("click", function(){ click(); histClearAll(); });
+  $("#histMask").addEventListener("click", function(e){ if(e.target===this) closeHistDialog(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeHistDialog(); });
+  $("#histList").addEventListener("click", function(e){
+    var ob=e.target.closest("[data-open]"), db=e.target.closest("[data-delete]");
+    if(ob){ click(); histOpen(Number(ob.getAttribute("data-open"))); }
+    else if(db){ click(); histDelete(Number(db.getAttribute("data-delete"))); }
   });
 
   var hb=$("#soundHintBtn");
