@@ -661,7 +661,11 @@ function applyPref(pref){
 /* ========================= 状态 ========================= */
 var state={ muted:false, langMode:"en", trans:"cur", voicePref:"auto" };
 var currentSentences=[];
-var player={ playing:false, current:0, rate:0.85, timer:null };
+/* continuous = 用户的「连播意图」，只由播放按钮维护：
+   点播放→true（想连播），点暂停→false（人工停止）。
+   单句点击是否连播看它，而不是看 player.playing——后者会被
+   playSentence 自身置 true，导致「停止后点单句、未播完又点别的句子」被误判成连播。 */
+var player={ playing:false, continuous:false, current:0, rate:0.85, timer:null };
 
 var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
 var TRANS_ORDER = ["cur","all","none"];
@@ -820,6 +824,7 @@ function firstLangByMode(mode){
 function renderSentences(result){
   currentSentences=result.items;
   player.current=0;
+  player.continuous=false; /* 新会话：连播意图清零 */
   stopPlayback();
 
   var first = firstLangByMode(state.langMode);
@@ -1012,8 +1017,15 @@ function bind(){
   $("#playBtn").addEventListener("click", function(){
     unlockAudio(); click();
     if(!currentSentences.length){ toast("先粘贴文章并断句"); return; }
-    if(player.playing) stopPlayback();
-    else playSentence(player.current);
+    if(player.playing){
+      /* 人工点暂停：记录停止意图，后续单句点击都播完即停 */
+      player.continuous=false;
+      stopPlayback();
+    } else {
+      /* 人工点播放：恢复连播意图，从当前句一路往下读 */
+      player.continuous=true;
+      playSentence(player.current, true);
+    }
   });
 
   $("#prevBtn").addEventListener("click", function(){
@@ -1044,11 +1056,12 @@ function bind(){
     var btn=e.target.closest(".sent");
     if(!btn) return;
     unlockAudio(); click();
-    /* 停止状态下点单句：只播这一句（播完即停）；
-       播放状态下点单句：从该句继续往下连播。 */
-    var wasPlaying=player.playing;
+    /* 是否连播取决于播放按钮记录的「连播意图」，不是 player.playing：
+       人工停止后（continuous=false）点单句→播完即停，且未播完再点别的句子仍播完即停；
+       连播中（continuous=true）点单句→从该句继续往下连播。 */
+    var continuous=player.continuous;
     stopPlayback();
-    playSentence(Number(btn.getAttribute("data-idx")), wasPlaying);
+    playSentence(Number(btn.getAttribute("data-idx")), continuous);
   });
 
   $("#soundBtn").addEventListener("click", function(){
