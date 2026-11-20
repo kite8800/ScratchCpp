@@ -3,187 +3,514 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TTS 诊断</title>
+<title>TTS 环境测试</title>
 <style>
-  body{margin:0;background:#fbf7ec;font-family:system-ui,"Microsoft YaHei",sans-serif;color:#2f2418;padding:20px;line-height:1.6}
-  h1{font-size:20px;margin:0 0 4px}
-  .wrap{max-width:820px;margin:0 auto}
-  .box{background:#fff;border:3px solid #2f2418;border-radius:10px;padding:14px;margin:12px 0;box-shadow:5px 5px 0 rgba(47,36,24,.15)}
-  .box h2{font-size:14px;margin:0 0 8px;color:#7a4a22}
-  pre{background:#f5f1e6;border:1px solid #e0d8c4;border-radius:6px;padding:10px;font-size:12px;overflow:auto;max-height:260px;margin:0;white-space:pre-wrap}
-  button{font:inherit;font-weight:700;border:2.5px solid #2f2418;border-radius:8px;background:#fff;padding:8px 14px;margin:4px 6px 4px 0;cursor:pointer}
-  button:hover{background:#f0e8d8}
-  .ok{color:#1a7f37;font-weight:700}
-  .bad{color:#c0392b;font-weight:700}
-  #log{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:10px;min-height:110px;max-height:260px;overflow:auto}
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:#f7f4ec;color:#2f2418;
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    line-height:1.6;padding:22px 16px 60px;
+  }
+  .wrap{max-width:940px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px;letter-spacing:.5px}
+  .lead{font-size:13px;color:#6b5c47;margin-bottom:18px}
+  .card{
+    background:#fff;border:2.5px solid #2f2418;border-radius:12px;
+    padding:16px 18px;margin-bottom:16px;box-shadow:5px 5px 0 rgba(47,36,24,.13);
+  }
+  .card h2{
+    font-size:14px;margin:0 0 12px;color:#7a4a22;
+    letter-spacing:.5px;text-transform:uppercase;
+  }
+  /* 环境栅格 */
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .kv div{background:#faf7ef;border:1.5px solid #e4dcc9;border-radius:8px;padding:8px 10px;font-size:12.5px}
+  .kv b{display:block;color:#8a7859;font-size:11px;font-weight:600;margin-bottom:2px}
+  .num{font-weight:800;font-size:15px}
+  .num.good{color:#1a7f37}
+  .num.warn{color:#c07a00}
+  .num.bad{color:#c0392b}
+  /* 过滤条 */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{
+    font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+    border:2px solid #2f2418;background:#fff;border-radius:20px;padding:5px 13px;
+  }
+  .chip.on{background:#2f2418;color:#fff}
+  .chip:hover{background:#f0e8d8}
+  .chip.on:hover{background:#2f2418}
+  /* 表格 */
+  .tblbox{max-height:330px;overflow:auto;border:2px solid #2f2418;border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{
+    position:sticky;top:0;background:#efe7d4;text-align:left;padding:8px 10px;
+    font-size:11.5px;color:#6b5c47;border-bottom:2px solid #2f2418;white-space:nowrap;z-index:1;
+  }
+  td{padding:7px 10px;border-bottom:1px solid #eee6d6;vertical-align:top}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#faf6ea}
+  tbody tr.sel{background:#fff4d6;outline:2px solid #e0a900;outline-offset:-2px}
+  tbody tr.sel td{font-weight:700}
+  .tag{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:10px;white-space:nowrap}
+  .tag.local{background:#dff3e2;color:#1a7f37;border:1px solid #a9d8b4}
+  .tag.remote{background:#fde8e6;color:#c0392b;border:1px solid #f1b6ae}
+  .tag.def{background:#e6eefc;color:#1d5fbf;border:1px solid #b3c9ef}
+  .empty{padding:16px;text-align:center;color:#9a8a70;font-size:13px}
+  /* 测试区 */
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .row label{font-size:12.5px;font-weight:700;color:#6b5c47}
+  select,textarea{
+    font:inherit;font-size:13px;border:2px solid #2f2418;border-radius:8px;
+    padding:7px 9px;background:#fff;color:#2f2418;outline:none;
+  }
+  select{min-width:250px;max-width:100%}
+  textarea{width:100%;min-height:64px;resize:vertical}
+  .sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .slider{font-size:12.5px}
+  .slider .lab{display:flex;justify-content:space-between;font-weight:700;color:#6b5c47;margin-bottom:2px}
+  .slider .lab span:last-child{color:#c07a00}
+  input[type=range]{width:100%;accent-color:#c07a00}
+  button.act{
+    font:inherit;font-weight:800;font-size:13.5px;cursor:pointer;
+    border:2.5px solid #2f2418;border-radius:9px;background:#fff;
+    padding:9px 18px;box-shadow:3px 3px 0 rgba(47,36,24,.18);
+    transition:transform .08s;
+  }
+  button.act:hover{background:#f7efdc}
+  button.act:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(47,36,24,.18)}
+  button.act.primary{background:#c07a00;color:#fff}
+  button.act.primary:hover{background:#a86900}
+  button.act:disabled{opacity:.45;cursor:not-allowed}
+  /* 日志 */
+  #log{
+    font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:12px;
+    background:#20201e;color:#d8d4c8;border-radius:10px;padding:12px;
+    min-height:120px;max-height:260px;overflow:auto;line-height:1.7;
+  }
+  #log .ok{color:#7ddc9a}
+  #log .bad{color:#ff8b7e}
+  #log .info{color:#8ec5ff}
+  #log .dim{color:#8a8778}
+  /* 提示块 */
+  .tip{
+    border-left:5px solid #c07a00;background:#fffbee;border-radius:0 8px 8px 0;
+    padding:11px 14px;font-size:13px;margin-bottom:10px;
+  }
+  .tip.bad{border-color:#c0392b;background:#fff5f3}
+  .tip.good{border-color:#1a7f37;background:#f2fbf4}
+  .tip b{color:#2f2418}
+  .tip ol,.tip ul{margin:6px 0 0;padding-left:20px}
+  .tip li{margin:3px 0}
+  code{background:#efe7d4;border-radius:4px;padding:1px 5px;font-size:12px}
+  .hide{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>TTS 诊断页（微信兼容版）</h1>
-  <div class="box"><h2>① 环境（含带前缀 API 检测）</h2><pre id="env">读取中…</pre></div>
-  <div class="box"><h2>② 测试（依次点，看哪个听得到声音）</h2>
-    <button id="t1">测试1：同步 speak（微信/iOS 正确姿势）</button>
-    <button id="t2">测试2：cancel 后立刻 speak（旧版逻辑）</button>
-    <button id="t3">测试3：speak + 300ms resume 唤醒</button>
-    <button id="t4">测试4：cancel + 90ms 延迟 speak + 唤醒</button>
-    <button id="t5">测试5：修复版 mcstory 同款（自动前缀 + 同步）</button>
-    <div id="log"></div>
+  <h1>TTS 环境测试</h1>
+  <div class="lead">列出本机所有语音 → 任选一个 → 测中文 / 英文 / 降调，并给出系统缺少语音时的安装提示。</div>
+
+  <!-- ① 环境 -->
+  <div class="card">
+    <h2>① 环境概览</h2>
+    <div class="kv" id="envBox">读取中…</div>
+  </div>
+
+  <!-- ② 语音列表 -->
+  <div class="card">
+    <h2>② 语音列表（点一行选中）</h2>
+    <div class="filters">
+      <button class="chip on" data-f="all">全部</button>
+      <button class="chip" data-f="zh">中文</button>
+      <button class="chip" data-f="en">英文</button>
+      <button class="chip" data-f="local">仅本地</button>
+      <button class="chip" data-f="other">其他语言</button>
+    </div>
+    <div class="tblbox">
+      <table>
+        <thead><tr><th style="width:38px">#</th><th>名称</th><th style="width:90px">语言</th><th style="width:82px">来源</th><th style="width:62px">默认</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="5" class="empty">正在加载语音…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ③ 测试 -->
+  <div class="card">
+    <h2>③ 播放测试</h2>
+    <div class="row">
+      <label>语音</label>
+      <select id="voiceSel"></select>
+    </div>
+    <div class="row">
+      <label>文本</label>
+      <button class="act" id="fillZh" style="padding:5px 12px;font-size:12.5px">填入中文</button>
+      <button class="act" id="fillEn" style="padding:5px 12px;font-size:12.5px">填入英文</button>
+    </div>
+    <textarea id="text">你好，我是史蒂夫，我们一起读故事吧。</textarea>
+    <div class="sliders" style="margin:14px 0">
+      <div class="slider">
+        <div class="lab"><span>语速 rate</span><span id="rateV">0.85</span></div>
+        <input type="range" id="rate" min="0.5" max="2" step="0.05" value="0.85">
+      </div>
+      <div class="slider">
+        <div class="lab"><span>音调 pitch</span><span id="pitchV">1.00</span></div>
+        <input type="range" id="pitch" min="0" max="2" step="0.05" value="1">
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <button class="act primary" id="play">▶ 播放</button>
+      <button class="act" id="stop">■ 停止</button>
+      <button class="act" id="cmp">🔉 降调对比（1.0 → 0.6）</button>
+    </div>
+  </div>
+
+  <!-- ④ 日志 -->
+  <div class="card">
+    <h2>④ 事件日志</h2>
+    <div id="log"><span class="dim">等待操作…</span></div>
+  </div>
+
+  <!-- ⑤ 结论 -->
+  <div class="card">
+    <h2>⑤ 诊断结论与安装提示</h2>
+    <div id="advice">分析中…</div>
   </div>
 </div>
+
 <script>
-var TEXT = "你好，这是一次声音测试。";
-var logEl = document.getElementById("log");
-function log(msg){
-  var t = new Date().toLocaleTimeString();
-  logEl.innerHTML += "[" + t + "] " + msg + "<br>";
+/* ===================== 基础工具 ===================== */
+var $ = function(s){ return document.querySelector(s); };
+var logEl = $("#log");
+var logCount = 0;
+function log(msg, cls){
+  if(logCount === 0) logEl.innerHTML = "";
+  logCount++;
+  var t = new Date().toLocaleTimeString("zh-CN", {hour12:false});
+  var line = document.createElement("div");
+  line.innerHTML = '<span class="dim">[' + t + ']</span> <span class="' + (cls||"") + '">' + msg + '</span>';
+  logEl.appendChild(line);
   logEl.scrollTop = logEl.scrollHeight;
 }
-
-/* 与 mcstory.html 同一套运行时探测：标准名 + webkit/moz/ms 前缀 */
-function S(){ return window.speechSynthesis||window.webkitSpeechSynthesis||
-                    window.mozSpeechSynthesis||window.msSpeechSynthesis||null; }
-function C(){ return window.SpeechSynthesisUtterance||window.webkitSpeechSynthesisUtterance||
-                     window.mozSpeechSynthesisUtterance||window.msSpeechSynthesisUtterance||null; }
-function newUtt(text){
-  var U=C(); if(typeof U==="function") return new U(text);
-  var s=S(); if(s && typeof s.SpeechSynthesisUtterance==="function") return new s.SpeechSynthesisUtterance(text);
-  return null;
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
 }
-function usable(){ var s=S(); return !!s && typeof s.speak==="function" &&
-                          (typeof C()==="function" || (s && typeof s.SpeechSynthesisUtterance==="function")); }
-function isWechat(){ return /MicroMessenger/i.test(navigator.userAgent||""); }
+var isWin = /windows/i.test(navigator.userAgent);
+var isAndroid = /android/i.test(navigator.userAgent);
+var isCJK = function(s){ return /[\u4e00-\u9fff]/.test(s); };
+function isLocal(v){ return v && v.localService !== false; }
+function langOf(v){ return (v.lang || "").toLowerCase(); }
 
-/* ---- 环境信息 ---- */
-function dumpEnv(){
-  var s=S(), v=[];
-  try { v = (s && s.getVoices && s.getVoices()) || []; } catch(e){}
-  var muted = null;
-  try { muted = localStorage.getItem("mcr_muted"); } catch(e){}
-  var acState = "n/a";
-  try {
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (AC) { var c = new AC(); acState = c.state; try{c.close();}catch(e){} }
-  } catch(e){ acState = "err"; }
+/* ===================== 语音加载 ===================== */
+var allVoices = [];
+var filter = "all";
+var selectedId = null;
 
-  var lines = [];
-  lines.push("浏览器: " + navigator.userAgent);
-  lines.push("是否微信内置: " + (isWechat() ? "是" : "否"));
-  lines.push("标准 speechSynthesis: " + (!!window.speechSynthesis));
-  lines.push("webkitSpeechSynthesis: " + (!!window.webkitSpeechSynthesis));
-  lines.push("构造器: 标准=" + (typeof window.SpeechSynthesisUtterance) +
-             " / webkit=" + (typeof window.webkitSpeechSynthesisUtterance));
-  lines.push("解析后可用: " + (usable() ? "是 ✔" : "否 ✘"));
-  lines.push("语音数量 getVoices().length = " + v.length + (v.length ? "" : "   ← 微信里常见为 0，不代表一定不能读"));
-  lines.push("mcr_muted (localStorage) = " + muted);
-  lines.push("AudioContext 初始 state = " + acState);
-  if (s) lines.push("speaking=" + s.speaking + " pending=" + s.pending + " paused=" + s.paused);
-  else lines.push("没有 synth 对象，下面所有测试都会失败");
-  lines.push("");
-  if (v.length) {
-    lines.push("—— 语音列表 ——");
-    v.forEach(function(x,i){
-      lines.push((i+1) + ". " + x.name + "  | lang=" + x.lang + " | local=" + x.localService + (x.default ? " | DEFAULT" : ""));
-    });
-  } else {
-    lines.push("—— 语音列表为空 ——");
+function loadVoices(){
+  var list = [];
+  try { list = speechSynthesis.getVoices() || []; } catch(e){}
+  if(!list.length) return false;
+  allVoices = list;
+  renderEnv();
+  renderTable();
+  renderSelect();
+  renderAdvice();
+  return true;
+}
+
+/* 首次可能为空：事件 + 轮询兜底 */
+if(window.speechSynthesis){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = function(){ loadVoices(); };
+  var tries = 0;
+  var timer = setInterval(function(){
+    tries++;
+    if(loadVoices() || tries > 20) clearInterval(timer);
+  }, 300);
+}
+
+/* ===================== ① 环境 ===================== */
+function shortUA(){
+  var ua = navigator.userAgent || "";
+  var m = ua.match(/(HeadlessChrome|Chrome|Edg|Firefox|Safari)\/([\d.]+)/);
+  var name = m ? (m[1] === "HeadlessChrome" ? "Chrome" : m[1]) + " " + m[2] : "";
+  var cent = /CentBrowser\/([\d.]+)/i.exec(ua);
+  if(cent) name = "Cent " + cent[1] + (m ? " · Chromium " + m[2] : "");
+  return name || ua.slice(0, 42);
+}
+function renderEnv(){
+  var total = allVoices.length;
+  var local = allVoices.filter(isLocal);
+  var zhLocal = local.filter(function(v){ return /^zh/.test(langOf(v)); });
+  var enLocal = local.filter(function(v){ return /^en/.test(langOf(v)); });
+  var remote = total - local.length;
+
+  function cls(n, goodIfPositive){
+    if(goodIfPositive) return n > 0 ? "good" : "bad";
+    return n > 0 ? "warn" : "good";
   }
-  document.getElementById("env").textContent = lines.join("\n");
-}
-dumpEnv();
-try { var s0=S(); if(s0) s0.onvoiceschanged = dumpEnv; } catch(e){}
-setTimeout(dumpEnv, 1200);
-setTimeout(dumpEnv, 3000);
 
-/* ---- 工具 ---- */
-function makeU(tag){
-  var u = newUtt(TEXT);
-  if(!u){ log("["+tag+"] <span class='bad'>没有可用的 Utterance 构造器</span>"); return null; }
-  u.lang = "zh-CN";
-  u.rate = 0.85;
-  u.pitch = 1.0;
-  u.volume = 1;
-  var s = S();
-  var vs = (s && s.getVoices && s.getVoices()) || [];
-  var zh = null;
-  for (var i=0;i<vs.length;i++){ if (/^zh/i.test(vs[i].lang||"")) { zh = vs[i]; break; } }
-  if (zh) { u.voice = zh; log("["+tag+"] 使用语音: " + zh.name); }
-  else { log("["+tag+"] 没有中文语音，用默认"); }
-  u.onstart = function(){ log("["+tag+"] <span class='ok'>onstart ✔ 开始发声</span>"); };
-  u.onend   = function(){ log("["+tag+"] onend 结束"); };
-  u.onerror = function(ev){ log("["+tag+"] <span class='bad'>onerror: " + ((ev&&ev.error)||"?") + "</span>"); };
-  return u;
-}
-function begin(){ try{ var s=S(); if(s) s.cancel(); }catch(e){} }
-function doSpeak(u, tag){
-  var s=S();
-  if(!s){ log("["+tag+"] <span class='bad'>没有 synth，无法朗读</span>"); return; }
-  try{ s.speak(u); }catch(e){ log("["+tag+"] <span class='bad'>异常: "+e+"</span>"); }
+  var items = [
+    ["浏览器", esc(shortUA())],
+    ["平台", ((isWin ? "Windows" : (isAndroid ? "Android" : (navigator.platform || "未知"))) + (isWin ? ' <span style="color:#8a7859">(' + (navigator.userAgent.indexOf("Win64") >= 0 ? "64 位" : "") + ')</span>' : ""))],
+    ["语音总数", '<span class="num">' + total + "</span>"],
+    ["本地语音", '<span class="num ' + cls(local.length, true) + '">' + local.length + "</span>"],
+    ["联网语音", '<span class="num ' + cls(remote, false) + '">' + remote + "</span>"],
+    ["中文·本地", '<span class="num ' + cls(zhLocal.length, true) + '">' + zhLocal.length + "</span>"],
+    ["英文·本地", '<span class="num ' + cls(enLocal.length, true) + '">' + enLocal.length + "</span>"]
+  ];
+  $("#envBox").innerHTML = items.map(function(it){
+    return "<div><b>" + it[0] + "</b>" + it[1] + "</div>";
+  }).join("");
 }
 
-/* 测试1：同步 speak —— 微信/iOS 唯一可靠姿势 */
-document.getElementById("t1").onclick = function(){
-  log("—— 测试1：同步 speak（用户手势内直接调用）——");
-  begin();
-  var u = makeU("T1"); if(!u) return;
-  doSpeak(u, "T1");
-};
+/* ===================== ② 表格 ===================== */
+function passFilter(v){
+  var l = langOf(v);
+  if(filter === "zh") return /^zh/.test(l);
+  if(filter === "en") return /^en/.test(l);
+  if(filter === "local") return isLocal(v);
+  if(filter === "other") return !/^(zh|en)/.test(l);
+  return true;
+}
 
-/* 测试2：cancel 后立刻 speak（旧版隐患复刻） */
-document.getElementById("t2").onclick = function(){
-  log("—— 测试2：cancel 后立刻 speak ——");
-  var u = makeU("T2"); if(!u) return;
-  var s=S();
-  try{
-    if (s && (s.speaking || s.pending)) s.cancel();
-    doSpeak(u, "T2");
-  }catch(e){ log("T2 异常:" + e); }
-};
+function renderTable(){
+  var rows = allVoices.filter(passFilter);
+  var tb = $("#tbody");
+  if(!rows.length){
+    tb.innerHTML = '<tr><td colspan="5" class="empty">没有匹配的语音</td></tr>';
+    return;
+  }
+  var html = "";
+  rows.forEach(function(v){
+    var idx = allVoices.indexOf(v);
+    var sel = (selectedId === idx) ? " sel" : "";
+    var src = isLocal(v)
+      ? '<span class="tag local">本地</span>'
+      : '<span class="tag remote">联网</span>';
+    var def = v.default ? '<span class="tag def">默认</span>' : "";
+    html += '<tr class="' + sel.trim() + '" data-i="' + idx + '">' +
+      '<td>' + (idx + 1) + "</td>" +
+      "<td>" + esc(v.name) + "</td>" +
+      "<td>" + esc(v.lang || "-") + "</td>" +
+      "<td>" + src + "</td>" +
+      "<td>" + def + "</td></tr>";
+  });
+  tb.innerHTML = html;
+}
 
-/* 测试3：speak + resume 唤醒 */
-document.getElementById("t3").onclick = function(){
-  log("—— 测试3：speak + 300ms resume ——");
-  begin();
-  var u = makeU("T3"); if(!u) return;
-  setTimeout(function(){
-    doSpeak(u, "T3");
+$("#tbody").addEventListener("click", function(e){
+  var tr = e.target.closest("tr[data-i]");
+  if(!tr) return;
+  selectedId = parseInt(tr.getAttribute("data-i"), 10);
+  var v = allVoices[selectedId];
+  $("#voiceSel").value = String(selectedId);
+  renderTable();
+  if(v){
+    log("已选中：" + esc(v.name) + "（" + esc(v.lang) + "，" + (isLocal(v) ? "本地" : "联网") + "）", "info");
+    /* 自动填入对应语言的例句 */
+    if(/^zh/.test(langOf(v))) $("#text").value = "你好，我是史蒂夫，我们一起读故事吧。";
+    else if(/^en/.test(langOf(v))) $("#text").value = "Hello! I am Steve. Let's read a story together.";
+  }
+});
+
+/* ===================== 语音下拉 ===================== */
+function renderSelect(){
+  var sel = $("#voiceSel");
+  var html = '<option value="">（不指定，用浏览器默认）</option>';
+  allVoices.forEach(function(v, i){
+    var mark = isLocal(v) ? "本地" : "联网";
+    html += '<option value="' + i + '">' + esc(v.name) + " · " + esc(v.lang) + " · " + mark + "</option>";
+  });
+  sel.innerHTML = html;
+  if(selectedId !== null) sel.value = String(selectedId);
+}
+
+/* ===================== ③ 播放 ===================== */
+function curVoice(){
+  var i = $("#voiceSel").value;
+  if(i === "") return null;
+  return allVoices[parseInt(i, 10)] || null;
+}
+function curText(){ return $("#text").value.trim(); }
+
+function speakAsync(v, text, rate, pitch, label){
+  return new Promise(function(resolve){
+    var settled = false;
+    function done(silent){ if(settled) return; settled = true; resolve(); }
+
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = (v && v.lang) ? v.lang : (isCJK(text) ? "zh-CN" : "en-US");
+    if(v) u.voice = v;
+    u.rate = rate;
+    u.pitch = pitch;
+    u.volume = 1;
+
+    u.onstart = function(){ log("[" + label + "] onstart ✔ 开始发声", "ok"); };
+    u.onend   = function(){ log("[" + label + "] onend 正常结束", "ok"); done(); };
+    u.onerror = function(ev){
+      log("[" + label + "] <span class='bad'>onerror: " + esc((ev && ev.error) || "?") + "</span>", "bad");
+      done();
+    };
+
+    try{
+      try{ speechSynthesis.cancel(); }catch(e){}
+      setTimeout(function(){
+        try{
+          speechSynthesis.speak(u);
+          /* Chrome 引擎假死 → 延时唤醒 */
+          setTimeout(function(){ try{ speechSynthesis.resume(); }catch(e){} }, 320);
+        }catch(e){
+          log("[" + label + "] speak 异常: " + esc(e && e.message || e), "bad");
+          done();
+        }
+      }, 90);
+    }catch(e){ done(); }
+
+    /* 超时兜底：长文本按字数估，最少 6 秒 */
+    var est = Math.max(6000, text.length * 260 / Math.max(0.5, rate));
     setTimeout(function(){
-      try{ var s=S(); if(s){ s.resume(); log("T3 已调用 resume() 唤醒"); } }catch(e){ log("T3 resume 异常:"+e); }
-    }, 300);
-  }, 60);
-};
+      if(!settled){ log("[" + label + "] 等待超时（可能引擎卡住或被拦）", "dim"); done(); }
+    }, est);
+  });
+}
 
-/* 测试4：Chrome 兜底组合 */
-document.getElementById("t4").onclick = function(){
-  log("—— 测试4：cancel + 90ms 延迟 speak + 唤醒 ——");
-  begin();
-  var u = makeU("T4"); if(!u) return;
-  setTimeout(function(){
-    doSpeak(u, "T4");
-    setTimeout(function(){ try{ var s=S(); if(s) s.resume(); }catch(e){} }, 300);
-  }, 90);
-};
+$("#play").addEventListener("click", function(){
+  var t = curText();
+  if(!t){ log("文本为空", "bad"); return; }
+  var v = curVoice();
+  var rate = parseFloat($("#rate").value);
+  var pitch = parseFloat($("#pitch").value);
+  log("播放｜语音=" + (v ? esc(v.name) : "默认") + "｜rate=" + rate + "｜pitch=" + pitch + "｜文字=" + esc(t.slice(0, 24)) + (t.length > 24 ? "…" : ""), "info");
+  speakAsync(v, t, rate, pitch, "播放");
+});
 
-/* 测试5：修复版 mcstory 同款（自动前缀 + 同步 speak + 2.2s 兜底重试） */
-document.getElementById("t5").onclick = function(){
-  log("—— 测试5：修复版同款（自动前缀 + 同步 speak）——");
-  if(!usable()){ log("<span class='bad'>当前环境探测不到可用 TTS；若在微信里，请点右上角『…』→ 在浏览器中打开对比</span>"); return; }
-  begin();
-  var u = makeU("T5"); if(!u) return;
-  var started = false;
-  u.onstart = function(){ started=true; log("["+"T5"+"] <span class='ok'>onstart ✔ 开始发声</span>"); };
-  doSpeak(u, "T5");
-  setTimeout(function(){
-    if(started) return;
-    log("T5: 2.2s 未 onstart，按修复版逻辑换默认语音重试一次");
-    var u2 = newUtt(TEXT); if(!u2) return;
-    u2.lang="zh-CN"; u2.rate=.85; u2.pitch=1; u2.volume=1;
-    u2.onstart=function(){ log("T5 <span class='ok'>重试后 onstart ✔</span>"); };
-    u2.onend=function(){ log("T5 重试结束"); };
-    u2.onerror=function(ev){ log("T5 重试 onerror: "+((ev&&ev.error)||"?")); };
-    doSpeak(u2, "T5重试");
-  }, 2200);
-};
+$("#stop").addEventListener("click", function(){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  log("已停止（cancel）", "dim");
+});
+
+$("#cmp").addEventListener("click", function(){
+  var v = curVoice();
+  var t = curText();
+  if(!t){ log("文本为空", "bad"); return; }
+  var rate = parseFloat($("#rate").value);
+  var btn = this;
+  btn.disabled = true;
+  log("—— 降调对比开始：同一句先 pitch=1.0，再 pitch=0.6 ——", "info");
+  speakAsync(v, t, rate, 1.0, "A·pitch1.0").then(function(){
+    log("—— 换 pitch=0.6 ——", "info");
+    return speakAsync(v, t, rate, 0.6, "B·pitch0.6");
+  }).then(function(){
+    log("对比结束。若两段听起来一样 → 这个浏览器/语音引擎忽略了 pitch", "dim");
+    if(isWin) log("（Windows + Chromium 朗读中文时，pitch 常被系统引擎忽略，属正常）", "dim");
+    btn.disabled = false;
+  });
+});
+
+/* 滑块数值 */
+$("#rate").addEventListener("input", function(){ $("#rateV").textContent = parseFloat(this.value).toFixed(2); });
+$("#pitch").addEventListener("input", function(){ $("#pitchV").textContent = parseFloat(this.value).toFixed(2); });
+
+/* 预设文本 */
+$("#fillZh").addEventListener("click", function(){
+  $("#text").value = "你好，我是史蒂夫，我们一起读故事吧。今天的天气真好。";
+  log("已填入中文例句", "info");
+});
+$("#fillEn").addEventListener("click", function(){
+  $("#text").value = "Hello! I am Steve. Let's read a story together.";
+  log("已填入英文例句", "info");
+});
+
+/* 过滤器 */
+document.querySelectorAll(".chip").forEach(function(c){
+  c.addEventListener("click", function(){
+    document.querySelectorAll(".chip").forEach(function(x){ x.classList.remove("on"); });
+    this.classList.add("on");
+    filter = this.getAttribute("data-f");
+    renderTable();
+  });
+});
+
+/* ===================== ⑤ 诊断建议 ===================== */
+function renderAdvice(){
+  var local = allVoices.filter(isLocal);
+  var zhLocal = local.filter(function(v){ return /^zh/.test(langOf(v)); });
+  var enLocal = local.filter(function(v){ return /^en/.test(langOf(v)); });
+  var enRemote = allVoices.filter(function(v){ return /^en/.test(langOf(v)) && !isLocal(v); });
+
+  var out = [];
+
+  if(!allVoices.length){
+    out.push('<div class="tip bad"><b>没有检测到任何语音。</b>这个浏览器可能禁用了语音合成，或系统没装语音包。</div>');
+    $("#advice").innerHTML = out.join("");
+    return;
+  }
+
+  /* 英文 */
+  if(enLocal.length === 0){
+    out.push('<div class="tip bad"><b>⚠️ 没有本地英文语音。</b>' +
+      (enRemote.length
+        ? '现在英文只能走 <b>' + enRemote.length + ' 个联网语音</b>（Google），<b>国内网络通常连不上，会完全没声音</b>。'
+        : '英文将完全无法朗读。') +
+      '</div>');
+    out.push(installTip("英文"));
+  }else{
+    out.push('<div class="tip good"><b>✔ 英文本地语音可用：</b>' +
+      esc(enLocal.slice(0,3).map(function(v){ return v.name; }).join(" / ")) +
+      (enLocal.length > 3 ? " 等 " + enLocal.length + " 个" : "") + "。</div>");
+  }
+
+  /* 中文 */
+  if(zhLocal.length === 0){
+    out.push('<div class="tip bad"><b>⚠️ 没有本地中文语音。</b>中文朗读会无声或走联网语音。</div>');
+    out.push(installTip("中文"));
+  }else{
+    var hasMale = zhLocal.some(function(v){ return /(kangkang|yunxi|yunjian|yunyang)/i.test(v.name); });
+    out.push('<div class="tip good"><b>✔ 中文本地语音可用：</b>' +
+      esc(zhLocal.slice(0,4).map(function(v){ return v.name; }).join(" / ")) +
+      (hasMale ? "（含<b>男声</b>）" : "（<b>没有男声</b>，男声只能靠降调，Windows 上通常无效）") + "。</div>");
+  }
+
+  /* 联网语音提醒 */
+  var remoteCount = allVoices.length - local.length;
+  if(remoteCount > 0){
+    out.push('<div class="tip"><b>提示：</b>列表里有 <b>' + remoteCount + ' 个联网语音</b>（标「联网」）。' +
+      '它们需要外网，国内经常连不上且可能静默失败。做朗读功能时建议<b>只用本地语音</b>。</div>');
+  }
+
+  /* pitch 说明 */
+  if(isWin){
+    out.push('<div class="tip"><b>关于降调：</b>Windows 上 Chromium 内核（Chrome / Edge / Cent 等）朗读中文时，' +
+      '<code>pitch</code> 往往被系统语音引擎忽略，只认 <code>rate</code>。' +
+      '可以点上面的「降调对比」自己验证——两段听着一样就说明无效。' +
+      '想要真正的低音男声，建议用系统自带男声（如 Kangkang），或改用支持音调的在线 TTS。</div>');
+  }
+
+  $("#advice").innerHTML = out.join("");
+}
+
+function installTip(langName){
+  var steps;
+  if(isWin){
+    steps = '<b>Windows 安装' + langName + '语音的方法：</b><ol>' +
+      '<li>打开 <b>设置 → 时间和语言 → 语言和区域</b></li>' +
+      '<li>点「添加语言」，搜索并选择 <b>' + (langName === "英文" ? "English (United States)" : "中文(简体，中国)") + '</b>，下一步</li>' +
+      '<li>在「可选语言功能」里勾上 <b>语音</b>（Speech），然后安装</li>' +
+      '<li>装完<b>完全关闭浏览器再重开</b>，回到本页刷新即可看到新语音</li>' +
+      '</ol>' +
+      '<div style="margin-top:6px;color:#8a7859">（Win11 也可在 设置 → 辅助功能 → 讲述人 → 添加自然语音 里补装）</div>';
+  }else if(isAndroid){
+    steps = '<b>安卓安装' + langName + '语音：</b>设置 → 系统 → 语言和输入法 → 文字转语音输出 → 选择 Google 语音服务 → 安装语音数据，勾选' + langName + '。';
+  }else{
+    steps = '<b>安装' + langName + '语音：</b>macOS 在 系统设置 → 辅助功能 → 朗读内容 → 系统声音 → 管理声音，勾选并下载' + langName + '语音。';
+  }
+  return '<div class="tip bad">' + steps + '</div>';
+}
+
+/* 初始日志 */
+log("页面已就绪。若列表为空，请稍等 1~2 秒（语音是异步加载的）。", "dim");
 </script>
 </body>
 </html>

@@ -68,6 +68,7 @@ main{padding-top:14px}
   display:flex; gap:8px; align-items:center; flex-wrap:wrap;
   margin-top:10px;
 }
+.action-row .row-break{flex-basis:100%;height:0;margin:0}
 .sw{
   display:inline-flex;align-items:center;gap:5px;padding:7px 13px;
   border:2.5px solid var(--ink);border-radius:10px;background:#fff;
@@ -109,10 +110,12 @@ main{padding-top:14px}
   background:var(--paper);border:3px solid var(--ink);border-radius:14px;
   box-shadow:var(--shadow);padding:6px;min-height:120px;
 }
-.reader-body .title-line{
-  padding:10px 12px 6px; font-family:var(--pixel); font-weight:900;
-  font-size:15px; color:var(--ink); border-bottom:2px dashed rgba(47,36,24,.15);
-  margin-bottom:4px;
+.reader-body .seg-head{
+  padding:8px 12px; font-family:var(--pixel); font-weight:900;
+  font-size:13px; color:#8a5a00; letter-spacing:.03em;
+  background:linear-gradient(90deg,#fff1cd 0%,#fdf7e6 100%);
+  border:1.5px solid var(--gold); border-left:5px solid var(--gold);
+  border-radius:7px; margin:10px 2px 6px;
 }
 .sent{
   display:block; width:100%; text-align:left;
@@ -224,6 +227,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       </label>
       <button class="sw primary" id="parseBtn">✂️ 识别并断句</button>
       <button class="sw" id="clearBtn">清空</button>
+      <div class="row-break"></div>
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
     </div>
@@ -680,12 +684,6 @@ function stripBullet(line){
   t=t.replace(/^[-–—•·*]+\s*/,"");
   return t.trim();
 }
-function looksLikeTitle(line){
-  var t=line.trim(); if(!t) return false;
-  if(/^#{1,6}\s+/.test(t)) return true;
-  if(t.length<=40 && !/[.!?。！？]$/.test(t) && (t===t.toUpperCase()) && /[A-Z]/.test(t)) return true;
-  return false;
-}
 var ABBR=/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|vs|etc|e\.g|i\.e|U\.S|U\.K|No|Fig|al)\./gi;
 function splitEnglish(text){
   var t=text.replace(ABBR,function(m){return m.replace(/\./g,"\u0001");});
@@ -701,11 +699,14 @@ function splitChinese(text){
 
 function parseText(raw){
   var lines=raw.replace(/\r\n/g,"\n").split("\n");
-  var stats={en:0,zh:0,mix:0,title:0,other:0};
+  var stats={en:0,zh:0,mix:0,other:0};
   var classified=lines.map(function(line){
     var t=stripBullet(line);
     if(!t) return {type:"blank",text:""};
-    if(looksLikeTitle(line)){stats.title++;return{type:"title",text:line.replace(/^#+\s*/,"")};}
+    /* 行首 # 作为分段符：切断 chunk，文字挂到紧随其后的句子上做小标题 */
+    if(/^#{1,6}\s*/.test(line.trim())){
+      return {type:"sep",text:line.trim().replace(/^#+\s*/,"")};
+    }
     var r=cjkRatio(t),w=enWordCount(t);
     if(r>=0.5){stats.zh++;return{type:"zh",text:t};}
     if(r>0&&w>=1){stats.mix++;return{type:"mix",text:t};}
@@ -716,12 +717,12 @@ function parseText(raw){
   var order="en-first";
   for(var i=0;i<classified.length;i++){
     var c=classified[i];
-    if(c.type==="blank"||c.type==="title") continue;
+    if(c.type==="blank"||c.type==="sep") continue;
     order = c.type==="zh" ? "zh-first" : "en-first";
     break;
   }
 
-  var items=[],titles=[];
+  var items=[];
 
   /* ---------- 按「块」配对：相邻的一轮英文行 + 中文行构成一个 chunk ----------
      块边界有两种：
@@ -730,19 +731,32 @@ function parseText(raw){
           说明上一组已经结束、这是新的一组。
      这样句数对不上时，多出来的句子只会留在本块内（中文留空 / 中文被忽略），
      绝不会串到下一组「一行英文一行中文」去。 */
-  var chunks=[],cur=null;
-  function newChunk(){ var c={enLines:[],zhLines:[]}; chunks.push(c); return c; }
-  function addPart(lang,text){
+  var chunks=[],cur=null,pendingHead="";
+  /* 新块创建时立刻「消费」pendingHead 存到块上：
+     避免等到块内配对阶段时 pendingHead 已被后面的 # 行覆盖。
+     order 按块局部判断（块内首行语言），不再用全文全局 order——
+     否则 # 分段里「中文在前」的用例会被全文顺序强行拆块。 */
+  function newChunk(){
+    var c={enLines:[],zhLines:[],head:pendingHead,order:null,lastPure:null};
+    pendingHead="";
+    chunks.push(c); return c;
+  }
+  function pushItem(en,zh,head){ items.push({en:en,zh:zh,head:head||""}); }
+  function addPart(lang,text,isMix){
     if(!text) return;
-    if(lang==="en" && order==="en-first" && cur && cur.zhLines.length) cur=newChunk();
-    if(lang==="zh" && order==="zh-first" && cur && cur.enLines.length) cur=newChunk();
-    if(!cur) cur=newChunk();
+    if(!cur){ cur=newChunk(); cur.order=lang; }
+    /* 切块：出现「块首语言」且其前一行是另一种纯语言行 → 新一轮开始。
+       纯行之间才触发；混排行不参与阶段判定（D3 的混排+下一行属于同一块）。 */
+    if(lang===cur.order && cur.lastPure && cur.lastPure!==lang){
+      cur=newChunk(); cur.order=lang;
+    }
+    if(!isMix) cur.lastPure=lang;
     if(lang==="en") cur.enLines.push(text); else cur.zhLines.push(text);
   }
   var CJK_PUNCT=/[\u4e00-\u9fff\u3400-\u4dbf。！？；，、…（）【】「」『』]/;
   classified.forEach(function(c){
     if(c.type==="blank"){ cur=null; return; }
-    if(c.type==="title"){ titles.push(c.text); cur=null; return; }
+    if(c.type==="sep"){ pendingHead=c.text; cur=null; return; }  /* 分段符：切块 + 记小标题 */
     if(c.type==="other"){ cur=null; return; }
     if(c.type==="en"){ addPart("en",c.text); return; }
     if(c.type==="zh"){ addPart("zh",c.text); return; }
@@ -753,34 +767,46 @@ function parseText(raw){
         if(!p) return;
         if(CJK_PUNCT.test(p)) zhBuf+=p; else enBuf+=p;
       });
-      if(order==="zh-first"){
-        if(zhBuf.trim()) addPart("zh",zhBuf.trim());
-        if(enBuf.trim()) addPart("en",enBuf.trim());
-      } else {
-        if(enBuf.trim()) addPart("en",enBuf.trim());
-        if(zhBuf.trim()) addPart("zh",zhBuf.trim());
-      }
+      /* 混排行按块首语言决定先后顺序，且不参与 lastPure 阶段判定 */
+      var firstLang = (cur && cur.order) ? cur.order : (cjkRatio(c.text)>=0.5 ? "zh" : "en");
+      var parts2 = firstLang==="zh" ? [["zh",zhBuf],["en",enBuf]] : [["en",enBuf],["zh",zhBuf]];
+      parts2.forEach(function(pair){
+        if(pair[1].trim()) addPart(pair[0], pair[1].trim(), true);
+      });
       return;
     }
     if(enWordCount(c.text)>0) addPart("en",c.text);
   });
 
-  /* ---------- 块内各自断句，然后按 max 长度一一配对 ---------- */
+  /* ---------- 块内配对：能对齐就对齐，对不齐整块合并 ---------- */
   chunks.forEach(function(ch){
-    var enSents=[];
-    ch.enLines.forEach(function(l){ splitEnglish(l).forEach(function(s){ enSents.push(s); }); });
-    var zhSents=[];
-    ch.zhLines.forEach(function(l){ splitChinese(l).forEach(function(s){ zhSents.push(s); }); });
-    var n=Math.max(enSents.length,zhSents.length);
-    for(var k=0;k<n;k++){
-      var en=enSents[k]||"", zh=zhSents[k]||"";
-      if(!en && !zh) continue;
-      items.push({en:en,zh:zh});
+    var enSents=[], zhSents=[];
+    ch.enLines.forEach(function(l){
+      splitEnglish(l).forEach(function(s){ if(s && s.trim()) enSents.push(s.trim()); });
+    });
+    ch.zhLines.forEach(function(l){
+      splitChinese(l).forEach(function(s){ if(s && s.trim()) zhSents.push(s.trim()); });
+    });
+    var ne=enSents.length, nz=zhSents.length;
+    if(!ne && !nz) return;
+    /* 小标题只挂到本块的首句，块内后续句子不重复挂 */
+    var h=ch.head;
+    /* A：一侧为空，只放有内容的一侧 */
+    if(!ne){ zhSents.forEach(function(zh){ pushItem("",zh,h); h=""; }); return; }
+    if(!nz){ enSents.forEach(function(en){ pushItem(en,"",h); h=""; }); return; }
+    /* B：句数相等，1:1 严格配对 */
+    if(ne===nz){
+      for(var i=0;i<ne;i++) pushItem(enSents[i],zhSents[i],h), h="";
+      return;
     }
+    /* C：对不齐 → 整块合并成一句（英文空格拼接，中文直接拼接），绝不串段 */
+    pushItem(enSents.join(" "),zhSents.join(""),h);
   });
 
-  items=items.filter(function(it){return it.en&&it.en.trim();});
-  return {items:items,order:order,stats:stats,titles:titles};
+  items=items.filter(function(it){
+    return (it.en && it.en.trim()) || (it.zh && it.zh.trim());
+  });
+  return {items:items,order:order,stats:stats};
 }
 
 /* =========================================================
@@ -799,14 +825,16 @@ function renderSentences(result){
   var first = firstLangByMode(state.langMode);
 
   var html="";
-  if(result.titles&&result.titles.length){
-    html+='<div class="title-line">'+result.titles.map(esc).join(" · ")+'</div>';
-  }
   html+=result.items.map(function(s,i){
     var mainText = first==="zh" ? (s.zh||"") : (s.en||"");
     var altText  = first==="zh" ? (s.en||"") : (s.zh||"");
     if(!mainText){ mainText = altText; altText = ""; }
-    return '<button class="sent" data-idx="'+i+'">'+
+    /* # 分段符的小标题：只用于查看，不是按钮、不计句、不影响 data-idx */
+    var segHead = s.head
+      ? '<div class="seg-head">'+esc(s.head)+'</div>'
+      : '';
+    return segHead +
+      '<button class="sent" data-idx="'+i+'">'+
       '<span class="line main-line"><span class="num">'+(i+1)+'.</span>'+esc(mainText)+'</span>'+
       (altText ? '<span class="line alt-line">'+esc(altText)+'</span>' : '')+
     '</button>';
@@ -829,7 +857,8 @@ function highlightSentence(idx){
 /* =========================================================
    播放器（原样）
    ========================================================= */
-function playSentence(idx){
+function playSentence(idx, autoNext){
+  if(autoNext===undefined) autoNext=true;
   if(idx<0 || idx>=currentSentences.length){ stopPlayback(); return; }
   player.current=idx; player.playing=true;
   $("#playBtn").textContent="⏸ 暂停"; $("#playBtn").classList.add("on");
@@ -842,7 +871,7 @@ function playSentence(idx){
 
   var goNext=function(){
     if(!player.playing) return;
-    if(player.current+1<currentSentences.length) playSentence(player.current+1);
+    if(autoNext && player.current+1<currentSentences.length) playSentence(player.current+1, true);
     else stopPlayback();
   };
 
@@ -951,7 +980,6 @@ function bind(){
     var orderTxt=result.order==="zh-first"?"先中文后英文":"先英文后中文";
     var html="识别结果：<b>"+orderTxt+"</b><br>"+
       "英文行 <b>"+s.en+"</b> · 中文行 <b>"+s.zh+"</b> · 混排行 <b>"+s.mix+"</b>"+
-      (s.title?" · 标题 <b>"+s.title+"</b>":"")+
       " → 共 <b>"+result.items.length+"</b> 句";
     var rp=$("#report"); rp.innerHTML=html; rp.classList.add("show");
 
@@ -971,8 +999,8 @@ function bind(){
     save("langMode", state.langMode);
     click();
     if(currentSentences.length){
-      var keep = currentSentences.map(function(x){return {en:x.en,zh:x.zh};});
-      renderSentences({items:keep, titles:[]});
+      var keep = currentSentences.map(function(x){return {en:x.en,zh:x.zh,head:x.head};});
+      renderSentences({items:keep});
       $("#sentCount").textContent=keep.length+" 句";
     }
   });
@@ -1015,8 +1043,12 @@ function bind(){
   $("#readerBody").addEventListener("click", function(e){
     var btn=e.target.closest(".sent");
     if(!btn) return;
-    unlockAudio(); click(); stopPlayback();
-    playSentence(Number(btn.getAttribute("data-idx")));
+    unlockAudio(); click();
+    /* 停止状态下点单句：只播这一句（播完即停）；
+       播放状态下点单句：从该句继续往下连播。 */
+    var wasPlaying=player.playing;
+    stopPlayback();
+    playSentence(Number(btn.getAttribute("data-idx")), wasPlaying);
   });
 
   $("#soundBtn").addEventListener("click", function(){
