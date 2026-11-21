@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>词汇表范文 · MC小作文阅读器</title>
+<style>
+:root{--ink:#2f2418;--ink2:#6b5a45;--grass:#6cbf4a;--grass-d:#4e9b32;--gold:#f2b53c;--cream:#fbf7ec;--paper:#fffdf6;--shadow:0 5px 0 rgba(47,36,24,.15)}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--cream);padding-bottom:40px}
+.wrap{max-width:820px;margin:0 auto;padding:0 14px}
+h1{font-family:"Courier New",monospace;font-size:22px;margin:18px 0 4px;color:#fff;text-shadow:2px 2px 0 var(--grass-d)}
+.tip{font-size:12.5px;color:var(--ink2);line-height:1.6;background:#fffdf3;border:2px dashed rgba(47,36,24,.18);border-radius:9px;padding:9px 12px;margin-bottom:14px}
+.tip b{color:var(--ink)}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);padding:14px;margin:12px 0}
+.card h2{font-size:16px;margin:0 0 6px;font-family:"Courier New",monospace}
+.card .desc{font-size:12px;color:var(--ink2);margin-bottom:10px}
+textarea{
+  width:100%;height:180px;resize:vertical;border:2.5px solid var(--ink);border-radius:10px;
+  padding:10px 12px;font-family:inherit;font-size:13.5px;line-height:1.6;background:#fff;color:var(--ink)
+}
+.bar{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+button{
+  font-family:inherit;font-size:13px;font-weight:800;padding:8px 16px;border:2.5px solid var(--ink);
+  border-radius:10px;background:var(--grass);color:#fff;box-shadow:0 3px 0 var(--grass-d);cursor:pointer
+}
+button:active{transform:translateY(2px);box-shadow:none}
+button.ghost{background:#fff;color:var(--ink)}
+.bar .meta{font-size:12px;color:var(--ink2);margin-left:auto}
+footer{max-width:820px;margin:22px auto 0;padding:14px;text-align:center;font-size:12px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>词汇表范文</h1>
+  <div class="tip">
+    每篇范文开头几行是<b>单词表</b>（格式 <b>英文|中文</b>），阅读器会自动把它们抽成词条、不计入句子。<br>
+    用法：点「复制全文」→ 打开 <b>mcstory.html</b> → 粘进输入框 → 点「识别并断句」。正文里特意用了不规则动词（go/went、eat/ate、see/saw 等）来验证词形识别，点「词汇」按钮可把命中词挖空做填空记忆。
+  </div>
+
+  <div class="card">
+    <h2>① A Trip to the Farm</h2>
+    <div class="desc">测：go/went、see/saw、eat/ate、take/took、give/gave（一般过去时叙事）</div>
+    <textarea id="t1">go|去
+see|看见
+eat|吃
+take|带
+give|给
+farm|农场
+Last Sunday we went to a farm.
+We saw many cows and sheep there.
+The farmer gave us some apples.
+I ate one apple and took a photo.
+We went home in the afternoon.
+上周日我们去了一个农场。
+我们在那里看见很多牛和羊。
+农民给了我们一些苹果。
+我吃了一个苹果还拍了张照片。
+我们下午回了家。</textarea>
+    <div class="bar">
+      <button onclick="cp('t1',this)">复制全文</button>
+      <button class="ghost" onclick="sel('t1')">只选中</button>
+      <span class="meta">5 词 · 5 句</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② My Busy Morning</h2>
+    <div class="desc">测：get/got、have/had、do/did、write/wrote、read/read（含 read 过去式同形）</div>
+    <textarea id="t2">get|起床
+have|吃
+do|做
+write|写
+read|读
+morning|早晨
+I got up at seven this morning.
+I had bread and milk for breakfast.
+Then I did my homework.
+I wrote a story and read it aloud.
+It was a busy but happy morning.
+今天早晨我七点起床。
+我早餐吃了面包和牛奶。
+然后我做了作业。
+我写了一个故事并大声读了出来。
+这是个忙碌却开心的早晨。</textarea>
+    <div class="bar">
+      <button onclick="cp('t2',this)">复制全文</button>
+      <button class="ghost" onclick="sel('t2')">只选中</button>
+      <span class="meta">6 词 · 5 句</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ The Lost Cat</h2>
+    <div class="desc">测：lose/lost、find/found、tell/told、think/thought、run/ran、buy/bought</div>
+    <textarea id="t3">lose|丢失
+find|找到
+tell|告诉
+think|认为
+run|跑
+buy|买
+cat|猫
+My little cat was lost yesterday.
+I told my mother about it.
+We thought it ran into the garden.
+We bought some fish to find it.
+At last we found it under a tree.
+我的小猫昨天走丢了。
+我把这件事告诉了妈妈。
+我们认为它跑进了花园。
+我们买了些鱼来找到它。
+最后我们在一棵树下找到了它。</textarea>
+    <div class="bar">
+      <button onclick="cp('t3',this)">复制全文</button>
+      <button class="ghost" onclick="sel('t3')">只选中</button>
+      <span class="meta">7 词 · 5 句</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>④ A Rainy Day</h2>
+    <div class="desc">测：be(was/were)、take/took、make/made、sleep/slept、feel/felt、break/broke + 短语精确匹配</div>
+    <textarea id="t4">be|是
+take|拿
+make|制作
+sleep|睡觉
+feel|感觉
+break|打破
+get up|起床
+It was raining when I took my umbrella.
+I get up early every day.
+My sister made a card at home.
+The little boy broke his toy and felt sad.
+We slept well that night.
+我拿着伞的时候天正在下雨。
+我每天早起。
+我姐姐在家做了一张卡片。
+小男孩弄坏了他的玩具，很难过。
+那天晚上我们睡得很好。</textarea>
+    <div class="bar">
+      <button onclick="cp('t4',this)">复制全文</button>
+      <button class="ghost" onclick="sel('t4')">只选中</button>
+      <span class="meta">7 词 · 5 句</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⑤ My Hero</h2>
+    <div class="desc">测：teach/taught、learn/learnt→规则 learn、win/won、become/became、help/helped（规则）、不规则与规则混排</div>
+    <textarea id="t5">teach|教
+learn|学习
+win|赢
+become|成为
+help|帮助
+teacher|老师
+My teacher taught me many things.
+I learned a lot from her.
+Our team won the game last week.
+I want to become a good teacher.
+She always helps everyone.
+我的老师教了我很多东西。
+我从她那里学到了很多。
+我们队上周赢了比赛。
+我想成为一名好老师。
+她总是帮助每个人。</textarea>
+    <div class="bar">
+      <button onclick="cp('t5',this)">复制全文</button>
+      <button class="ghost" onclick="sel('t5')">只选中</button>
+      <span class="meta">6 词 · 5 句</span>
+    </div>
+  </div>
+</div>
+<footer>词汇表范文 · 供 mcstory.html 单词表功能测试</footer>
+<script>
+function cp(id,btn){
+  var ta=document.getElementById(id), txt=ta.value, old=btn.textContent;
+  function done(){ btn.textContent="已复制 ✓"; setTimeout(function(){btn.textContent=old;},1500); }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done,function(){ fallback(ta,done); });
+  } else { fallback(ta,done); }
+}
+function fallback(ta,cb){
+  ta.focus(); ta.select();
+  try{ document.execCommand("copy"); cb(); }catch(e){ alert("复制失败，请手动全选复制"); }
+}
+function sel(id){ var ta=document.getElementById(id); ta.focus(); ta.select(); }
+</script>
+</body>
+</html>
