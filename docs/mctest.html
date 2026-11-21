@@ -148,7 +148,9 @@ body[data-trans="all"] .sent .alt-line{display:block}
   font-family:var(--pixel); font-weight:900; font-size:12px; color:#8a5a00;
   letter-spacing:.03em; margin-bottom:4px;
 }
-.vocab-block .vb-row{display:block;padding:5px 8px;margin:2px 0;border-radius:7px;background:#fff;border:1.5px solid rgba(47,36,24,.12)}
+.vocab-block .vb-row{display:block;width:100%;box-sizing:border-box;text-align:left;padding:5px 8px;margin:2px 0;border-radius:7px;background:#fff;border:1.5px solid rgba(47,36,24,.12);cursor:pointer;transition:background .15s,border-color .15s}
+.vocab-block .vb-row:hover{border-color:var(--gold);background:#fffdf3}
+.vocab-block .vb-row.active{background:#fff1cd;border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,63,.35)}
 .vocab-block .vb-row .line{display:block;font-size:14px;line-height:1.5}
 .vocab-block .vb-row .line + .line{font-size:12.5px;color:var(--ink2);font-weight:600;margin-top:2px}
 
@@ -193,7 +195,9 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
 .type-mask{position:fixed;inset:0;z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:20px 14px;background:var(--cream);background-image:radial-gradient(rgba(47,36,24,.055) 1px,transparent 1px);background-size:16px 16px;overflow-y:auto}
 .type-mask[hidden]{display:none}
 body.tt-on{overflow:hidden}
-.type-panel{width:100%;max-width:620px;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin:auto 0}
+/* 软键盘弹起时：覆盖层高度由 JS 用 visualViewport 动态指定，这里只微调内边距 */
+body.kb-open .type-mask{padding-top:8px}
+.type-panel{width:100%;max-width:820px;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
 .tt-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2px dashed rgba(47,36,24,.15);background:#fffdf3;flex-wrap:wrap}
 .tt-title{font-family:var(--pixel);font-weight:900;font-size:14px}
 .tt-apples{display:inline-flex;align-items:center;gap:4px;font-size:14px;line-height:1.6}
@@ -231,8 +235,16 @@ body.tt-on{overflow:hidden}
 .tt-peek{margin:12px 16px 0;padding:10px 12px;border:2px dashed var(--gold);border-radius:9px;background:#fff8e6;font-size:15px;line-height:1.7}
 .tt-peek-tag{display:block;font-size:11px;color:#8a5a00;font-weight:700;margin-bottom:3px}
 .tt-peek b{color:var(--ink);font-size:16px}
-.tt-actions{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 16px}
+.tt-navrow{display:flex;align-items:center;gap:9px;padding:9px 16px 14px;border-top:1.5px dashed rgba(47,36,24,.2)}
+.tt-jump-label{font-family:var(--pixel);font-weight:900;font-size:11.5px;color:var(--ink2);white-space:nowrap;min-width:42px;text-align:center}
+.tt-jump{flex:1;min-width:80px;accent-color:var(--grass-d)}
+.tt-rate{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1.5px solid rgba(47,36,24,.18);border-radius:7px;background:#fffdf3}
+.tt-rate input{width:54px;accent-color:var(--grass-d)}
+.tt-rate .tt-rate-val{font-family:var(--pixel);font-weight:900;font-size:10.5px;color:var(--ink2);min-width:33px;text-align:center}
+.tt-rate .tt-rate-ico{font-size:11px}
+.tt-actions{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px 8px}
 .tt-actions .sw{font-size:12.5px;padding:7px 12px}
+.tt-actions .sw.icon-only{font-size:16px;padding:5px 11px;line-height:1}
 .tt-actions .sw.primary{background:var(--grass);color:#fff;border-color:var(--grass-d)}
 .tt-score{text-align:center;padding:26px 16px}
 .tt-cheer{font-size:15px;font-weight:900;color:#8a5a00;margin-bottom:8px;line-height:1.5}
@@ -349,6 +361,7 @@ body.tt-on{overflow:hidden}
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
       <button class="sw" id="histOpenBtn" title="查看已保存的文章">📚 打开历史</button>
+      <button class="sw" id="sampleBtn" title="载入内置范文：我的世界第一天">范文</button>
       <div class="row-break"></div>
       <span class="action-label">测试：</span>
       <span class="loot-label">你的战利品</span>
@@ -373,7 +386,7 @@ body.tt-on{overflow:hidden}
       <span id="progress">0 / 0</span>
       <div class="rate-wrap">
         <span>🐢</span>
-        <input id="rateInput" type="range" min="0.5" max="1.4" step="0.05" value="0.85" aria-label="语速">
+        <input id="rateInput" type="range" min="0.5" max="2.0" step="0.05" value="0.85" aria-label="语速">
         <span id="rateLabel">0.85x</span>
       </div>
     </div>
@@ -392,6 +405,11 @@ body.tt-on{overflow:hidden}
     </div>
     <div class="tt-body" id="ttBody"></div>
     <div class="tt-actions" id="ttActions"></div>
+    <div class="tt-navrow">
+      <span class="tt-jump-label" id="ttJumpLabel">1 / 1</span>
+      <input class="tt-jump" id="ttJump" type="range" min="0" max="0" step="1" value="0" aria-label="跳转句子">
+      <span class="tt-rate"><span class="tt-rate-ico">🐢</span><input id="ttRateInput" type="range" min="0.5" max="2.0" step="0.05" value="0.85" aria-label="打单词语速"><span class="tt-rate-val" id="ttRateLabel">0.85x</span><span class="tt-rate-ico">🐇</span></span>
+    </div>
   </div>
 </div>
 
@@ -1137,22 +1155,62 @@ function firstLangByMode(mode){
   return "en";
 }
 
-/* 词汇表面板：按当前语言顺序像句子一样列出词条，只查看不朗读 */
+/* 词汇表面板：按当前语言顺序像句子一样列出词条，可点击朗读 */
 function renderVocabBlock(){
   var box=$("#vocabListBox");
   if(!box) return;
   if(!currentVocab.length){ box.innerHTML=""; box.hidden=true; return; }
   var first=firstLangByMode(state.langMode);
-  var rows=currentVocab.map(function(v){
+  var rows=currentVocab.map(function(v,i){
     var en=v.en||"", zh=v.zh||"";
     var main=first==="zh"?zh:en, alt=first==="zh"?en:zh;
-    return '<div class="vb-row">'+
+    return '<button type="button" class="vb-row" data-vi="'+i+'" title="点击朗读这个词">'+
       '<span class="line">'+esc(main)+'</span>'+
       (alt?'<span class="line">'+esc(alt)+'</span>':'')+
-    '</div>';
+    '</button>';
   }).join("");
-  box.innerHTML='<div class="vocab-block"><div class="vb-head">📒 单词表 · '+currentVocab.length+' 词</div>'+rows+'</div>';
+  box.innerHTML='<div class="vocab-block"><div class="vb-head">📒 单词表 · '+currentVocab.length+' 词 · 点词朗读</div>'+rows+'</div>';
   box.hidden=!state.vocabList;
+}
+/* 高亮正在朗读的词条 */
+function highlightVocab(i){
+  $$(".vb-row").forEach(function(el){el.classList.remove("active");});
+  if(i<0 || i>=currentVocab.length) return;
+  var el=document.querySelector('.vb-row[data-vi="'+i+'"]');
+  if(el){ el.classList.add("active"); el.scrollIntoView({behavior:"smooth",block:"center"}); }
+}
+/* 朗读词表：从第 i 词开始，按 langMode 顺序读；读一条 → 下一条链下去 */
+function playVocabSeq(i, autoNext){
+  if(!currentVocab.length || !state.vocabList){ stopPlayback(); return; }
+  if(i>=currentVocab.length){ stopPlayback(); return; }
+  player.playing=true;
+  highlightVocab(i);
+  var v=currentVocab[i], rate=player.rate, mode=state.langMode;
+  var en=v.en||"", zh=v.zh||"";
+  var next=function(){
+    if(!player.playing) return;
+    if(autoNext) playVocabSeq(i+1, true);
+    else stopPlayback();
+  };
+  if(mode==="en"){
+    if(en) speakOne(en,"en",rate,next); else next();
+  }else if(mode==="zh"){
+    if(zh) speakOne(zh,"zh",rate,next); else next();
+  }else if(mode==="en-zh"){
+    if(en) speakOne(en,"en",rate,function(){ if(zh) speakOne(zh,"zh",rate,next); else next(); });
+    else if(zh) speakOne(zh,"zh",rate,next); else next();
+  }else{ /* zh-en */
+    if(zh) speakOne(zh,"zh",rate,function(){ if(en) speakOne(en,"en",rate,next); else next(); });
+    else if(en) speakOne(en,"en",rate,next); else next();
+  }
+}
+/* 文章念完转词表：先念 Keywords 提示，再顺读整张表 */
+function playVocabAfterStory(){
+  if(!state.vocabList || !currentVocab.length){ stopPlayback(); return; }
+  highlightVocab(-1);
+  speakOne("Keywords","en",player.rate,function(){
+    if(player.playing) playVocabSeq(0, true);
+  });
 }
 function renderSentences(result){
   currentSentences=result.items;
@@ -1217,6 +1275,7 @@ function playSentence(idx, autoNext){
   var goNext=function(){
     if(!player.playing) return;
     if(autoNext && player.current+1<currentSentences.length) playSentence(player.current+1, true);
+    else if(autoNext && state.vocabList && currentVocab.length) playVocabAfterStory(); /* 文章读完续读单词表 */
     else stopPlayback();
   };
 
@@ -1255,6 +1314,7 @@ function stopPlayback(){
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
   $("#playBtn").textContent="▶ 播放"; $("#playBtn").classList.remove("on");
   $$(".sent").forEach(function(el){el.classList.remove("active");});
+  highlightVocab(-1);
 }
 
 /* =========================================================
@@ -1318,7 +1378,58 @@ function ttBuild(){
   });
   return items;
 }
+/* ===== 手机软键盘适配：用 visualViewport 感知键盘，把输入框顶到可视区 ===== */
+var ttKb={ bound:false, open:false, baseH:0 };
+function ttKbInit(){
+  if(ttKb.bound) return;
+  var vv=window.visualViewport;
+  if(!vv) return; /* 不支持则退回原生 focus 行为 */
+  ttKb.baseH=vv.height;
+  function onResize(){
+    if($("#typeTest").hidden) return;
+    /* 键盘弹出后 vv.height 明显小于初始高度 → 视为键盘打开 */
+    var h=vv.height;
+    var kbOpen=(ttKb.baseH-h>120) || (window.innerHeight-h>120);
+    var mask=$("#typeTest");
+    if(kbOpen){
+      if(!ttKb.open){
+        ttKb.open=true;
+        document.body.classList.add("kb-open");
+      }
+      /* 覆盖层只占可视高度，内部滚动区随之缩小，输入框不会被键盘盖住 */
+      mask.style.height=h+"px";
+      mask.style.top=(vv.offsetTop||0)+"px";
+      /* 把当前聚焦的输入框滚进可视区中部 */
+      var a=document.activeElement;
+      if(a && a.classList && a.classList.contains("tt-input")){
+        setTimeout(function(){ try{ a.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} },80);
+      }
+    }else if(ttKb.open){
+      ttKb.open=false;
+      document.body.classList.remove("kb-open");
+      mask.style.height="";
+      mask.style.top="";
+    }
+  }
+  vv.addEventListener("resize",onResize);
+  vv.addEventListener("scroll",onResize);
+  /* 任何输入框被聚焦（含切题、点第二个空）都滚到可视区中部 */
+  $("#typeTest").addEventListener("focusin",function(e){
+    if($("#typeTest").hidden) return;
+    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
+    setTimeout(function(){ try{ e.target.scrollIntoView({block:"center",behavior:"smooth"}); }catch(err){} }, ttKb.open?60:20);
+  });
+  ttKb.bound=true;
+}
+function ttKbReset(){
+  if(!ttKb.open) return;
+  ttKb.open=false;
+  document.body.classList.remove("kb-open");
+  var mask=$("#typeTest");
+  mask.style.height=""; mask.style.top="";
+}
 function ttStart(){
+  ttKbInit();
   if(!currentSentences.length){ toast("先点「识别并断句」"); return; }
   if(!currentVocab.length){ toast("先在正文里写单词表（英文|中文）"); return; }
   var items=ttBuild();
@@ -1340,6 +1451,7 @@ function ttExit(){
   clearTimeout(tt.timer); /* 退出时取消闪答案/翻页定时，避免关掉后又动 */
   tt.speakGen++; /* 失效正在进行的答案朗读链 */
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
+  ttKbReset();
   $("#typeTest").hidden=true;
   document.body.classList.remove("tt-on");
 }
@@ -1398,10 +1510,17 @@ function renderTT(i){
 
   /* 固定按钮栏：上一句 / 下一句 / 朗读 / 跳过；「全部提交」在顶栏 */
   $("#ttActions").innerHTML=
-    '<button class="sw" id="ttPrevBtn" type="button"'+(tt.idx===0?' disabled':'')+'>← 上一句</button>'+
+    '<button class="sw icon-only" id="ttPrevBtn" type="button" title="上一句"'+(tt.idx===0?' disabled':'')+'>←</button>'+
     '<button class="sw primary" id="ttNextBtn" type="button">下一句 →</button>'+
     '<button class="sw" id="ttReadBtn" type="button">🔊 朗读整句</button>'+
     '<button class="sw" id="ttSkipBtn" type="button">跳过</button>';
+  /* 水平线下的导航行：跳句滑块（长）+ 语速（小） */
+  var jump=$("#ttJump");
+  jump.max=Math.max(0, tt.items.length-1);
+  jump.value=tt.idx;
+  $("#ttJumpLabel").textContent=(tt.idx+1)+" / "+tt.items.length;
+  $("#ttRateInput").value=player.rate;
+  $("#ttRateLabel").textContent=Number(player.rate).toFixed(2)+"x";
   var first=$("#ttBody .tt-input");
   if(first) first.focus();
 }
@@ -1640,6 +1759,54 @@ function openHistDialog(){
 }
 function closeHistDialog(){ $("#histMask").classList.remove("show"); }
 /* 把输入框原文交给现有的断句流程；返回是否成功 */
+/* 内置范文：我的世界第一天（标题 → 文章 → 单词表） */
+var SAMPLE_STORY=[
+  "# The First Day in Minecraft",
+  "",
+  "Steve wakes up on green grass with nothing in his hands.",
+  "史蒂夫在一片绿草上醒来，手里什么都没有。",
+  "There is no bed and no house, only tall trees all around.",
+  "这里没有床，也没有房子，只有四周高高的树。",
+  "He punches a tree again and again until the wood drops down.",
+  "他一遍又一遍地捶打大树，直到木头掉了下来。",
+  "He turns the logs into planks and makes a wooden pickaxe.",
+  "他把原木做成木板，造了一把木镐。",
+  "With the pickaxe he digs stone and coal in a dark cave.",
+  "他用镐在黑暗的洞穴里挖出石头和煤。",
+  "He finds ripe apples and eats them to stay strong.",
+  "他找到成熟的苹果，吃掉它们来补充体力。",
+  "The sky turns orange, and night is coming soon.",
+  "天空变成了橙色，夜晚很快就要来了。",
+  "He builds a small shelter and lights a bright torch.",
+  "他搭起一间小小的庇护所，点亮一支明亮的火把。",
+  "A zombie moans outside, but Steve feels safe inside.",
+  "一只僵尸在外面呻吟，但史蒂夫在里面很安全。",
+  "What a busy but wonderful first day in this new world!",
+  "在这个新世界里，这是多么忙碌又美好的第一天啊！",
+  "",
+  "grass|草",
+  "tree|树",
+  "wood|木头",
+  "log|原木",
+  "plank|木板",
+  "pickaxe|镐",
+  "stone|石头",
+  "coal|煤",
+  "cave|洞穴",
+  "apple|苹果",
+  "night|夜晚",
+  "shelter|庇护所",
+  "torch|火把",
+  "zombie|僵尸",
+  "world|世界"
+].join("\n");
+function loadSample(){
+  $("#inputBox").value=SAMPLE_STORY;
+  click();
+  doParse();
+  toast("已载入范文：我的世界第一天");
+}
+
 function doParse(){
   var raw=$("#inputBox").value;
   if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return false; }
@@ -1776,18 +1943,49 @@ function bind(){
     if(e.target.closest("#ttAgainBtn")){ click(); ttStart(); return; }
     if(e.target.closest("#ttBackBtn")){ click(); ttExit(); return; }
   });
-  /* 敲键音效 + 回车下一句：输入框里每敲一键给一声轻响，回车翻到下一句 */
+  /* 敲键音效 + 回车下一句 + Tab 在输入框间跳转 */
   $("#typeTest").addEventListener("keydown", function(e){
     if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
     if(e.key==="Enter"){ e.preventDefault(); ttNext(); return; }
+    if(e.key==="Tab"){
+      /* 阻止默认跳到「拼读」等按钮，改为只在填空之间移动 */
+      e.preventDefault();
+      var ins=$$("#ttBody .tt-input");
+      var k=ins.indexOf(e.target);
+      var nxt=e.shiftKey? k-1 : k+1;
+      if(nxt>=0 && nxt<ins.length){
+        ins[nxt].focus();
+      }else if(!e.shiftKey && tt.idx<tt.items.length-1){
+        /* 本句最后一个 → 下一句第一个（不判分、不念答案，草稿已实时保存） */
+        ttGo(tt.idx+1);
+      }else if(e.shiftKey && tt.idx>0){
+        /* 本句第一个 → 上一句最后一个 */
+        ttGo(tt.idx-1);
+        var prev=$$("#ttBody .tt-input"); if(prev.length) prev[prev.length-1].focus();
+      }else{
+        /* 到底/到头：循环回另一端 */
+        ins[e.shiftKey? ins.length-1 : 0].focus();
+      }
+      return;
+    }
     if(e.key==="Backspace" || e.key==="Delete" || e.key.length===1){
       if(e.key!==" " && !e.ctrlKey && !e.metaKey && !e.altKey) typeTick();
     }
   });
   /* 记录草稿：回退时恢复用户当时填的内容 */
   $("#typeTest").addEventListener("input", function(e){
+    if(e.target && e.target.id==="ttJump"){
+      /* 拖动跳句滑块时先预览句号，松手(change)才真正跳，避免焦点被输入框抢走中断拖动 */
+      $("#ttJumpLabel").textContent=(Number(e.target.value)+1)+" / "+tt.items.length;
+      return;
+    }
     if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
     tt.drafts[tt.idx]=$$("#ttBody .tt-input").map(function(i){return i.value;});
+  });
+  /* 跳句滑块：松手后跳到对应句（草稿已实时保存，回退可恢复） */
+  $("#typeTest").addEventListener("change", function(e){
+    if(!e.target || e.target.id!=="ttJump") return;
+    ttGo(Number(e.target.value));
   });
 
   $("#vocabListBtn").addEventListener("click", function(){
@@ -1833,19 +2031,39 @@ function bind(){
   $("#rateInput").addEventListener("input", function(e){
     player.rate=Number(e.target.value);
     $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+    /* 同步打字测试里的语速滑块（若存在） */
+    var ttr=$("#ttRateInput"); if(ttr){ ttr.value=player.rate; $("#ttRateLabel").textContent=player.rate.toFixed(2)+"x"; }
+    save("rate", player.rate);
+  });
+  /* 打字测试里的语速滑块（动态生成，用委托）：与主界面共用 player.rate，并回写主界面显示 */
+  $("#typeTest").addEventListener("input", function(e){
+    if(!e.target || e.target.id!=="ttRateInput") return;
+    player.rate=Number(e.target.value);
+    $("#ttRateLabel").textContent=player.rate.toFixed(2)+"x";
+    $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+    $("#rateInput").value=player.rate;
     save("rate", player.rate);
   });
 
   $("#readerBody").addEventListener("click", function(e){
+    /* 词表词条：点哪个词就从哪个词读起，连播意图同句子 */
+    var vb=e.target.closest(".vb-row");
+    if(vb){
+      unlockAudio(); click();
+      var continuous=player.continuous;
+      stopPlayback();
+      playVocabSeq(Number(vb.getAttribute("data-vi")), continuous);
+      return;
+    }
     var btn=e.target.closest(".sent");
     if(!btn) return;
     unlockAudio(); click();
     /* 是否连播取决于播放按钮记录的「连播意图」，不是 player.playing：
        人工停止后（continuous=false）点单句→播完即停，且未播完再点别的句子仍播完即停；
        连播中（continuous=true）点单句→从该句继续往下连播。 */
-    var continuous=player.continuous;
+    var cont=player.continuous;
     stopPlayback();
-    playSentence(Number(btn.getAttribute("data-idx")), continuous);
+    playSentence(Number(btn.getAttribute("data-idx")), cont);
   });
 
   $("#soundBtn").addEventListener("click", function(){
@@ -1859,6 +2077,7 @@ function bind(){
   /* 历史文章 */
   $("#histSaveBtn").addEventListener("click", function(){ click(); histSaveCurrent(); });
   $("#histOpenBtn").addEventListener("click", function(){ click(); openHistDialog(); });
+  $("#sampleBtn").addEventListener("click", function(){ click(); loadSample(); });
   $("#histCloseBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
   $("#histCancelBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
   $("#histClearBtn").addEventListener("click", function(){ click(); histClearAll(); });

@@ -147,7 +147,9 @@ body[data-trans="all"] .sent .alt-line{display:block}
   font-family:var(--pixel); font-weight:900; font-size:12px; color:#8a5a00;
   letter-spacing:.03em; margin-bottom:4px;
 }
-.vocab-block .vb-row{display:block;padding:5px 8px;margin:2px 0;border-radius:7px;background:#fff;border:1.5px solid rgba(47,36,24,.12)}
+.vocab-block .vb-row{display:block;width:100%;box-sizing:border-box;text-align:left;padding:5px 8px;margin:2px 0;border-radius:7px;background:#fff;border:1.5px solid rgba(47,36,24,.12);cursor:pointer;transition:background .15s,border-color .15s}
+.vocab-block .vb-row:hover{border-color:var(--gold);background:#fffdf3}
+.vocab-block .vb-row.active{background:#fff1cd;border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,63,.35)}
 .vocab-block .vb-row .line{display:block;font-size:14px;line-height:1.5}
 .vocab-block .vb-row .line + .line{font-size:12.5px;color:var(--ink2);font-weight:600;margin-top:2px}
 
@@ -187,6 +189,7 @@ footer b{color:var(--ink)}
 footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);letter-spacing:.04em;font-size:12.5px}
 #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,18px);background:var(--ink);color:#fff;font-weight:700;font-size:13px;padding:9px 16px;border-radius:11px;opacity:0;pointer-events:none;transition:.25s;z-index:9999}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
 
 /* 历史文章弹窗 */
 .hist-mask{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(47,36,24,.5)}
@@ -261,7 +264,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。词表可点词朗读：连播念完整篇后先提示「Keywords」再顺读整张表（隐藏词表则不读）。
     </div>
 
     <div class="action-row">
@@ -284,6 +287,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
       <button class="sw" id="histOpenBtn" title="查看已保存的文章">📚 打开历史</button>
+      <button class="sw" id="sampleBtn" title="载入内置范文：我的世界第一天">范文</button>
     </div>
 
     <div id="report"></div>
@@ -302,12 +306,14 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       <span id="progress">0 / 0</span>
       <div class="rate-wrap">
         <span>🐢</span>
-        <input id="rateInput" type="range" min="0.5" max="1.4" step="0.05" value="0.85" aria-label="语速">
+        <input id="rateInput" type="range" min="0.5" max="2.0" step="0.05" value="0.85" aria-label="语速">
         <span id="rateLabel">0.85x</span>
       </div>
     </div>
   </div>
 </main>
+
+</div>
 
 <footer>
   <div class="foot-title">MC MINI STORY READER · MC小作文阅读器</div>
@@ -965,14 +971,11 @@ function enForms(w){
   return out;
 }
 function regEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
-/* 把一段文本按词表命中包成 <span>：
-   lang=en 原文 → 命中词 v-full 带下划线；lang=zh 译文 → 命中词 v-full 带高亮。
-   同时输出挖空占位 v-blank（默认隐藏，仅由 body[data-vocab] 切换显示）。
-   匹配用「长词优先」避免 work 抢在 working 前面。 */
-function markVocab(text, lang){
-  if(!text) return "";
-  if(!currentVocab.length) return esc(text);
-  var hits=[]; /* {start,end} */
+/* 词表命中区间：返回 [{start,end,word}]，已合并重叠、长词优先。
+   挖空显示与打字测试共用这一套规则，避免两处判定跑偏。 */
+function vocabRanges(text, lang){
+  if(!text || !currentVocab.length) return [];
+  var hits=[];
   if(lang==="en"){
     var forms=[];
     currentVocab.forEach(function(v){ enForms(v.en).forEach(function(f){ forms.push(f); }); });
@@ -988,14 +991,24 @@ function markVocab(text, lang){
       while((idx=text.indexOf(term,from))>=0){ hits.push({start:idx,end:idx+term.length}); from=idx+term.length; }
     });
   }
-  if(!hits.length) return esc(text);
-  /* 合并重叠区间，避免嵌套 span */
+  if(!hits.length) return [];
   hits.sort(function(a,b){return a.start-b.start||b.end-a.end;});
   var merged=[], last=null;
   hits.forEach(function(h){
     if(last && h.start<last.end){ last.end=Math.max(last.end,h.end); }
     else { last={start:h.start,end:h.end}; merged.push(last); }
   });
+  merged.forEach(function(h){ h.word=text.slice(h.start,h.end); });
+  return merged;
+}
+/* 把一段文本按词表命中包成 <span>：
+   lang=en 原文 → 命中词 v-full 带下划线；lang=zh 译文 → 命中词 v-full 带高亮。
+   同时输出挖空占位 v-blank（默认隐藏，仅由 body[data-vocab] 切换显示）。 */
+function markVocab(text, lang){
+  if(!text) return "";
+  if(!currentVocab.length) return esc(text);
+  var merged=vocabRanges(text, lang);
+  if(!merged.length) return esc(text);
   var out="", pos=0;
   merged.forEach(function(h){
     if(h.start>pos) out+=esc(text.slice(pos,h.start));
@@ -1019,22 +1032,62 @@ function firstLangByMode(mode){
   return "en";
 }
 
-/* 词汇表面板：按当前语言顺序像句子一样列出词条，只查看不朗读 */
+/* 词汇表面板：按当前语言顺序像句子一样列出词条，可点击朗读 */
 function renderVocabBlock(){
   var box=$("#vocabListBox");
   if(!box) return;
   if(!currentVocab.length){ box.innerHTML=""; box.hidden=true; return; }
   var first=firstLangByMode(state.langMode);
-  var rows=currentVocab.map(function(v){
+  var rows=currentVocab.map(function(v,i){
     var en=v.en||"", zh=v.zh||"";
     var main=first==="zh"?zh:en, alt=first==="zh"?en:zh;
-    return '<div class="vb-row">'+
+    return '<button type="button" class="vb-row" data-vi="'+i+'" title="点击朗读这个词">'+
       '<span class="line">'+esc(main)+'</span>'+
       (alt?'<span class="line">'+esc(alt)+'</span>':'')+
-    '</div>';
+    '</button>';
   }).join("");
-  box.innerHTML='<div class="vocab-block"><div class="vb-head">📒 单词表 · '+currentVocab.length+' 词</div>'+rows+'</div>';
+  box.innerHTML='<div class="vocab-block"><div class="vb-head">📒 单词表 · '+currentVocab.length+' 词 · 点词朗读</div>'+rows+'</div>';
   box.hidden=!state.vocabList;
+}
+/* 高亮正在朗读的词条 */
+function highlightVocab(i){
+  $$(".vb-row").forEach(function(el){el.classList.remove("active");});
+  if(i<0 || i>=currentVocab.length) return;
+  var el=document.querySelector('.vb-row[data-vi="'+i+'"]');
+  if(el){ el.classList.add("active"); el.scrollIntoView({behavior:"smooth",block:"center"}); }
+}
+/* 朗读词表：从第 i 词开始，按 langMode 顺序读；读一条 → 下一条链下去 */
+function playVocabSeq(i, autoNext){
+  if(!currentVocab.length || !state.vocabList){ stopPlayback(); return; }
+  if(i>=currentVocab.length){ stopPlayback(); return; }
+  player.playing=true;
+  highlightVocab(i);
+  var v=currentVocab[i], rate=player.rate, mode=state.langMode;
+  var en=v.en||"", zh=v.zh||"";
+  var next=function(){
+    if(!player.playing) return;
+    if(autoNext) playVocabSeq(i+1, true);
+    else stopPlayback();
+  };
+  if(mode==="en"){
+    if(en) speakOne(en,"en",rate,next); else next();
+  }else if(mode==="zh"){
+    if(zh) speakOne(zh,"zh",rate,next); else next();
+  }else if(mode==="en-zh"){
+    if(en) speakOne(en,"en",rate,function(){ if(zh) speakOne(zh,"zh",rate,next); else next(); });
+    else if(zh) speakOne(zh,"zh",rate,next); else next();
+  }else{ /* zh-en */
+    if(zh) speakOne(zh,"zh",rate,function(){ if(en) speakOne(en,"en",rate,next); else next(); });
+    else if(en) speakOne(en,"en",rate,next); else next();
+  }
+}
+/* 文章念完转词表：先念 Keywords 提示，再顺读整张表 */
+function playVocabAfterStory(){
+  if(!state.vocabList || !currentVocab.length){ stopPlayback(); return; }
+  highlightVocab(-1);
+  speakOne("Keywords","en",player.rate,function(){
+    if(player.playing) playVocabSeq(0, true);
+  });
 }
 function renderSentences(result){
   currentSentences=result.items;
@@ -1099,6 +1152,7 @@ function playSentence(idx, autoNext){
   var goNext=function(){
     if(!player.playing) return;
     if(autoNext && player.current+1<currentSentences.length) playSentence(player.current+1, true);
+    else if(autoNext && state.vocabList && currentVocab.length) playVocabAfterStory(); /* 文章读完续读单词表 */
     else stopPlayback();
   };
 
@@ -1137,6 +1191,7 @@ function stopPlayback(){
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
   $("#playBtn").textContent="▶ 播放"; $("#playBtn").classList.remove("on");
   $$(".sent").forEach(function(el){el.classList.remove("active");});
+  highlightVocab(-1);
 }
 
 /* =========================================================
@@ -1180,6 +1235,7 @@ function toggleVocabList(){
   save("vocabList", state.vocabList);
   applyVocabList();
 }
+
 
 /* ========================= 历史文章 ========================= */
 var HIST_KEY="history", HIST_QUOTA=5*1024*1024; /* localStorage 通常约 5MB */
@@ -1247,6 +1303,54 @@ function openHistDialog(){
 }
 function closeHistDialog(){ $("#histMask").classList.remove("show"); }
 /* 把输入框原文交给现有的断句流程；返回是否成功 */
+/* 内置范文：我的世界第一天（标题 → 文章 → 单词表） */
+var SAMPLE_STORY=[
+  "# The First Day in Minecraft",
+  "",
+  "Steve wakes up on green grass with nothing in his hands.",
+  "史蒂夫在一片绿草上醒来，手里什么都没有。",
+  "There is no bed and no house, only tall trees all around.",
+  "这里没有床，也没有房子，只有四周高高的树。",
+  "He punches a tree again and again until the wood drops down.",
+  "他一遍又一遍地捶打大树，直到木头掉了下来。",
+  "He turns the logs into planks and makes a wooden pickaxe.",
+  "他把原木做成木板，造了一把木镐。",
+  "With the pickaxe he digs stone and coal in a dark cave.",
+  "他用镐在黑暗的洞穴里挖出石头和煤。",
+  "He finds ripe apples and eats them to stay strong.",
+  "他找到成熟的苹果，吃掉它们来补充体力。",
+  "The sky turns orange, and night is coming soon.",
+  "天空变成了橙色，夜晚很快就要来了。",
+  "He builds a small shelter and lights a bright torch.",
+  "他搭起一间小小的庇护所，点亮一支明亮的火把。",
+  "A zombie moans outside, but Steve feels safe inside.",
+  "一只僵尸在外面呻吟，但史蒂夫在里面很安全。",
+  "What a busy but wonderful first day in this new world!",
+  "在这个新世界里，这是多么忙碌又美好的第一天啊！",
+  "",
+  "grass|草",
+  "tree|树",
+  "wood|木头",
+  "log|原木",
+  "plank|木板",
+  "pickaxe|镐",
+  "stone|石头",
+  "coal|煤",
+  "cave|洞穴",
+  "apple|苹果",
+  "night|夜晚",
+  "shelter|庇护所",
+  "torch|火把",
+  "zombie|僵尸",
+  "world|世界"
+].join("\n");
+function loadSample(){
+  $("#inputBox").value=SAMPLE_STORY;
+  click();
+  doParse();
+  toast("已载入范文：我的世界第一天");
+}
+
 function doParse(){
   var raw=$("#inputBox").value;
   if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return false; }
@@ -1365,6 +1469,7 @@ function bind(){
     click(); cycleTrans();
   });
 
+
   $("#vocabListBtn").addEventListener("click", function(){
     click(); toggleVocabList();
   });
@@ -1412,15 +1517,24 @@ function bind(){
   });
 
   $("#readerBody").addEventListener("click", function(e){
+    /* 词表词条：点哪个词就从哪个词读起，连播意图同句子 */
+    var vb=e.target.closest(".vb-row");
+    if(vb){
+      unlockAudio(); click();
+      var continuous=player.continuous;
+      stopPlayback();
+      playVocabSeq(Number(vb.getAttribute("data-vi")), continuous);
+      return;
+    }
     var btn=e.target.closest(".sent");
     if(!btn) return;
     unlockAudio(); click();
     /* 是否连播取决于播放按钮记录的「连播意图」，不是 player.playing：
        人工停止后（continuous=false）点单句→播完即停，且未播完再点别的句子仍播完即停；
        连播中（continuous=true）点单句→从该句继续往下连播。 */
-    var continuous=player.continuous;
+    var cont=player.continuous;
     stopPlayback();
-    playSentence(Number(btn.getAttribute("data-idx")), continuous);
+    playSentence(Number(btn.getAttribute("data-idx")), cont);
   });
 
   $("#soundBtn").addEventListener("click", function(){
@@ -1434,11 +1548,15 @@ function bind(){
   /* 历史文章 */
   $("#histSaveBtn").addEventListener("click", function(){ click(); histSaveCurrent(); });
   $("#histOpenBtn").addEventListener("click", function(){ click(); openHistDialog(); });
+  $("#sampleBtn").addEventListener("click", function(){ click(); loadSample(); });
   $("#histCloseBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
   $("#histCancelBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
   $("#histClearBtn").addEventListener("click", function(){ click(); histClearAll(); });
   $("#histMask").addEventListener("click", function(e){ if(e.target===this) closeHistDialog(); });
-  document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeHistDialog(); });
+  document.addEventListener("keydown", function(e){
+    if(e.key!=="Escape") return;
+    closeHistDialog();
+  });
   $("#histList").addEventListener("click", function(e){
     var ob=e.target.closest("[data-open]"), db=e.target.closest("[data-delete]");
     if(ob){ click(); histOpen(Number(ob.getAttribute("data-open"))); }
@@ -1472,6 +1590,7 @@ function init(){
 
   state.vocabList=load("vocabList",true);
   applyVocabList();
+
 
   state.langMode=load("langMode","en");
   $("#langMode").value=state.langMode;
