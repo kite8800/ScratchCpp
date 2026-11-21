@@ -79,6 +79,7 @@ main{padding-top:14px}
 .sw:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(47,36,24,.15)}
 .sw.primary{background:var(--grass);color:#fff;border-color:var(--grass-d);box-shadow:0 3px 0 var(--grass-d)}
 .sw.on{background:#eaf7e2;border-color:var(--grass-d);color:#3c6b2a}
+.sw.vocab-off{background:#fff;color:#8b7a67}
 .sw.off{color:#8b7a67}
 
 .lang-select{
@@ -161,6 +162,10 @@ body[data-vocab="zh"] .vocab[data-lang="en"] .v-full{display:none}
 body[data-vocab="zh"] .vocab[data-lang="en"] .v-blank{display:inline-block}
 body[data-vocab="en"] .vocab[data-lang="zh"] .v-full{display:none}
 body[data-vocab="en"] .vocab[data-lang="zh"] .v-blank{display:inline-block}
+/* 不标注：原文不加下划线、译文不高亮，全部正常显示 */
+body[data-vocab="none"] .vocab[data-lang="en"] .v-full,
+body[data-vocab="none"] .vocab[data-lang="zh"] .v-full{text-decoration:none;background:transparent;color:inherit;padding:0;border-radius:0}
+body[data-vocab="none"] .vocab .v-blank{display:none}
 
 /* 播放条 */
 .player-bar{
@@ -282,7 +287,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       <div class="row-break"></div>
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
       <button class="sw on" id="vocabListBtn" title="单词表列表 显示/隐藏">词汇表：显示</button>
-      <button class="sw on" id="vocabBtn" title="单词表记忆模式：全部 / 仅译文 / 仅原文">词汇：全部</button>
+      <button class="sw on" id="vocabBtn" title="词汇标注模式：全部 / 仅译文 / 仅原文 / 不标注">词汇：全部</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
@@ -751,8 +756,8 @@ var player={ playing:false, continuous:false, current:0, rate:0.85, timer:null }
 var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
 var TRANS_ORDER = ["cur","all","none"];
 /* 词汇记忆模式：all=原文下划线+译文高亮都显示；zh=只显示译文(原文命中词挖空)；en=只显示原文(译文命中词挖空) */
-var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文" };
-var VOCAB_ORDER = ["all","zh","en"];
+var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文", none:"不标注" };
+var VOCAB_ORDER = ["all","zh","en","none"];
 
 /* =========================================================
    格式识别 + 断句（原样保留）
@@ -1214,7 +1219,9 @@ function cycleTrans(){
 function applyVocab(){
   document.body.setAttribute("data-vocab", state.vocab);
   $("#vocabBtn").textContent = "词汇：" + VOCAB_LABEL[state.vocab];
-  $("#vocabBtn").classList.toggle("on", state.vocab!=="all");
+  var noMark = state.vocab==="none"; /* 不标注态：黄底；其余三态：绿底 */
+  $("#vocabBtn").classList.toggle("on", !noMark);
+  $("#vocabBtn").classList.toggle("vocab-off", noMark);
 }
 function cycleVocab(){
   var i = VOCAB_ORDER.indexOf(state.vocab);
