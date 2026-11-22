@@ -763,9 +763,20 @@ var VOCAB_ORDER = ["all","zh","en","none"];
    格式识别 + 断句（原样保留）
    ========================================================= */
 function isCJK(ch){ return /[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch); }
+function isCJKPunct(ch){ return /[。！？；，、…（）【】「」『』：《》""''·—　]/.test(ch); }
+/* 中文占比：汉字+中文标点算中文侧；英文按「单词」整体计 1 单位（不再按字母逐个计），
+   避免长英文词把中文比例稀释，导致夹英文的中文行被误判成英文/混排。数字、半角标点等算其他。 */
 function cjkRatio(s){
-  if(!s) return 0; var cjk=0,total=0;
-  for(var i=0;i<s.length;i++){ var ch=s[i]; if(/\s/.test(ch)) continue; total++; if(isCJK(ch)) cjk++; }
+  if(!s) return 0;
+  var cjk=0, other=0;
+  var stripped=s.replace(/[A-Za-z][A-Za-z''-]*/g,""); /* 去掉英文单词（整体按词计） */
+  for(var i=0;i<stripped.length;i++){
+    var ch=stripped[i];
+    if(/\s/.test(ch)) continue;
+    if(isCJK(ch)||isCJKPunct(ch)) cjk++; else other++;
+  }
+  var en=enWordCount(s)*1.3; /* 英文词略加权，避免英文占多数的句子被误判成中文 */
+  var total=cjk+en+other;
   return total?cjk/total:0;
 }
 function enWordCount(s){ var m=s.match(/[A-Za-z][A-Za-z'’-]*/g); return m?m.length:0; }
