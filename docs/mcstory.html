@@ -235,6 +235,61 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
   .action-label{width:100%;margin:0}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== 打印：只输出识别后的结果，三项开关(译文/词汇/词汇表)沿用当前设置 ===== */
+@media print{
+  @page{ margin:16mm; }
+  html,body{ background:#fff!important; color:#000!important; }
+  /* 白名单：先全隐藏，再逐层放行到 #readerBody */
+  body > *{ display:none!important; }
+  body > main.wrap{ display:block!important; }
+  main.wrap > *{ display:none!important; }
+  main.wrap > #reader{ display:block!important; }
+  #reader > *{ display:none!important; }
+  #reader > .reader-body{ display:block!important; }
+  /* 版式复位：去掉屏幕上的卡片/阴影/边框 */
+  main.wrap{ max-width:none!important; margin:0!important; padding:0!important; }
+  .reader-body{ border:0!important; box-shadow:none!important; padding:0!important;
+    background:#fff!important; min-height:0!important; }
+  .sent.active,.sent:hover{ background:transparent!important; box-shadow:none!important; }
+  .sent{ padding:2mm 0!important; margin:0!important; page-break-inside:avoid;
+    font-size:12pt!important; line-height:1.5!important; }
+  /* 译文：none=不显示；cur 与 all 一样都按全文打印 */
+  body[data-trans="cur"] .sent .alt-line{ display:block!important; }
+  /* 词汇标注：全部 / 不标注 → 两侧都正常显示，无下划线无高亮 */
+  body[data-vocab="all"] .sent .vocab .v-full,
+  body[data-vocab="none"] .sent .vocab .v-full{ text-decoration:none!important;
+    background:transparent!important; color:inherit!important; padding:0!important; }
+  body[data-vocab="all"] .sent .vocab .v-blank,
+  body[data-vocab="none"] .sent .vocab .v-blank{ display:none!important; }
+  /* 仅译文(zh)：英文挖空 → 留下划线；中文正常显示不高亮 */
+  body[data-vocab="zh"] .sent .vocab[data-lang="en"] .v-full{ display:none!important; }
+  body[data-vocab="zh"] .sent .vocab[data-lang="en"] .v-blank{
+    display:inline-block!important; color:transparent!important; background:transparent!important;
+    border:0!important; border-bottom:1.5px solid #111!important; }
+  body[data-vocab="zh"] .sent .vocab[data-lang="zh"] .v-full{
+    text-decoration:none!important; background:transparent!important; color:inherit!important; padding:0!important; }
+  /* 仅原文(en)：中文挖空 → 留下划线；英文正常显示无下划线 */
+  body[data-vocab="en"] .sent .vocab[data-lang="zh"] .v-full{ display:none!important; }
+  body[data-vocab="en"] .sent .vocab[data-lang="zh"] .v-blank{
+    display:inline-block!important; color:transparent!important; background:transparent!important;
+    border:0!important; border-bottom:1.5px solid #111!important; }
+  body[data-vocab="en"] .sent .vocab[data-lang="en"] .v-full{
+    text-decoration:none!important; background:transparent!important; color:inherit!important; padding:0!important; }
+  /* 小标题保留 */
+  .reader-body .seg-head{ background:transparent!important; border:0!important;
+    border-bottom:1px solid #bbb!important; border-radius:0!important; padding:3mm 0 1mm!important;
+    margin:4mm 0 1mm!important; color:#000!important; font-size:11pt!important; }
+  /* 单词表：显隐由「词汇表」开关(#vocabListBox[hidden])控制，这里只去按钮外观 */
+  .vocab-block{ border:0!important; background:transparent!important; padding:0!important;
+    margin:6mm 0 0!important; }
+  .vocab-block .vb-head{ color:#000!important; border-bottom:1px solid #999;
+    padding-bottom:2mm; margin-bottom:2mm; font-size:11pt!important; }
+  .vocab-block .vb-row{ border:0!important; background:transparent!important;
+    padding:1.5mm 0!important; margin:0!important; box-shadow:none!important;
+    page-break-inside:avoid; }
+  .vocab-block .vb-row .line{ font-size:10.5pt!important; }
+}
 </style>
 </head>
 <body data-trans="cur" data-vocab="all">
@@ -293,6 +348,7 @@ footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);let
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
       <button class="sw" id="histOpenBtn" title="查看已保存的文章">📚 打开历史</button>
+      <button class="sw" id="printBtn" title="打印识别后的文章与单词表">🖨 打印</button>
       <button class="sw" id="sampleBtn" title="载入内置范文：我的世界第一天">范文</button>
     </div>
 
@@ -1370,6 +1426,11 @@ function loadSample(){
   toast("已载入范文：我的世界第一天");
 }
 
+function doPrint(){
+  if($("#reader").hidden){ toast("先点「识别并断句」，再打印 🖨"); return; }
+  try{ window.print(); }catch(e){ toast("这个浏览器不支持直接打印"); }
+}
+
 function doParse(){
   var raw=$("#inputBox").value;
   if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return false; }
@@ -1568,6 +1629,7 @@ function bind(){
   $("#histSaveBtn").addEventListener("click", function(){ click(); histSaveCurrent(); });
   $("#histOpenBtn").addEventListener("click", function(){ click(); openHistDialog(); });
   $("#sampleBtn").addEventListener("click", function(){ click(); loadSample(); });
+  $("#printBtn").addEventListener("click", function(){ click(); doPrint(); });
   $("#histCloseBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
   $("#histCancelBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
   $("#histClearBtn").addEventListener("click", function(){ click(); histClearAll(); });
