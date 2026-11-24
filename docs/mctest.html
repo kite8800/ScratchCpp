@@ -449,7 +449,7 @@ body.kb-open .type-mask{padding-top:8px}
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；「卡片」切换单词卡正面内容（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：断句后点「🃏 单词卡」进入翻卡背诵；正面内容由「卡片」按钮控制（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义），背面是词 + 中文 + 例句。点卡片或按空格/回车翻面，←→切词，Esc 退出；「🔊 读词」「🔊 例句」都是英文→中文连读。每个词都点过「✓ 记住了」才算完成一轮，下一张会跳过已记住的词；全部记住后弹出汇总奖励页，奖励 1 个胡萝卜（满 10 进位金胡萝卜）。「🖼 换图」可换配图，图片来自外部热链、有每日额度，已做缓存和防连点。<br><b>打单词</b>：断句后点「⌨️ 打单词」进入专注模式，句子里命中词变成空格，看中文提示填英文；每空「🔤 拼读」逐字母读再读整词，「🔊 朗读整句」听语境。<b>整卷作答、统一交卷</b>：填完点「下一句」会闪本题答案并逐个念出（不拼读，念完再翻页，不判分），可「上一句」回改；全部填完点顶栏绿色「✓ 全部提交」一次性判分出成绩。回车 = 下一句。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；「卡片」切换单词卡正面内容（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：断句后点「🃏 单词卡」进入翻卡背诵；正面内容由「卡片」按钮控制（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义），背面是词 + 中文 + 例句。点卡片或按空格/回车翻面，←→切词，Esc 退出；点「✓ 记住了」或「→」切到下一张时会自动念出那张卡的英文单词；「🔊 读词」只读英文词，「🔊 读词义」先读英文词再读中文释义，「🔊 例句」先读英文例句再读中文翻译。每个词都点过「✓ 记住了」才算完成一轮，下一张会跳过已记住的词；全部记住后弹出汇总奖励页，奖励 1 个胡萝卜（满 10 进位金胡萝卜）。「🖼 换图」可换配图，图片来自外部热链、有每日额度，已做缓存和防连点。<br><b>打单词</b>：断句后点「⌨️ 打单词」进入专注模式，句子里命中词变成空格，看中文提示填英文；每空「🔤 拼读」逐字母读再读整词，「🔊 朗读整句」听语境。<b>整卷作答、统一交卷</b>：填完点「下一句」会闪本题答案并逐个念出（不拼读，念完再翻页，不判分），可「上一句」回改；全部填完点顶栏绿色「✓ 全部提交」一次性判分出成绩。回车 = 下一句。
     </div>
 
     <div class="action-row">
@@ -561,7 +561,8 @@ body.kb-open .type-mask{padding-top:8px}
       <div class="row-break"></div>
       <button class="sw" id="wcChangePicBtn" title="换一张图片">🖼 换图</button>
       <div class="row-break"></div>
-      <button class="sw" id="wcReadWordBtn" title="先读英文词，再读中文释义">🔊 读词</button>
+      <button class="sw" id="wcReadWordBtn" title="只读英文单词">🔊 读词</button>
+      <button class="sw" id="wcReadZhBtn" title="先读英文词，再读中文释义">🔊 读词义</button>
       <button class="sw" id="wcReadExBtn" title="先读英文例句，再读中文翻译">🔊 例句</button>
     </div>
     <div class="tt-navrow">
@@ -2073,6 +2074,11 @@ function wcStep(dir){
   }
   wcGo((i+dir+n)%n);
 }
+/* 下一张：先切到将要出现的那张卡，再念它的英文单词（只读词，不读义） */
+function wcNextAndSpeak(){
+  wcStep(1);
+  wcSpeak("word");
+}
 /* 一轮完成后的鼓励语（按胡萝卜数轮播，{n} 替换本轮词数） */
 var WC_CHEERS=[
   "整整 {n} 个词全拿下，Steve 的背包都快装不下你的记性了！",
@@ -2114,7 +2120,7 @@ function wcKnow(){
   click();
   wc.remembered[wc.idx]=true;
   if(wcMemoCount()>=currentVocab.length){ wcFinishRound(); return; }
-  wcStep(1);
+  wcNextAndSpeak();
 }
 /* 取消卡片朗读：切词/退出时让正在进行的「英文→中文」链失效 */
 function wcCancelSpeak(){
@@ -2129,6 +2135,10 @@ function wcSpeak(kind){
   wcCancelSpeak();
   var gen=wc.speakGen;
   if(kind==="word"){
+    /* 读词：只读英文单词 */
+    speakOne(v.en||"","en",player.rate,function(){});
+  } else if(kind==="wordZh"){
+    /* 读词义：先读英文词，再读中文释义 */
     speakOne(v.en||"","en",player.rate,function(){
       if(gen!==wc.speakGen) return;
       if(v.zh) speakOne(v.zh,"zh",player.rate,function(){});
@@ -2558,11 +2568,12 @@ function bind(){
     if(e.target.closest("#wcAgainBtn")){ click(); wcStart(); return; }
     if(e.target.closest("#wcDoneExitBtn")){ click(); wcExit(); return; }
     if(e.target.closest("#wcPrevBtn")){ click(); wcStep(-1); return; }
-    if(e.target.closest("#wcNextBtn")){ click(); wcStep(1); return; }
+    if(e.target.closest("#wcNextBtn")){ click(); wcNextAndSpeak(); return; }
     if(e.target.closest("#wcKnowBtn")){ wcKnow(); return; }
     if(e.target.closest("#wcFlipBtn")){ click(); wcFlip(); return; }
     if(e.target.closest("#wcCard")){ unlockAudio(); click(); wcFlip(); return; } /* 点卡片翻面 */
     if(e.target.closest("#wcReadWordBtn")){ wcSpeak("word"); return; }
+    if(e.target.closest("#wcReadZhBtn")){ wcSpeak("wordZh"); return; }
     if(e.target.closest("#wcReadExBtn")){ wcSpeak("ex"); return; }
     if(e.target.closest("#wcChangePicBtn")){ wcChangePic(); return; }
   });
@@ -2574,7 +2585,7 @@ function bind(){
       return;
     }
     if(e.key==="ArrowLeft"){ e.preventDefault(); click(); wcStep(-1); }
-    else if(e.key==="ArrowRight"){ e.preventDefault(); click(); wcStep(1); }
+    else if(e.key==="ArrowRight"){ e.preventDefault(); click(); wcNextAndSpeak(); }
     else if(e.key===" " || e.key==="Enter"){ e.preventDefault(); click(); wcFlip(); }
   });
   /* 跳词滑块：松手才跳，避免拖动被状态刷新打断 */
