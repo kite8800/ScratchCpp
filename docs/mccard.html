@@ -1558,12 +1558,11 @@ function carrotAward(){ var n=carrotGet()+1; carrotSet(n); return n; }
 
 /* ========================= 单词卡 =========================
    词表来自 currentVocab=[{en,zh}]；例句取文章里含该词的原句（按 enForms 匹配变形）。
-   配图来自 free.direct-img.link，只在用户点「🖼 生图」时才请求一次，不预取、不排队；
+   配图来自 direct-img.link（短语转 +），只在用户点「🖼 生图」时才请求一次，不预取、不排队；
    结果写进会话缓存，翻卡只读缓存，没生成过的词永远不发请求。 */
 var wc={
   idx:0, flipped:false, gen:0,
   imgCache:{},      /* word -> {ok,url} 只在点「生图」成功后写入，翻卡只读不请求 */
-  variant:{},       /* word -> 已生成次数（>0 时给 URL 加 ?i=，再点一次换一张） */
   remembered:{},    /* 本轮已点「记住了」的词下标，全部点完才算一轮 */
   roundStart:0,     /* 本轮开始时间，汇总页显示用时 */
   speakGen:0,       /* 朗读令牌：切词/退出时让旧朗读链失效 */
@@ -1613,7 +1612,7 @@ function wcRenderPic(){
   if(url && pic){ pic.src=url; pic.hidden=false; }
 }
 /* 生成当前词的配图：只有点「🖼 生图」才会走到这里 —— 不预取、不排队、失败不自动重试。
-   再点一次 = 换一张（?i= 变体递增）；成功后写缓存并立即显示，失败回到隐藏。 */
+   URL 只拼词本身（短语用 + 连），不加任何查询参数；成功后写缓存并立即显示。 */
 function wcGenerate(){
   var v=currentVocab[wc.idx]; if(!v) return;
   var key=String(v.en||"").trim().toLowerCase();
@@ -1632,9 +1631,8 @@ function wcGenerate(){
   if(wrap) wrap.hidden=false;
   if(pic) pic.hidden=true;
   if(noimg){ noimg.textContent="图片生成中…"; noimg.classList.add("loading"); noimg.hidden=false; }
-  var times=wc.variant[key]||0;
-  wc.variant[key]=times+1;
-  var url="https://free.direct-img.link/"+toQuery(key)+(times?("?i="+times):"");
+  /* 短语不能带空格，统一转成 a+b；不加 ?i= 之类的查询参数 */
+  var url="https://direct-img.link/"+toQuery(key);
   function finish(ok, finalUrl, transient){
     wc.picBusy=false;
     if(btn){ btn.disabled=false; btn.textContent="🖼 生图"; }
