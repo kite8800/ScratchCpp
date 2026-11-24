@@ -293,7 +293,7 @@ body.kb-open .type-mask{padding-top:8px}
 .wc-front-tip{font-size:11.5px;color:var(--ink2);margin-top:16px;opacity:.75}
 .wc-word-back{font-family:var(--pixel);font-weight:900;font-size:32px;color:var(--ink);margin-bottom:16px;text-align:center;line-height:1.2;word-break:break-word}
 .wc-zh{font-size:26px;font-weight:900;color:var(--grass-d);text-align:center;line-height:1.4;word-break:break-word}
-.wc-example{margin-top:18px;padding:10px 12px;border:2px dashed rgba(47,36,24,.18);border-radius:10px;background:#fff;font-size:13.5px;line-height:1.7;color:var(--ink);text-align:center;max-height:150px;overflow-y:auto}
+.wc-example{margin-top:14px;padding:12px 14px;border:2px dashed rgba(47,36,24,.18);border-radius:10px;background:#fff;font-size:15px;line-height:1.75;color:var(--ink);text-align:center;min-height:200px;max-height:220px;overflow-y:auto}
 .wc-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;padding:6px 16px 12px}
 .wc-actions .row-break{flex-basis:100%;height:0;margin:0}
 .wc-actions .sw{font-size:12px;padding:6px 10px}
@@ -450,7 +450,7 @@ body.kb-open .type-mask{padding-top:8px}
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；「卡片」切换单词卡正面内容（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：断句后点「🃏 单词卡」进入翻卡背诵；正面内容由「卡片」按钮控制（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义），背面是词 + 中文 + 例句。点卡片或按空格/回车翻面，←→切词（→ 等同「✗ 没记住」），Esc 退出；点「✓ 记住了」或「✗ 没记住」切到下一张时会自动念出那张卡的英文单词；「🔊 读词」只读英文词，「🔊 读词义」先读英文词再读中文释义，「🔊 例句」先读英文例句再读中文翻译。每个词都点过「✓ 记住了」才算完成一轮，下一张会跳过已记住的词；全部记住后弹出汇总奖励页，奖励 1 个胡萝卜（满 10 进位金胡萝卜）。「🖼 换图」可换配图，图片来自外部热链、有每日额度，已做缓存和防连点。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文 / 不标注，同时决定单词卡正面显示词还是义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：点「🃏 单词卡」翻卡背诵；点卡片/空格翻面，← 上一张、→ 没记住，Esc 退出；点「✓ 记住了」标记该词、「✗ 没记住」跳过，两者都会切到下一张，全部记住后出汇总页奖 1 个胡萝卜。
     </div>
 
     <div class="action-row">
@@ -471,7 +471,6 @@ body.kb-open .type-mask{padding-top:8px}
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
       <button class="sw on" id="vocabListBtn" title="单词表列表 显示/隐藏">词汇表：显示</button>
       <button class="sw on" id="vocabBtn" title="词汇标注模式：全部 / 仅译文 / 仅原文 / 不标注">词汇：全部</button>
-      <button class="sw on" id="cardFaceBtn" title="卡片正面：图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义">卡片：图+词</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
@@ -539,6 +538,7 @@ body.kb-open .type-mask{padding-top:8px}
       <button class="sw miss" id="wcNextBtn" title="没记住，跳到下一个没记住的词">✗ 没记住</button>
       <div class="row-break"></div>
       <button class="sw" id="wcChangePicBtn" title="换一张图片">🖼 换图</button>
+      <button class="sw on" id="wcTogglePicBtn" title="隐藏卡片配图（隐藏后不再取图）">图片：开</button>
       <div class="row-break"></div>
       <button class="sw" id="wcReadWordBtn" title="只读英文单词">🔊 读词</button>
       <button class="sw" id="wcReadZhBtn" title="先读英文词，再读中文释义">🔊 读词义</button>
@@ -991,7 +991,7 @@ function applyPref(pref){
 }
 
 /* ========================= 状态 ========================= */
-var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, cardFace:"pw", voicePref:"auto" };
+var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, cardPic:true, voicePref:"auto" };
 var currentSentences=[];
 var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
 /* continuous = 用户的「连播意图」，只由播放按钮维护：
@@ -1005,10 +1005,6 @@ var TRANS_ORDER = ["cur","all","none"];
 /* 词汇记忆模式：all=原文下划线+译文高亮都显示；zh=只显示译文(原文命中词挖空)；en=只显示原文(译文命中词挖空) */
 var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文", none:"不标注" };
 var VOCAB_ORDER = ["all","zh","en","none"];
-/* 单词卡正面内容：pw=图+词 / pwz=图+词+义 / w=仅词 / wz=词+义 / p=仅图 / pz=图+义 */
-var CARD_FACE_LABEL = { pw:"图+词", pwz:"图+词+义", w:"仅词", wz:"词+义", p:"仅图", pz:"图+义" };
-var CARD_FACE_ORDER = ["pw","pwz","w","wz","p","pz"];
-
 /* =========================================================
    格式识别 + 断句（原样保留）
    ========================================================= */
@@ -1500,6 +1496,7 @@ function cycleVocab(){
   state.vocab = VOCAB_ORDER[(i+1) % VOCAB_ORDER.length];
   save("vocab", state.vocab);
   applyVocab();
+  if(!$("#wordCards").hidden) wcRender(); /* 卡片正面跟随词汇：覆盖层开着时立刻刷新 */
 }
 /* 词汇表面板：显示/隐藏两态，默认显示 */
 function applyVocabList(){
@@ -1513,19 +1510,19 @@ function toggleVocabList(){
   save("vocabList", state.vocabList);
   applyVocabList();
 }
-/* 卡片正面内容：图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义，只影响卡片正面，不影响正文标注 */
-function applyCardFace(){
-  var btn=$("#cardFaceBtn"); if(!btn) return;
-  btn.textContent="卡片："+CARD_FACE_LABEL[state.cardFace];
-  btn.classList.toggle("on", state.cardFace!=="p");
+/* 卡片是否显示配图：关掉时不取图/不预取，省 direct-img 额度；卡片正面的词/义由「词汇」模式决定 */
+function applyCardPic(){
+  var btn=$("#wcTogglePicBtn"); if(!btn) return;
+  btn.textContent=state.cardPic?"图片：开":"图片：关";
+  btn.classList.toggle("on", !!state.cardPic);
+  btn.title=state.cardPic?"隐藏卡片配图（隐藏后不再取图）":"显示卡片配图";
 }
-function cycleCardFace(){
-  var i=CARD_FACE_ORDER.indexOf(state.cardFace);
-  if(i<0) i=0;
-  state.cardFace=CARD_FACE_ORDER[(i+1)%CARD_FACE_ORDER.length];
-  save("cardFace", state.cardFace);
-  applyCardFace();
-  if(!$("#wordCards").hidden) wcRender(); /* 覆盖层开着时立刻换正面 */
+function toggleCardPic(){
+  state.cardPic=!state.cardPic;
+  save("cardPic", state.cardPic);
+  applyCardPic();
+  if(!state.cardPic) wcPicClearQueue(); /* 关图时撤掉还没发出的取图/预取 */
+  if(!$("#wordCards").hidden) wcRender(); /* 开着时立刻刷新卡面 */
 }
 
 /* ========================= 胡萝卜奖励（单词卡）=========================
@@ -1581,14 +1578,14 @@ var wc={
   picTimer:null,    /* 队列调度定时器 */
   timer:null
 };
-/* 卡片正面是否显示图片/英文/中文（背面的词+中文+例句不变） */
+/* 卡片正面显隐（背面的词+中文+例句不变）：图片由「图片：开/关」控制，词/义跟随「词汇」四态
+   all=词+义 / en(仅原文)=仅词 / zh(仅译文)=仅义 / none(不标注)=都不显示 */
 function wcFaceParts(){
-  var f=state.cardFace;
-  return {
-    pic:  f==="pw"||f==="pwz"||f==="p"||f==="pz",
-    word: f==="pw"||f==="pwz"||f==="w"||f==="wz",
-    zh:   f==="pwz"||f==="wz"||f==="pz"
-  };
+  var pic =!!state.cardPic;
+  var word=(state.vocab==="all"||state.vocab==="en");
+  var zh  =(state.vocab==="all"||state.vocab==="zh");
+  if(!pic && !word && !zh) word=true; /* 全都不显示时至少露出英文词，避免空白卡面 */
+  return { pic:pic, word:word, zh:zh };
 }
 function toQuery(word){
   return String(word||"").trim().toLowerCase()
@@ -2192,6 +2189,7 @@ function bind(){
     if(e.target.closest("#wcReadZhBtn")){ wcSpeak("wordZh"); return; }
     if(e.target.closest("#wcReadExBtn")){ wcSpeak("ex"); return; }
     if(e.target.closest("#wcChangePicBtn")){ wcChangePic(); return; }
+    if(e.target.closest("#wcTogglePicBtn")){ click(); toggleCardPic(); return; }
   });
   /* 方向键翻词、空格翻卡（单词卡全屏时） */
   $("#wordCards").addEventListener("keydown", function(e){
@@ -2225,10 +2223,6 @@ function bind(){
 
   $("#vocabBtn").addEventListener("click", function(){
     click(); cycleVocab();
-  });
-
-  $("#cardFaceBtn").addEventListener("click", function(){
-    click(); cycleCardFace();
   });
 
   $("#playBtn").addEventListener("click", function(){
@@ -2347,9 +2341,9 @@ function init(){
   state.vocabList=load("vocabList",true);
   applyVocabList();
 
-  state.cardFace=load("cardFace","pw");
-  if(CARD_FACE_ORDER.indexOf(state.cardFace)<0) state.cardFace="pw";
-  applyCardFace();
+  state.cardPic=load("cardPic",true);
+  if(typeof state.cardPic!=="boolean") state.cardPic=true;
+  applyCardPic();
 
   carrotRender(); /* 主页胡萝卜显示 */
 
