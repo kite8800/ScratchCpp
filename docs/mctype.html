@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#dff0ff">
+<title>MC MINI STORY READER · MC小作文阅读器</title>
+<style>
+:root{
+  --cream:#fbf7ec; --paper:#fffdf6; --ink:#2f2418; --ink2:#6b5a45;
+  --grass:#6cbf4a; --grass-d:#4e9b32; --gold:#f2b53c;
+  --shadow:0 5px 0 rgba(47,36,24,.15);
+  --pixel:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:var(--ink); background:var(--cream);
+  background-image:radial-gradient(rgba(47,36,24,.055) 1px,transparent 1px);
+  background-size:16px 16px; -webkit-font-smoothing:antialiased; padding-bottom:40px;
+}
+button{font-family:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:820px;margin:0 auto;padding:0 14px}
+
+/* HERO */
+.hero{position:relative;overflow:hidden;background:linear-gradient(#c9e8ff 0%,#e3f4ff 58%,#f4fbf0 100%)}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:16px 14px 14px}
+/* 头像按钮：默认苦力怕；点击循环 */
+.creeper{
+  width:56px;height:56px;flex:none;display:grid;
+  grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+  border:3px solid var(--ink);border-radius:4px;
+  box-shadow:4px 4px 0 rgba(47,36,24,.18);
+  overflow:hidden;animation:bob 3s ease-in-out infinite;
+  padding:0;background:#cfe8c8;
+  transition:transform .12s;
+}
+.creeper:hover{transform:translateY(-2px) scale(1.03)}
+.creeper:active{transform:scale(.94)}
+.creeper.pop{animation:pop .32s ease, bob 3s ease-in-out infinite}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
+.creeper i{display:block;width:100%;height:100%}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.hero-text{flex:1;min-width:0}
+h1{margin:0 0 3px;font-family:var(--pixel);font-weight:900;font-size:clamp(17px,3.2vw,25px);line-height:1.05;letter-spacing:.01em;color:#fff;text-shadow:2px 2px 0 var(--grass-d),4px 4px 0 rgba(47,36,24,.16)}
+h1 .h1-sub{display:block;font-size:.56em;margin-top:5px;text-shadow:1.5px 1.5px 0 var(--grass-d),3px 3px 0 rgba(47,36,24,.14)}
+.grass-strip{height:14px;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 10px,transparent 10px 20px),linear-gradient(#7cc94f,#5aa93a);border-top:3px solid #3f8a2a;border-bottom:3px solid var(--ink)}
+
+main{padding-top:14px}
+
+/* 粘贴框 */
+.paste-box{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);padding:12px;margin-bottom:12px}
+.paste-box textarea{
+  width:100%; min-height:140px; resize:vertical;
+  border:2.5px solid var(--ink); border-radius:10px; padding:10px 12px;
+  font-family:inherit; font-size:14px; line-height:1.6; color:var(--ink); background:#fff; outline:none;
+}
+.paste-box textarea:focus{border-color:var(--grass-d); box-shadow:0 0 0 3px rgba(108,191,74,.2)}
+.paste-help{
+  margin-top:8px; font-size:11.5px; color:var(--ink2); line-height:1.6;
+  padding:8px 10px; background:#fffdf3; border:2px dashed rgba(47,36,24,.18); border-radius:9px;
+}
+.paste-help b{color:var(--ink)}
+
+/* 操作区 */
+.action-row{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  margin-top:10px;
+}
+.action-row .row-break{flex-basis:100%;height:0;margin:0}
+.sw{
+  display:inline-flex;align-items:center;gap:5px;padding:7px 13px;
+  border:2.5px solid var(--ink);border-radius:10px;background:#fff;
+  font-size:13px;font-weight:800;box-shadow:0 3px 0 rgba(47,36,24,.15);
+  transition:.12s;white-space:nowrap;
+}
+.sw:hover{transform:translateY(-1px)}
+.sw:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(47,36,24,.15)}
+.sw.primary{background:var(--grass);color:#fff;border-color:var(--grass-d);box-shadow:0 3px 0 var(--grass-d)}
+.sw.on{background:#eaf7e2;border-color:var(--grass-d);color:#3c6b2a}
+.sw.vocab-off{background:#fff;color:#8b7a67}
+.sw.off{color:#8b7a67}
+
+.lang-select{
+  display:inline-flex;align-items:center;gap:5px;
+  border:2.5px solid var(--ink);border-radius:10px;background:#fff;
+  padding:0 8px; box-shadow:0 3px 0 rgba(47,36,24,.15);
+  height:36px; font-size:13px; font-weight:800;
+}
+.lang-select select{
+  border:0; outline:0; background:transparent; font-family:inherit;
+  font-size:13px; font-weight:800; color:var(--ink); padding:6px 2px;
+  cursor:pointer; appearance:none; -webkit-appearance:none;
+}
+.lang-select::after{content:"▾";font-size:11px;color:var(--ink2);margin-left:2px}
+.action-label{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;margin-right:2px}
+.loot-label{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap;margin-right:2px}
+
+#report{
+  display:none; margin-top:10px; padding:9px 12px;
+  background:#eaf7e2; border:2.5px solid var(--grass-d); border-radius:10px;
+  font-size:12.5px; font-weight:700; color:#3c6b2a; line-height:1.5;
+}
+#report.show{display:block}
+#report b{font-family:var(--pixel);}
+
+/* 阅读器 */
+.reader-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.reader-head h2{margin:0;font-family:var(--pixel);font-size:17px;flex:1}
+.reader-body{
+  background:var(--paper);border:3px solid var(--ink);border-radius:14px;
+  box-shadow:var(--shadow);padding:6px;min-height:120px;
+}
+.reader-body .seg-head{
+  padding:8px 12px; font-family:var(--pixel); font-weight:900;
+  font-size:13px; color:#8a5a00; letter-spacing:.03em;
+  background:linear-gradient(90deg,#fff1cd 0%,#fdf7e6 100%);
+  border:1.5px solid var(--gold); border-left:5px solid var(--gold);
+  border-radius:7px; margin:10px 2px 6px;
+}
+.sent{
+  display:block; width:100%; text-align:left;
+  padding:9px 12px; margin:2px 0;
+  border:0; border-radius:8px; background:transparent;
+  font-family:inherit; font-size:15.5px; line-height:1.55; color:var(--ink);
+  cursor:pointer; transition:background .12s;
+}
+.sent:hover{background:#fff6dc}
+.sent.active{background:#ffe9a8; box-shadow:inset 0 0 0 2px #f2b53c}
+.sent .line{display:block}
+.sent .line + .line{margin-top:3px}
+.sent .main-line{font-weight:400}
+.sent .alt-line{font-size:12.5px;color:var(--ink2);font-weight:600;line-height:1.4;display:none}
+body[data-trans="none"] .sent .alt-line{display:none}
+body[data-trans="cur"] .sent.active .alt-line{display:block}
+body[data-trans="all"] .sent .alt-line{display:block}
+.sent .num{
+  display:inline-block; min-width:22px; font-family:var(--pixel);
+  font-size:11px; color:var(--ink2); font-weight:700; margin-right:4px;
+}
+
+/* 词汇表面板：像句子一样两行显示，只查看不朗读 */
+.vocab-block{
+  background:#fffdf3; border:2px dashed var(--gold); border-radius:10px;
+  padding:7px 10px; margin:2px 2px 8px;
+}
+.vocab-block .vb-head{
+  font-family:var(--pixel); font-weight:900; font-size:12px; color:#8a5a00;
+  letter-spacing:.03em; margin-bottom:4px;
+}
+.vocab-block .vb-row{display:block;width:100%;box-sizing:border-box;text-align:left;padding:5px 8px;margin:2px 0;border-radius:7px;background:#fff;border:1.5px solid rgba(47,36,24,.12);cursor:pointer;transition:background .15s,border-color .15s}
+.vocab-block .vb-row:hover{border-color:var(--gold);background:#fffdf3}
+.vocab-block .vb-row.active{background:#fff1cd;border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,63,.35)}
+.vocab-block .vb-row .line{display:block;font-size:14px;line-height:1.5}
+.vocab-block .vb-row .line + .line{font-size:12.5px;color:var(--ink2);font-weight:600;margin-top:2px}
+
+/* 单词表命中词：原文下划线 / 译文高亮 / 考试挖空 */
+.sent .vocab .v-blank{display:none;border-bottom:2px solid var(--gold);border-radius:2px}
+.vocab[data-lang="en"] .v-full{text-decoration:underline;text-decoration-color:#BA7517;text-underline-offset:3px}
+.vocab[data-lang="zh"] .v-full{background:#FAC775;color:#412402;padding:0 2px;border-radius:3px}
+body[data-vocab="zh"] .vocab[data-lang="en"] .v-full{display:none}
+body[data-vocab="zh"] .vocab[data-lang="en"] .v-blank{display:inline-block}
+body[data-vocab="en"] .vocab[data-lang="zh"] .v-full{display:none}
+body[data-vocab="en"] .vocab[data-lang="zh"] .v-blank{display:inline-block}
+/* 不标注：原文不加下划线、译文不高亮，全部正常显示 */
+body[data-vocab="none"] .vocab[data-lang="en"] .v-full,
+body[data-vocab="none"] .vocab[data-lang="zh"] .v-full{text-decoration:none;background:transparent;color:inherit;padding:0;border-radius:0}
+body[data-vocab="none"] .vocab .v-blank{display:none}
+
+/* 播放条 */
+.player-bar{
+  position:sticky;bottom:10px;z-index:30;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:12px;padding:10px 12px;
+  background:rgba(251,247,236,.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);
+}
+.player-bar .sw{font-size:13px;padding:7px 12px}
+.player-bar .sw.on{background:var(--grass);color:#fff;border-color:var(--grass-d)}
+#progress{font-family:var(--pixel);font-size:12px;font-weight:700;margin-left:auto;white-space:nowrap}
+.rate-wrap{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--ink2)}
+#rateInput{width:72px;accent-color:var(--grass-d)}
+#rateLabel{font-family:var(--pixel);font-size:11px;min-width:36px;text-align:right}
+
+#soundHint{display:flex;align-items:center;gap:9px;margin:10px 0 2px;padding:10px 12px;background:#fff6dc;border:2.5px solid var(--ink);border-radius:12px;box-shadow:var(--shadow);font-size:13px;line-height:1.4}
+#soundHint[hidden]{display:none}
+#soundHintText{flex:1;min-width:0}
+#soundHintBtn{flex:none;padding:6px 13px;font-size:13px;font-weight:800;background:var(--grass);color:#fff;border:2.5px solid var(--ink);border-radius:8px;box-shadow:0 3px 0 rgba(47,36,24,.28)}
+#soundHintBtn:active{transform:translateY(2px);box-shadow:none}
+#soundHintClose{flex:none;width:26px;height:26px;padding:0;font-size:12px;background:transparent;border:none;color:var(--ink2)}
+
+footer{max-width:820px;margin:22px auto 0;padding:14px;text-align:center;font-size:12px;color:var(--ink2);line-height:1.7}
+footer b{color:var(--ink)}
+footer .foot-title{font-family:var(--pixel);font-weight:900;color:var(--ink);letter-spacing:.04em;font-size:12.5px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,18px);background:var(--ink);color:#fff;font-weight:700;font-size:13px;padding:9px 16px;border-radius:11px;opacity:0;pointer-events:none;transition:.25s;z-index:9999}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* 打字测试：专注覆盖层 */
+.type-mask{position:fixed;inset:0;z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:20px 14px;background:var(--cream);background-image:radial-gradient(rgba(47,36,24,.055) 1px,transparent 1px);background-size:16px 16px;overflow-y:auto}
+.type-mask[hidden]{display:none}
+body.tt-on{overflow:hidden}
+/* 软键盘弹起时：覆盖层高度由 JS 用 visualViewport 动态指定，这里只微调内边距 */
+body.kb-open .type-mask{padding-top:8px}
+.type-panel{width:100%;max-width:820px;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.tt-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2px dashed rgba(47,36,24,.15);background:#fffdf3;flex-wrap:wrap}
+.tt-title{font-family:var(--pixel);font-weight:900;font-size:14px}
+.tt-apples{display:inline-flex;align-items:center;gap:4px;font-size:14px;line-height:1.6}
+.tt-apples .ico{letter-spacing:1px}
+.tt-apples .cnt{font-family:var(--pixel);font-weight:900;font-size:13px;color:#8a5a00;background:#fff1cd;border:1.5px solid var(--gold);border-radius:8px;padding:1px 7px}
+.tt-apples .ico-gold{width:19px;height:19px;display:inline-block;vertical-align:-4px;filter:drop-shadow(0 1px 1px rgba(180,116,0,.45))}
+.tt-progress{font-size:12.5px;color:var(--ink2);font-weight:700}
+.tt-right{font-size:12.5px;color:#3c6b2a;font-weight:700;margin-left:auto}
+.tt-exit{font-family:inherit;font-size:12px;font-weight:800;padding:5px 11px;border:2px solid var(--ink);border-radius:8px;background:#fff;cursor:pointer}
+.tt-submit{font-family:inherit;font-size:12px;font-weight:800;padding:5px 11px;border:2px solid var(--grass-d);border-radius:8px;background:var(--grass);color:#fff;cursor:pointer}
+.tt-submit:active{transform:translateY(1px)}
+.tt-body{padding:16px 16px 6px}
+.tt-hint-label{font-size:12px;color:var(--ink2);margin-bottom:6px}
+.tt-hint-zh{font-size:16px;line-height:1.6;margin-bottom:16px}
+.tt-sentence{font-size:18px;line-height:2.5}
+.tt-blank{display:inline-flex;align-items:center;gap:5px;margin:0 2px}
+.tt-input{
+  font-family:inherit;font-size:16px;font-weight:700;color:var(--ink);
+  border:0;border-bottom:2.5px solid var(--gold);border-radius:0;background:transparent;
+  padding:2px 4px;min-width:70px;outline:none;text-align:center;
+}
+.tt-input:focus{border-bottom-color:var(--grass-d);background:#fffbe8}
+.tt-input.ok{border-bottom-color:var(--grass-d);color:var(--grass-d)}
+.tt-input.bad{border-bottom-color:#d64545;color:#c0392b}
+.tt-spell{
+  font-family:inherit;font-size:11px;font-weight:700;padding:2px 7px;border:1.5px solid #8a5a00;
+  border-radius:7px;background:#fff1cd;color:#8a5a00;cursor:pointer;white-space:nowrap;
+}
+.tt-spell:active{transform:translateY(1px)}
+.tt-answer{font-size:13px;font-weight:700;margin-top:4px}
+.tt-answer.ok{color:var(--grass-d)}
+.tt-answer.bad{color:#c0392b}
+.tt-feedback{margin:12px 16px 0;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:700;background:#eaf7e2;color:#3c6b2a}
+.tt-feedback.bad{background:#fdeaea;color:#c0392b}
+.tt-peek{margin:12px 16px 0;padding:10px 12px;border:2px dashed var(--gold);border-radius:9px;background:#fff8e6;font-size:15px;line-height:1.7}
+.tt-peek-tag{display:block;font-size:11px;color:#8a5a00;font-weight:700;margin-bottom:5px}
+.tt-peek-row{display:flex;align-items:baseline;gap:10px;padding:2px 0}
+.tt-peek-row b{color:var(--ink);font-size:16px}
+.tt-peek-row span{font-size:13.5px;color:var(--ink2);font-weight:700}
+.tt-navrow{display:flex;align-items:center;gap:9px;padding:9px 16px 14px;border-top:1.5px dashed rgba(47,36,24,.2)}
+.tt-jump-label{font-family:var(--pixel);font-weight:900;font-size:11.5px;color:var(--ink2);white-space:nowrap;min-width:42px;text-align:center}
+.tt-jump{flex:1;min-width:80px;accent-color:var(--grass-d)}
+.tt-rate{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1.5px solid rgba(47,36,24,.18);border-radius:7px;background:#fffdf3}
+.tt-rate input{width:54px;accent-color:var(--grass-d)}
+.tt-rate .tt-rate-val{font-family:var(--pixel);font-weight:900;font-size:10.5px;color:var(--ink2);min-width:33px;text-align:center}
+.tt-rate .tt-rate-ico{font-size:11px}
+.tt-actions{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px 8px}
+.tt-actions .sw{font-size:12.5px;padding:7px 12px}
+.tt-actions .sw.icon-only{font-size:16px;padding:5px 11px;line-height:1}
+.tt-actions .sw.primary{background:var(--grass);color:#fff;border-color:var(--grass-d)}
+.tt-score{text-align:center;padding:26px 16px}
+.tt-cheer{font-size:15px;font-weight:900;color:#8a5a00;margin-bottom:8px;line-height:1.5}
+.tt-score .big{font-family:var(--pixel);font-size:38px;font-weight:900;color:var(--grass-d);animation:tt-pop .45s cubic-bezier(.2,1.6,.4,1) both}
+.tt-score .sub{font-size:13px;color:var(--ink2);margin-top:6px}
+@keyframes tt-pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.tt-reward{display:flex;align-items:center;gap:12px;margin:16px auto 0;padding:12px 16px;max-width:400px;border:2px dashed var(--gold);border-radius:14px;background:linear-gradient(135deg,#fff8e6,#fff1cc);text-align:left;animation:tt-shine 1.3s ease-in-out infinite alternate}
+.tt-reward.gold{background:linear-gradient(135deg,#fff6d8,#ffe9a0);border-color:#d39b00}
+.tt-reward-ico{font-size:36px;line-height:1;flex:0 0 auto;filter:drop-shadow(0 2px 2px rgba(180,116,0,.35))}
+.tt-reward-ico .ico-gold{width:38px;height:38px;vertical-align:0}
+.tt-reward-txt b{display:block;font-size:15px;color:#7a4a00}
+.tt-reward-txt span{display:block;font-size:12px;color:#8a5a00;margin-top:3px;font-weight:700}
+@keyframes tt-shine{from{box-shadow:0 0 0 rgba(255,210,63,0)}to{box-shadow:0 0 15px rgba(255,210,63,.6)}}
+.tt-noharvest{margin:16px auto 0;padding:10px 14px;max-width:360px;border:2px dashed rgba(47,36,24,.18);border-radius:10px;background:#faf6ea;color:var(--ink2);font-size:13px;font-weight:700}
+.tt-wrong{text-align:left;margin-top:18px;font-size:13px}
+.tt-wrong .row{padding:8px 10px;margin:5px 0;border:1.5px solid rgba(47,36,24,.15);border-radius:8px;background:#fff}
+.tt-wrong .zh{font-weight:700}
+.tt-wrong .a{color:var(--grass-d)}
+.tt-wrong .y{color:#c0392b}
+
+/* 历史文章弹窗 */
+.hist-mask{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(47,36,24,.5)}
+.hist-mask.show{display:flex}
+.hist-panel{width:100%;max-width:560px;max-height:82vh;display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.hist-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:2px dashed rgba(47,36,24,.15)}
+.hist-head h3{margin:0;flex:1;font-family:var(--pixel);font-weight:900;font-size:15px}
+.hist-x{flex:none;width:28px;height:28px;padding:0;border:2px solid var(--ink);border-radius:8px;background:var(--cream);font-weight:900;font-size:15px;line-height:1}
+.hist-store{padding:10px 14px 12px;background:#fffdf3;border-bottom:1px solid rgba(47,36,24,.12)}
+.hist-store .line{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:6px}
+.hist-store .line b{color:var(--ink)}
+.hist-bar{height:9px;border-radius:99px;background:rgba(47,36,24,.12);overflow:hidden}
+.hist-bar i{display:block;height:100%;width:0;background:var(--grass-d);transition:width .2s}
+.hist-bar.warn i{background:#d64545}
+.hist-store .warn-txt{color:#c0392b;font-weight:700}
+.hist-list{flex:1;overflow-y:auto;padding:8px 12px}
+.hist-item{display:flex;align-items:center;gap:8px;padding:9px 10px;margin:6px 0;border:2px solid rgba(47,36,24,.18);border-radius:10px;background:#fff}
+.hist-item .meta{flex:1;min-width:0}
+.hist-item .t{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-item .d{font-size:11.5px;color:var(--ink2);margin-top:3px}
+.hist-item .sw{flex:none;font-size:12px;padding:5px 10px}
+.hist-item .sw.danger{border-color:#d64545;color:#c0392b}
+.hist-empty{padding:34px 10px;text-align:center;color:var(--ink2);font-size:13px}
+.hist-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:2px dashed rgba(47,36,24,.15)}
+.hist-foot .hgroup{display:flex;gap:8px}
+.hist-foot .sw{font-size:12.5px}
+.hist-foot #histClearAll{border-color:#d64545;color:#c0392b}
+
+@media (max-width:720px){
+  .hero-inner{padding:12px;gap:10px}
+  .creeper{width:48px;height:48px}
+  .wrap{padding:0 10px}
+  .sent{font-size:15px;padding:8px 10px}
+  .player-bar{gap:6px;padding:8px 10px}
+  .player-bar .sw{font-size:12px;padding:6px 9px}
+  #rateInput{width:56px}
+  .action-row{gap:6px}
+  .action-label{width:100%;margin:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== 打印：只输出识别后的结果，三项开关(译文/词汇/词汇表)沿用当前设置 ===== */
+@media print{
+  @page{ margin:16mm; }
+  html,body{ background:#fff!important; color:#000!important; }
+  /* 白名单：先全隐藏，再逐层放行到 #readerBody */
+  body > *{ display:none!important; }
+  body > main.wrap{ display:block!important; }
+  main.wrap > *{ display:none!important; }
+  main.wrap > #reader{ display:block!important; }
+  #reader > *{ display:none!important; }
+  #reader > .reader-body{ display:block!important; }
+  /* 版式复位：去掉屏幕上的卡片/阴影/边框 */
+  main.wrap{ max-width:none!important; margin:0!important; padding:0!important; }
+  .reader-body{ border:0!important; box-shadow:none!important; padding:0!important;
+    background:#fff!important; min-height:0!important; }
+  .sent.active,.sent:hover{ background:transparent!important; box-shadow:none!important; }
+  .sent{ padding:2mm 0!important; margin:0!important; page-break-inside:avoid;
+    font-size:12pt!important; line-height:1.5!important; }
+  /* 译文：none=不显示；cur 与 all 一样都按全文打印 */
+  body[data-trans="cur"] .sent .alt-line{ display:block!important; }
+  /* 词汇标注：全部 / 不标注 → 两侧都正常显示，无下划线无高亮 */
+  body[data-vocab="all"] .sent .vocab .v-full,
+  body[data-vocab="none"] .sent .vocab .v-full{ text-decoration:none!important;
+    background:transparent!important; color:inherit!important; padding:0!important; }
+  body[data-vocab="all"] .sent .vocab .v-blank,
+  body[data-vocab="none"] .sent .vocab .v-blank{ display:none!important; }
+  /* 仅译文(zh)：英文挖空 → 留下划线；中文正常显示不高亮 */
+  body[data-vocab="zh"] .sent .vocab[data-lang="en"] .v-full{ display:none!important; }
+  body[data-vocab="zh"] .sent .vocab[data-lang="en"] .v-blank{
+    display:inline-block!important; color:transparent!important; background:transparent!important;
+    border:0!important; border-bottom:1.5px solid #111!important; }
+  body[data-vocab="zh"] .sent .vocab[data-lang="zh"] .v-full{
+    text-decoration:none!important; background:transparent!important; color:inherit!important; padding:0!important; }
+  /* 仅原文(en)：中文挖空 → 留下划线；英文正常显示无下划线 */
+  body[data-vocab="en"] .sent .vocab[data-lang="zh"] .v-full{ display:none!important; }
+  body[data-vocab="en"] .sent .vocab[data-lang="zh"] .v-blank{
+    display:inline-block!important; color:transparent!important; background:transparent!important;
+    border:0!important; border-bottom:1.5px solid #111!important; }
+  body[data-vocab="en"] .sent .vocab[data-lang="en"] .v-full{
+    text-decoration:none!important; background:transparent!important; color:inherit!important; padding:0!important; }
+  /* 小标题保留 */
+  .reader-body .seg-head{ background:transparent!important; border:0!important;
+    border-bottom:1px solid #bbb!important; border-radius:0!important; padding:3mm 0 1mm!important;
+    margin:4mm 0 1mm!important; color:#000!important; font-size:11pt!important; }
+  /* 单词表：显隐由「词汇表」开关(#vocabListBox[hidden])控制，这里只去按钮外观 */
+  .vocab-block{ border:0!important; background:transparent!important; padding:0!important;
+    margin:6mm 0 0!important; }
+  .vocab-block .vb-head{ color:#000!important; border-bottom:1px solid #999;
+    padding-bottom:2mm; margin-bottom:2mm; font-size:11pt!important; }
+  .vocab-block .vb-row{ border:0!important; background:transparent!important;
+    padding:1.5mm 0!important; margin:0!important; box-shadow:none!important;
+    page-break-inside:avoid; }
+  .vocab-block .vb-row .line{ font-size:10.5pt!important; }
+}
+</style>
+</head>
+<body data-trans="cur" data-vocab="all">
+
+<header class="hero">
+  <div class="hero-inner">
+    <button class="creeper" id="creeper" aria-label="切换音色" title="点击切换：自动 / 男声(Steve) / 女声(Alex)&#10;Author: Hayden KWOK, Version 0.9"></button>
+    <div class="hero-text">
+      <h1>MC MINI STORY READER<span class="h1-sub">MC小作文阅读器 | Kite, Ver0.9</span></h1>
+    </div>
+  </div>
+  <div class="grass-strip"></div>
+</header>
+
+<main class="wrap">
+  <div id="soundHint" hidden>
+    <span id="soundHintText">👆 点一下开启声音</span>
+    <button id="soundHintBtn" type="button">🔊 试试</button>
+    <button id="soundHintClose" type="button" aria-label="关闭提示">✕</button>
+  </div>
+
+  <div class="paste-box">
+    <textarea id="inputBox" placeholder="把文章粘贴到这里，格式随意：
+
+· 纯英文段落 → 自动按 . ! ? 断句
+· 每行一句
+· 英文一行 + 中文一行（自动配对）
+· 中文一行 + 英文一行（自动配对）
+· 带 1. 2. 序号
+· 中英混排
+
+会自动判断先英还是先中。"></textarea>
+
+    <div class="paste-help">
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>打单词测试</b>：断句后点「⌨️ 打单词」进入专注模式，句子里命中词变成空格，看中文提示填英文；每空「🔤 拼读」逐字母读再读整词，「🔊 朗读整句」听语境。<b>整卷作答、统一交卷</b>：填完点「下一句」会闪本题答案并逐个念出（不拼读，念完再翻页，不判分），可「上一句」回改；全部填完点顶栏绿色「✓ 全部提交」一次性判分出成绩。回车 = 下一句。
+    </div>
+
+    <div class="action-row">
+      <span class="action-label">朗读：</span>
+      <div class="row-break"></div>
+      <label class="lang-select" title="选择朗读语言顺序">
+        <select id="langMode">
+          <option value="en">只读英文</option>
+          <option value="zh">只读中文</option>
+          <option value="en-zh">英文 → 中文</option>
+          <option value="zh-en">中文 → 英文</option>
+        </select>
+      </label>
+      <button class="sw primary" id="parseBtn">✂️ 识别并断句</button>
+      <button class="sw" id="clearBtn">清空</button>
+      <div class="row-break"></div>
+      <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
+      <button class="sw on" id="vocabListBtn" title="单词表列表 显示/隐藏">词汇表：显示</button>
+      <button class="sw on" id="vocabBtn" title="词汇标注模式：全部 / 仅译文 / 仅原文 / 不标注">词汇：全部</button>
+      <button class="sw" id="soundBtn" title="音效开关">🔊</button>
+      <div class="row-break"></div>
+      <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
+      <button class="sw" id="histOpenBtn" title="查看已保存的文章">📚 打开历史</button>
+      <button class="sw" id="printBtn" title="打印识别后的文章与单词表">🖨 打印</button>
+      <button class="sw" id="sampleBtn" title="载入内置范文：我的世界第一天">范文</button>
+      <div class="row-break"></div>
+      <span class="action-label">测试：</span>
+      <span class="loot-label">你的战利品</span>
+      <span class="tt-apples" id="ttApples" title="🍎 普通苹果 · 🥇 金苹果(10个兑换)"></span>
+      <div class="row-break"></div>
+      <button class="sw" id="typeTestBtn" title="在句子里填出命中的单词">⌨️ 打单词</button>
+    </div>
+
+    <div id="report"></div>
+  </div>
+
+  <div id="reader" hidden>
+    <div class="reader-head">
+      <h2 id="readerTitle">📖 阅读</h2>
+      <span class="sw" id="sentCount" style="cursor:default">0 句</span>
+    </div>
+    <div class="reader-body" id="readerBody"></div>
+    <div class="player-bar">
+      <button id="prevBtn" class="sw" title="上一句">⏮</button>
+      <button id="playBtn" class="sw on" title="播放/暂停">▶ 播放</button>
+      <button id="nextBtn" class="sw" title="下一句">⏭</button>
+      <span id="progress">0 / 0</span>
+      <div class="rate-wrap">
+        <span>🐢</span>
+        <input id="rateInput" type="range" min="0.5" max="2.0" step="0.05" value="0.85" aria-label="语速">
+        <span id="rateLabel">0.85x</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 打字测试：专注模式覆盖层（进入时隐藏阅读界面） -->
+<div id="typeTest" class="type-mask" hidden>
+  <div class="type-panel">
+    <div class="tt-head">
+      <span class="tt-title" id="ttTitle">⌨️ 打单词测试</span>
+      <span class="tt-progress" id="ttProgress">0 / 0</span>
+      <span class="tt-right" id="ttScore">已对 0</span>
+      <button class="tt-submit" id="ttSubmitBtn" type="button" title="全部作答完成后统一交卷">✓ 全部提交</button>
+      <button class="tt-exit" id="ttExitBtn" title="退出测试">退出 ✕</button>
+    </div>
+    <div class="tt-body" id="ttBody"></div>
+    <div class="tt-actions" id="ttActions"></div>
+    <div class="tt-navrow">
+      <span class="tt-jump-label" id="ttJumpLabel">1 / 1</span>
+      <input class="tt-jump" id="ttJump" type="range" min="0" max="0" step="1" value="0" aria-label="跳转句子">
+      <span class="tt-rate"><span class="tt-rate-ico">🐢</span><input id="ttRateInput" type="range" min="0.5" max="2.0" step="0.05" value="0.85" aria-label="打单词语速"><span class="tt-rate-val" id="ttRateLabel">0.85x</span><span class="tt-rate-ico">🐇</span></span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-title">MC MINI STORY READER · MC小作文阅读器</div>
+  <div>粘贴即读的英语小作文朗读器</div>
+</footer>
+
+<div id="histMask" class="hist-mask" role="dialog" aria-modal="true" aria-label="历史文章">
+  <div class="hist-panel">
+    <div class="hist-head">
+      <h3>📚 历史文章</h3>
+      <button class="hist-x" id="histCloseBtn" title="关闭" aria-label="关闭">✕</button>
+    </div>
+    <div class="hist-store">
+      <div class="line"><span>本地存储：<b id="histUsed">0 KB</b> / 约 5 MB</span><span id="histLeft">剩余约 5 MB</span></div>
+      <div class="hist-bar" id="histBar"><i id="histBarFill"></i></div>
+    </div>
+    <div class="hist-list" id="histList"></div>
+    <div class="hist-foot">
+      <button class="sw" id="histCancelBtn">取消</button>
+      <div class="hgroup">
+        <button class="sw" id="histClearBtn">全部删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ========================= 工具 ========================= */
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+  });
+}
+function load(k,d){ try{ var v=localStorage.getItem("mcr_"+k); return v===null?d:JSON.parse(v);}catch(e){return d;} }
+function save(k,v){ try{ localStorage.setItem("mcr_"+k, JSON.stringify(v)); }catch(e){} }
+
+/* ========================= 音效 ========================= */
+var actx=null;
+function ac(){
+  if(!actx){
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return null;
+    try{ actx=new AC(); }catch(e){ return null; }
+  }
+  return actx;
+}
+function unlockAudio(){
+  /* 首次触摸/点击时给微信/iOS 一次「预热」：很多 WebView 此时才挂载 TTS 或加载语音列表 */
+  primeTTS();
+  var c=ac(); if(!c) return;
+  var on=function(){
+    try{ var b=c.createBuffer(1,1,22050),s=c.createBufferSource(); s.buffer=b; s.connect(c.destination); s.start(0); }catch(e){}
+  };
+  if(c.state==="running"){ on(); }
+  else if(c.resume){ c.resume().then(on).catch(function(){on();}); }
+  else{ on(); }
+}
+function tone(freq,dur,type,vol){
+  if(state.muted) return;
+  var c=ac(); if(!c) return;
+  var play=function(){
+    try{
+      var t=c.currentTime+.005,o=c.createOscillator(),g=c.createGain();
+      o.type=type||"square"; o.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(vol||.03,t+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.03);
+    }catch(e){}
+  };
+  if(c.state==="running"){ play(); }
+  else if(c.resume){ c.resume().then(play).catch(function(){}); }
+}
+function click(){ tone(560,.05,"square",.022); }
+/* 打字机敲击音：清脆「咔-哒」双层——高频点击 + 中低频机身回响，硬起音 */
+var typeTickLast=0;
+function typeTick(){
+  var now=Date.now();
+  if(now-typeTickLast<28) return; /* 节流，避免长按/连打糊成一片 */
+  typeTickLast=now;
+  if(state.muted) return;
+  var c=ac(); if(!c) return;
+  var play=function(){
+    try{
+      var t=c.currentTime+.004;
+      /* [频率, 时长, 音量, 延迟]：先高频脆响，再一声略低的机身哒 */
+      [[2100,.016,.020,0],[880,.032,.013,.006]].forEach(function(p){
+        var st=t+p[3], o=c.createOscillator(), g=c.createGain();
+        o.type="square"; o.frequency.setValueAtTime(p[0],st);
+        g.gain.setValueAtTime(.0001,st);
+        g.gain.exponentialRampToValueAtTime(p[2],st+.002); /* 2ms 硬起音 → 清脆 */
+        g.gain.exponentialRampToValueAtTime(.0001,st+p[1]);
+        o.connect(g); g.connect(c.destination); o.start(st); o.stop(st+p[1]+.02);
+      });
+    }catch(e){}
+  };
+  if(c.state==="running") play();
+  else if(c.resume) c.resume().then(play).catch(function(){});
+}
+
+/* ========================= 朗读 + 音色 =========================
+   微信内置浏览器兼容要点（2026-11-20）：
+   1) 安卓微信 X5 / 老 WebView 可能只暴露带前缀的 webkitSpeechSynthesis，
+      只用标准名做检测会误判成「不支持」；
+   2) iOS 微信（WKWebView）和 X5 要求 speak() 在用户手势里「同步」调用，
+      原先 Chrome 用的 cancel → setTimeout(90ms) → speak 会被直接拒绝；
+   3) 微信里语音列表经常为空或延迟出现，不能在页面加载时据此断言不支持。
+   ================================================================ */
+var voices=[],ttsPrimed=false,ttsWarned=false,hintTimer=null;
+var UA=(navigator.userAgent||""),
+    IS_WECHAT=/MicroMessenger/i.test(UA),
+    IS_IOS=/iPad|iPhone|iPod/i.test(UA)||(/Macintosh/i.test(UA)&&navigator.maxTouchPoints>0),
+    NEED_SYNC_SPEAK=IS_WECHAT||IS_IOS; /* 这些环境必须在事件回调里同步 speak */
+
+/* 运行时解析，兼容带前缀的实现；每次调用都重新探测，避免微信里 API 延迟挂载 */
+function getSynth(){
+  return window.speechSynthesis||window.webkitSpeechSynthesis||
+         window.mozSpeechSynthesis||window.msSpeechSynthesis||null;
+}
+function getUtterCtor(){
+  return window.SpeechSynthesisUtterance||window.webkitSpeechSynthesisUtterance||
+         window.mozSpeechSynthesisUtterance||window.msSpeechSynthesisUtterance||null;
+}
+function newUtt(text){
+  var U=getUtterCtor();
+  if(typeof U==="function") return new U(text);
+  var s=getSynth();
+  if(s && typeof s.SpeechSynthesisUtterance==="function") return new s.SpeechSynthesisUtterance(text);
+  return null;
+}
+function hasTTS(){
+  var s=getSynth(), U=getUtterCtor();
+  return !!s && typeof s.speak==="function" &&
+         (typeof U==="function" || !!(s && typeof s.SpeechSynthesisUtterance==="function"));
+}
+function loadVoices(){ try{ voices=hasTTS()?(getSynth().getVoices()||[]):[]; }catch(e){ voices=[]; } }
+function primeTTS(){
+  if(!hasTTS()) return false;
+  var s=getSynth();
+  try{ if(s.getVoices) s.getVoices(); }catch(e){}
+  if(!voices.length) loadVoices();
+  try{ s.onvoiceschanged=loadVoices; }catch(e){}
+  return true;
+}
+primeTTS();
+
+/* ---------- 语音挑选：一律只用「本地语音」，绝不去碰 Google 联网语音 ----------
+   原因：Chrome 会把 Google US English 之类的远程语音塞进列表，国内连不上就静默无声。
+   好消息：Windows 自带的中文语音（Huihui / Yaoyao / Kangkang）念英文完全没问题，
+           所以缺英文本地语音也不影响英文朗读——有本地英文语音时自然优先用它。 */
+
+function isLocalVoice(v){ return !!v && v.localService !== false; }
+function langIs(v,p){ return (v.lang||"").toLowerCase().indexOf(p) === 0; }
+/* 本机是否装了「该语言的本地语音」——决定要不要给 lang 提示 */
+function hasLocalLang(lang){
+  var i, p = (lang==="zh") ? "zh" : "en";
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],p) && isLocalVoice(voices[i])) return true;
+  return false;
+}
+
+/* 按语言挑最合适的本地语音 */
+function bestVoiceFor(lang){
+  if(!voices.length) loadVoices();
+  var i, p = (lang==="zh") ? "zh" : "en";
+
+  if(p === "en"){
+    var prefEn = ["Samantha","Microsoft Aria","Microsoft Zira","Microsoft Jenny","Karen","Moira","Daniel","Alex","Microsoft David","Microsoft Mark","Microsoft Guy"];
+    for(i=0;i<prefEn.length;i++){
+      for(var j=0;j<voices.length;j++){
+        if((voices[j].name||"").indexOf(prefEn[i])>=0 && isLocalVoice(voices[j])) return voices[j];
+      }
+    }
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"en") && isLocalVoice(voices[i])) return voices[i];
+    /* 没有本地英文语音 → 用本机中文语音念英文（实测完全可读） */
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh") && isLocalVoice(voices[i])) return voices[i];
+    /* 再退：任意本地语音（总比联网语音强，联网在国内直接静音） */
+    for(i=0;i<voices.length;i++) if(isLocalVoice(voices[i])) return voices[i];
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"en")) return voices[i];
+    return voices[0] || null;
+  }
+
+  /* 中文：优先本地中文 */
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh") && isLocalVoice(voices[i])) return voices[i];
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh")) return voices[i];
+  for(i=0;i<voices.length;i++) if(isLocalVoice(voices[i])) return voices[i];
+  return voices[0] || null;
+}
+
+/* 判断一个语音是不是「专用男音」 */
+var FEMALE_NAME = /female|woman|girl|huihui|yaoyao|xiaoxiao|xiaoyi|xiaomo|ting-ting|mei-jia|zira|aria|jenny|samantha|karen|moira|susan|hazel/i;
+var MALE_NAME   = /kangkang|yunxi|yunjian|yunyang|yunxia|yunfeng|david|mark|guy|ryan|george|fred|tom|daniel|\bmale\b|\bman\b/i;
+function isMaleVoice(v){
+  var n = (v && v.name) || "";
+  if(FEMALE_NAME.test(n)) return false;
+  return MALE_NAME.test(n);
+}
+/* 找专用男音：只认「本地」男音（Google UK English Male 之类是联网语音，国内静音）；
+   同语言没有就用中文本地男音念英文；再没有返回 null → 走降调兜底 */
+function findMaleVoice(lang){
+  var i, p = (lang==="zh") ? "zh" : "en";
+  for(i=0;i<voices.length;i++) if(langIs(voices[i],p) && isLocalVoice(voices[i]) && isMaleVoice(voices[i])) return voices[i];
+  if(p === "en"){
+    for(i=0;i<voices.length;i++) if(langIs(voices[i],"zh") && isLocalVoice(voices[i]) && isMaleVoice(voices[i])) return voices[i];
+  }
+  for(i=0;i<voices.length;i++) if(isLocalVoice(voices[i]) && isMaleVoice(voices[i])) return voices[i];
+  return null;
+}
+
+/* 音色策略（2026-11-17 定稿）
+   · 苦力怕 creeper(auto) ：【绝不指定引擎】u.voice 不设，完全交给平台默认语音
+                            —— 这样 iPad / 安卓 / Mac / 各浏览器都一定念得出来，
+                               是整套音色的兜底。pitch 也保持默认 1.0。
+   · Alex  female         ：指定本地语音，音调 1.5
+   · Steve male           ：本机有专用男音（如 Kangkang）→ 直接用它，pitch 1.0；
+                            没有专用男音 → 用默认语音把音调压到 0.5
+   ⚠️ 指定 voice 在个别平台（老 iPad / 某些安卓）可能静音，所以只有 Alex/Steve 才指定；
+      若指定后 2.2 秒没出声，speakOne 会自动退回「不指定引擎」重试一次（等价于 creeper 的用法）。
+   ⚠️ Windows + Chromium 朗读中文时会把 pitch 吞掉（只传语速），本机听感可能变化不明显；
+      换到支持 pitch 的浏览器/系统上，这几个值会真正生效。 */
+function pickVoice(pref, lang){
+  if(!voices.length) loadVoices();
+
+  /* creeper：默认语音，什么都不指定（跨平台最稳） */
+  if(pref !== "male" && pref !== "female"){
+    return { voice: null, pitch: 1.0, fallbackMsg: "" };
+  }
+  var base = bestVoiceFor(lang);
+
+  if(pref === "male"){
+    var mv = findMaleVoice(lang);
+    if(mv) return { voice: mv, pitch: 1.0, fallbackMsg: "" };
+    return { voice: base, pitch: 0.5, fallbackMsg: "没有专用男音，已压低音调模拟" };
+  }
+  /* female */
+  return { voice: base, pitch: 1.5, fallbackMsg: "" };
+}
+
+function showHint(msg,sticky){
+  var el=$("#soundHint"); if(!el) return;
+  $("#soundHintText").textContent=msg; el.hidden=false; el.classList.add("show");
+  clearTimeout(hintTimer); if(!sticky) hintTimer=setTimeout(hideHint,9000);
+}
+function hideHint(){
+  var el=$("#soundHint"); if(!el) return;
+  clearTimeout(hintTimer); el.classList.remove("show");
+  hintTimer=setTimeout(function(){ el.hidden=true; },260);
+}
+function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true); }
+
+/* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色 */
+function speakOne(text, lang, rate, onDone){
+  if(state.muted){ onDone&&onDone(); return; }
+  /* 每次朗读前重新探测：微信里 API 可能在 WeixinJSBridgeReady / 首次触摸后才出现 */
+  if(!primeTTS()){
+    warnOnce(IS_WECHAT
+      ? "微信内置浏览器没开放朗读，点右上角『…』→ 在浏览器中打开再试"
+      : "这个浏览器暂时不支持朗读，建议用 Chrome 或 Safari 打开");
+    return;
+  }
+  var synth=getSynth(); if(!synth){ warnOnce("当前环境语音接口不完整"); return; }
+  var c=ac(); if(c && c.state==="suspended" && c.resume) c.resume().catch(function(){});
+
+  var pick = pickVoice(state.voicePref, lang);
+  var textLang = (lang==="zh") ? "zh-CN" : "en-US";
+  /* lang 只在「本机真有该语言本地语音」时才给；否则留空走平台默认，
+     免得 Chrome 按 en-US 去找 Google 联网语音而静音 */
+  var safeLang = hasLocalLang(lang) ? textLang : "";
+  var u=newUtt(text);
+  if(!u){ warnOnce("当前环境语音接口不完整，换个浏览器试试"); return; }
+  u.rate = rate||.85;
+  u.pitch = pick.pitch;
+  u.volume = 1;
+
+  if(pick.voice){
+    /* 指定引擎；lang 跟随该语音（中文语音念英文时 lang=zh-CN 也正常） */
+    u.voice = pick.voice;
+    u.lang  = pick.voice.lang || textLang;
+  } else {
+    /* creeper：不指定引擎，lang 也尽量不指定 → 纯平台默认 */
+    u.lang  = safeLang;
+  }
+
+  var done=false, started=false, wakeTimer=null;
+  function finish(){
+    if(done) return;
+    done=true;
+    clearTimeout(wakeTimer);
+    clearTimeout(player.timer);
+    onDone&&onDone();
+  }
+  u.onstart=function(){ started=true; clearTimeout(wakeTimer); ttsPrimed=true; ttsWarned=false; hideHint(); };
+  u.onend=finish;
+  u.onerror=function(ev){
+    var e=(ev&&ev.error)||"";
+    if(e==="interrupted"||e==="canceled") return;
+    if(e==="not-allowed"||e==="NotAllowedError"){
+      showHint(IS_WECHAT?"微信拦住了声音，请点播放按钮再试一次 👆":"浏览器拦住了播放，请再点一次播放按钮 👆");
+      return;
+    }
+    /* 语音/网络异常 → 不指定引擎（用系统默认）再来一次，音调沿用 */
+    if(/synthesis|voice|audio|network/i.test(e)){
+      try{
+        var u2=newUtt(text);
+        if(!u2){ finish(); return; }
+        u2.lang = safeLang;
+        u2.rate = rate||.85; u2.pitch = pick.pitch; u2.volume = 1;
+        u2.onend = finish;
+        synth.speak(u2);
+      }catch(x){ finish(); }
+      return;
+    }
+    finish();
+  };
+  try{
+    if(synth.speaking||synth.pending) synth.cancel();
+    var doSpeak=function(){
+      try{
+        synth.speak(u);
+        /* Chrome 引擎会「假死」：speak 后 resume() 能唤醒；
+           iOS/微信不需要，且在异步 timer 里 resume 可能打断发声 */
+        if(!NEED_SYNC_SPEAK) setTimeout(function(){ try{ synth.resume(); }catch(e){} },320);
+      }catch(e){ finish(); }
+    };
+    /* iOS 微信 / X5：必须在用户手势回调里同步 speak，不能放进 setTimeout；
+       Chrome：cancel 后立刻 speak 会被丢弃，隔 90ms 更稳 */
+    if(NEED_SYNC_SPEAK) doSpeak(); else setTimeout(doSpeak,90);
+  }catch(e){ finish(); return; }
+
+  /* 2.2 秒还没开声 → 换系统默认语音重试一次（不指定 voice，兼容性最高） */
+  wakeTimer=setTimeout(function(){
+    if(started || done) return;
+    try{ synth.cancel(); }catch(e){}
+    try{
+      var u3=newUtt(text);
+      if(!u3) return;
+      u3.lang = safeLang;
+      u3.rate = rate||.85; u3.pitch = pick.pitch; u3.volume = 1;
+      u3.onstart=function(){ started=true; clearTimeout(wakeTimer); ttsPrimed=true; hideHint(); };
+      u3.onend=finish;
+      u3.onerror=function(){ finish(); };
+      synth.speak(u3);
+      if(!NEED_SYNC_SPEAK) setTimeout(function(){ try{ synth.resume(); }catch(e){} },300);
+    }catch(e){}
+    /* 微信里语音列表常为空，若同步 speak 被吞掉，给一条可操作的指引而不是说「不支持」 */
+    if(IS_WECHAT && !started) showHint("微信里没听到声音？点右上角『…』→ 在浏览器中打开再试", true);
+  }, 2200);
+
+  var est=Math.max(1500,text.length*220/(rate||.85));
+  player.timer=setTimeout(finish, est+3500);
+}
+
+var toastTimer;
+function toast(msg){
+  var el=$("#toast"); el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ el.classList.remove("show"); },1700);
+}
+
+/* ========================= 头像（苦力怕 / Steve / Alex） =========================
+   全部 8×8。Steve/Alex 用 grid 逐格真实取色；苦力怕用 map+color。
+   每格都填可见色，绝不透明。
+   ========================================================= */
+var FACES = {
+  auto: { /* 苦力怕 */
+    bg: "#cfe8c8",
+    map: [
+      "........",
+      ".XX..XX.",
+      ".XX..XX.",
+      "...XX...",
+      "..XXXX..",
+      ".XXXXXX.",
+      ".XX..XX.",
+      ".XX..XX."
+    ],
+    color: function(ch,x,y){
+      if(ch==="X") return "#123d15";
+      return ["#5aa832","#64b23a","#549e2e"][(x+y)%3];
+    }
+  },
+  male: { /* Steve：8×8 逐格取色还原自原图 */
+    bg: "#22191b",
+    grid: [
+      ["#22191b","#221a1c","#20181b","#221a1b","#23191a","#221819","#231a1b","#22191b"],
+      ["#201919","#23191b","#221a1b","#241b1b","#241a1a","#23191a","#21181a","#24191c"],
+      ["#1f1919","#b98d66","#d09a72","#d19b73","#d09872","#d19a72","#b97956","#322628"],
+      ["#b77754","#ba8b62","#bb7a55","#b98d86","#946b61","#cf9771","#946b57","#926a57"],
+      ["#b88e65","#f7fafa","#3d439b","#c37d71","#cf9975","#3f4499","#f9fdfd","#bb7f5c"],
+      ["#a2664c","#b77959","#b58b89","#8a5252","#7c4946","#ba9072","#b97b59","#b07758"],
+      ["#906957","#9d6750","#5d282a","#77423e","#75413e","#642b2e","#906958","#936b57"],
+      ["#8f593a","#935c41","#602a28","#65312e","#673530","#602a28","#926a5a","#93634f"]
+    ]
+  },
+  female: { /* Alex：8×8 逐格取色还原自原图 */
+    bg: "#ea944a",
+    grid: [
+      ["#ea944a","#f7b05a","#d79246","#fbb458","#eb954c","#db9549","#f8b25c","#ec974e"],
+      ["#d89447","#f4b056","#e69448","#dd9547","#ea954d","#e8944a","#d8934c","#f3ae55"],
+      ["#d89543","#e29349","#d69144","#ea944a","#e1ca9b","#e1ca9a","#e8954b","#da9348"],
+      ["#d89647","#d99446","#e9964c","#f1d9b9","#f0dcbe","#f1ddc0","#eedbc0","#ed964f"],
+      ["#efddc3","#f7fbf9","#1f744c","#ecdcc1","#efdec2","#247d52","#f8fefe","#f1dec2"],
+      ["#f1dec0","#f1ddc1","#f1dcc0","#f1dcc1","#f2ddc1","#f0ddc1","#f1dec2","#f1ddc2"],
+      ["#efddc2","#f0dec3","#f2dcc2","#eac6c4","#eac6c5","#efdcc2","#edddc4","#f0dcc3"],
+      ["#f1ddc1","#f1ddc2","#f1dcc1","#f0dcc3","#f0dbc2","#f2dcc1","#f0dcc2","#e9d4b0"]
+    ]
+  }
+};
+
+function buildFace(kind){
+  try{
+    var f = FACES[kind] || FACES.auto;
+    var html = "";
+    if(f.grid){
+      /* 8×8 真实色块矩阵，每格已是最终颜色 */
+      for(var gy=0;gy<8;gy++){
+        var grow = f.grid[gy];
+        for(var gx=0;gx<8;gx++){
+          html += '<i style="background:' + (grow[gx] || f.bg) + '"></i>';
+        }
+      }
+    }else{
+      for(var y=0;y<8;y++){
+        var row = f.map[y] || "........";
+        for(var x=0;x<8;x++){
+          var ch = row.charAt(x) || ".";
+          html += '<i style="background:' + f.color(ch, x, y) + '"></i>';
+        }
+      }
+    }
+    var el = $("#creeper");
+    el.innerHTML = html;
+    el.style.background = f.bg;
+  }catch(e){
+    $("#creeper").innerHTML = '<i style="background:#6cbf4a;grid-column:1/9;grid-row:1/9"></i>';
+    console.error("buildFace error:", e);
+  }
+}
+
+function nextPref(p){ return p==="auto" ? "male" : (p==="male" ? "female" : "auto"); }
+var PREF_LABEL = { auto:"自动", male:"男声", female:"女声" };
+function applyPref(pref){
+  state.voicePref = pref;
+  buildFace(pref);
+  save("voicePref", pref);
+}
+
+/* ========================= 状态 ========================= */
+var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, voicePref:"auto" };
+var currentSentences=[];
+var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
+/* continuous = 用户的「连播意图」，只由播放按钮维护：
+   点播放→true（想连播），点暂停→false（人工停止）。
+   单句点击是否连播看它，而不是看 player.playing——后者会被
+   playSentence 自身置 true，导致「停止后点单句、未播完又点别的句子」被误判成连播。 */
+var player={ playing:false, continuous:false, current:0, rate:0.85, timer:null };
+
+var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
+var TRANS_ORDER = ["cur","all","none"];
+/* 词汇记忆模式：all=原文下划线+译文高亮都显示；zh=只显示译文(原文命中词挖空)；en=只显示原文(译文命中词挖空) */
+var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文", none:"不标注" };
+var VOCAB_ORDER = ["all","zh","en","none"];
+
+/* =========================================================
+   格式识别 + 断句（原样保留）
+   ========================================================= */
+function isCJK(ch){ return /[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch); }
+function isCJKPunct(ch){ return /[。！？；，、…（）【】「」『』：《》""''·—　]/.test(ch); }
+/* 中文占比：汉字+中文标点算中文侧；英文按「单词」整体计 1 单位（不再按字母逐个计），
+   避免长英文词把中文比例稀释，导致夹英文的中文行被误判成英文/混排。数字、半角标点等算其他。 */
+function cjkRatio(s){
+  if(!s) return 0;
+  var cjk=0, other=0;
+  var stripped=s.replace(/[A-Za-z][A-Za-z''-]*/g,""); /* 去掉英文单词（整体按词计） */
+  for(var i=0;i<stripped.length;i++){
+    var ch=stripped[i];
+    if(/\s/.test(ch)) continue;
+    if(isCJK(ch)||isCJKPunct(ch)) cjk++; else other++;
+  }
+  var en=enWordCount(s)*1.3; /* 英文词略加权，避免英文占多数的句子被误判成中文 */
+  var total=cjk+en+other;
+  return total?cjk/total:0;
+}
+function enWordCount(s){ var m=s.match(/[A-Za-z][A-Za-z'’-]*/g); return m?m.length:0; }
+function stripBullet(line){
+  var t=line.trim();
+  t=t.replace(/^[\(\[（【]?\s*\d+\s*[\)\]）】\.、．]\s*/,"");
+  t=t.replace(/^[\(\[（【]?\s*[一二三四五六七八九十百]+\s*[\)\]）】\.、．]\s*/,"");
+  t=t.replace(/^[①-⑳]\s*/,"");
+  t=t.replace(/^[-–—•·*]+\s*/,"");
+  return t.trim();
+}
+var ABBR=/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|vs|etc|e\.g|i\.e|U\.S|U\.K|No|Fig|al)\./gi;
+function splitEnglish(text){
+  var t=text.replace(ABBR,function(m){return m.replace(/\./g,"\u0001");});
+  t=t.replace(/(\d)\.(\d)/g,"$1\u0002$2");
+  var parts=t.match(/[^.!?…]+[.!?…]+["'”’)\]]*/g)||[t];
+  parts=parts.map(function(s){return s.replace(/\u0001/g,".").replace(/\u0002/g,".").trim();}).filter(function(s){return s.length>0;});
+  return parts;
+}
+function splitChinese(text){
+  var parts=text.match(/[^。！？；…]+[。！？；…]+["'”’）】」』]*/g)||[text];
+  return parts.map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
+}
+
+function parseText(raw){
+  var lines=raw.replace(/\r\n/g,"\n").split("\n");
+  /* 先抽词表行：含 | 且「左英右中」→ 收为词条，并从正文剔除（不计入句子） */
+  var vocab=[];
+  lines=lines.filter(function(line){
+    if(line.indexOf("|")<0) return true;
+    var parts=line.split("|");
+    var en=stripBullet(parts[0]), zh=stripBullet(parts.slice(1).join("|"));
+    if(en && zh && enWordCount(en)>0 && cjkRatio(en)===0 && cjkRatio(zh)>0){
+      if(!vocab.some(function(v){return v.en.toLowerCase()===en.toLowerCase();}))
+        vocab.push({en:en, zh:zh});
+      return false; /* 词表行不进正文 */
+    }
+    return true;
+  });
+  var stats={en:0,zh:0,mix:0,other:0};
+  var classified=lines.map(function(line){
+    var t=stripBullet(line);
+    if(!t) return {type:"blank",text:""};
+    /* 行首 # 作为分段符：切断 chunk，文字挂到紧随其后的句子上做小标题 */
+    if(/^#{1,6}\s*/.test(line.trim())){
+      return {type:"sep",text:line.trim().replace(/^#+\s*/,"")};
+    }
+    var r=cjkRatio(t),w=enWordCount(t);
+    if(r>=0.5){stats.zh++;return{type:"zh",text:t};}
+    if(r>0&&w>=1){stats.mix++;return{type:"mix",text:t};}
+    if(w>=1){stats.en++;return{type:"en",text:t};}
+    stats.other++;return{type:"other",text:t};
+  });
+
+  var order="en-first";
+  for(var i=0;i<classified.length;i++){
+    var c=classified[i];
+    if(c.type==="blank"||c.type==="sep") continue;
+    order = c.type==="zh" ? "zh-first" : "en-first";
+    break;
+  }
+
+  var items=[];
+
+  /* ---------- 按「块」配对：相邻的一轮英文行 + 中文行构成一个 chunk ----------
+     块边界有两种：
+       1) 空行 / 标题 / 无法识别的行；
+       2) 语言阶段「回退」——en-first 下中文之后又来英文（或 zh-first 反过来），
+          说明上一组已经结束、这是新的一组。
+     这样句数对不上时，多出来的句子只会留在本块内（中文留空 / 中文被忽略），
+     绝不会串到下一组「一行英文一行中文」去。 */
+  var chunks=[],cur=null,pendingHead="";
+  /* 新块创建时立刻「消费」pendingHead 存到块上：
+     避免等到块内配对阶段时 pendingHead 已被后面的 # 行覆盖。
+     order 按块局部判断（块内首行语言），不再用全文全局 order——
+     否则 # 分段里「中文在前」的用例会被全文顺序强行拆块。 */
+  function newChunk(){
+    var c={enLines:[],zhLines:[],head:pendingHead,order:null,lastPure:null};
+    pendingHead="";
+    chunks.push(c); return c;
+  }
+  function pushItem(en,zh,head){ items.push({en:en,zh:zh,head:head||""}); }
+  function addPart(lang,text,isMix){
+    if(!text) return;
+    if(!cur){ cur=newChunk(); cur.order=lang; }
+    /* 切块：出现「块首语言」且其前一行是另一种纯语言行 → 新一轮开始。
+       纯行之间才触发；混排行不参与阶段判定（D3 的混排+下一行属于同一块）。 */
+    if(lang===cur.order && cur.lastPure && cur.lastPure!==lang){
+      cur=newChunk(); cur.order=lang;
+    }
+    if(!isMix) cur.lastPure=lang;
+    if(lang==="en") cur.enLines.push(text); else cur.zhLines.push(text);
+  }
+  var CJK_PUNCT=/[\u4e00-\u9fff\u3400-\u4dbf。！？；，、…（）【】「」『』]/;
+  classified.forEach(function(c){
+    if(c.type==="blank"){ cur=null; return; }
+    if(c.type==="sep"){ pendingHead=c.text; cur=null; return; }  /* 分段符：切块 + 记小标题 */
+    if(c.type==="other"){ cur=null; return; }
+    if(c.type==="en"){ addPart("en",c.text); return; }
+    if(c.type==="zh"){ addPart("zh",c.text); return; }
+    if(c.type==="mix"){
+      var parts=c.text.split(/([\u4e00-\u9fff\u3400-\u4dbf。！？；，、…（）【】「」『』]+)/);
+      var enBuf="",zhBuf="";
+      parts.forEach(function(p){
+        if(!p) return;
+        if(CJK_PUNCT.test(p)) zhBuf+=p; else enBuf+=p;
+      });
+      /* 混排行按块首语言决定先后顺序，且不参与 lastPure 阶段判定 */
+      var firstLang = (cur && cur.order) ? cur.order : (cjkRatio(c.text)>=0.5 ? "zh" : "en");
+      var parts2 = firstLang==="zh" ? [["zh",zhBuf],["en",enBuf]] : [["en",enBuf],["zh",zhBuf]];
+      parts2.forEach(function(pair){
+        if(pair[1].trim()) addPart(pair[0], pair[1].trim(), true);
+      });
+      return;
+    }
+    if(enWordCount(c.text)>0) addPart("en",c.text);
+  });
+
+  /* ---------- 块内配对：能对齐就对齐，对不齐整块合并 ---------- */
+  chunks.forEach(function(ch){
+    var enSents=[], zhSents=[];
+    ch.enLines.forEach(function(l){
+      splitEnglish(l).forEach(function(s){ if(s && s.trim()) enSents.push(s.trim()); });
+    });
+    ch.zhLines.forEach(function(l){
+      splitChinese(l).forEach(function(s){ if(s && s.trim()) zhSents.push(s.trim()); });
+    });
+    var ne=enSents.length, nz=zhSents.length;
+    if(!ne && !nz) return;
+    /* 小标题只挂到本块的首句，块内后续句子不重复挂 */
+    var h=ch.head;
+    /* A：一侧为空，只放有内容的一侧 */
+    if(!ne){ zhSents.forEach(function(zh){ pushItem("",zh,h); h=""; }); return; }
+    if(!nz){ enSents.forEach(function(en){ pushItem(en,"",h); h=""; }); return; }
+    /* B：句数相等，1:1 严格配对 */
+    if(ne===nz){
+      for(var i=0;i<ne;i++) pushItem(enSents[i],zhSents[i],h), h="";
+      return;
+    }
+    /* C：对不齐 → 整块合并成一句（英文空格拼接，中文直接拼接），绝不串段 */
+    pushItem(enSents.join(" "),zhSents.join(""),h);
+  });
+
+  items=items.filter(function(it){
+    return (it.en && it.en.trim()) || (it.zh && it.zh.trim());
+  });
+  return {items:items,order:order,stats:stats,vocab:vocab};
+}
+
+/* =========================================================
+   单词表标注：词形变化 + 命中挖空
+   ========================================================= */
+/* 常用不规则动词：原形 → 不规则变形（第三人称单数/过去式/过去分词/现在分词）。
+   词表写原形即可识别这些变形；不在表里的走下面的规则变化。 */
+var IRREGULAR = {
+  be:["am","is","are","was","were","been","being"],
+  have:["has","had","having"], do:["does","did","done","doing"],
+  go:["goes","went","gone","going"], come:["comes","came","come","coming"],
+  get:["gets","got","gotten","getting"], make:["makes","made","making"],
+  take:["takes","took","taken","taking"], give:["gives","gave","given","giving"],
+  see:["sees","saw","seen","seeing"], know:["knows","knew","known","knowing"],
+  find:["finds","found","finding"], think:["thinks","thought","thinking"],
+  tell:["tells","told","telling"], become:["becomes","became","becoming"],
+  leave:["leaves","left","leaving"], feel:["feels","felt","feeling"],
+  bring:["brings","brought","bringing"], begin:["begins","began","begun","beginning"],
+  keep:["keeps","kept","keeping"], hold:["holds","held","holding"],
+  write:["writes","wrote","written","writing"], stand:["stands","stood","standing"],
+  hear:["hears","heard","hearing"], mean:["means","meant","meaning"],
+  meet:["meets","met","meeting"], run:["runs","ran","run","running"],
+  pay:["pays","paid","paying"], sit:["sits","sat","sitting"],
+  speak:["speaks","spoke","spoken","speaking"], lie:["lies","lay","lain","lying"],
+  lead:["leads","led","leading"], read:["reads","read","reading"],
+  grow:["grows","grew","grown","growing"], lose:["loses","lost","losing"],
+  fall:["falls","fell","fallen","falling"], send:["sends","sent","sending"],
+  build:["builds","built","building"], understand:["understands","understood","understanding"],
+  draw:["draws","drew","drawn","drawing"], break:["breaks","broke","broken","breaking"],
+  spend:["spends","spent","spending"], cut:["cuts","cut","cutting"],
+  rise:["rises","rose","risen","rising"], drive:["drives","drove","driven","driving"],
+  buy:["buys","bought","buying"], wear:["wears","wore","worn","wearing"],
+  choose:["chooses","chose","chosen","choosing"], drink:["drinks","drank","drunk","drinking"],
+  swim:["swims","swam","swum","swimming"], sing:["sings","sang","sung","singing"],
+  fly:["flies","flew","flown","flying"], forget:["forgets","forgot","forgotten","forgetting"],
+  teach:["teaches","taught","teaching"], catch:["catches","caught","catching"],
+  sleep:["sleeps","slept","sleeping"], wake:["wakes","woke","woken","waking"],
+  win:["wins","won","winning"], eat:["eats","ate","eaten","eating"],
+  put:["puts","put","putting"], let:["lets","let","letting"], set:["sets","set","setting"]
+};
+/* 生成一个英文词条的所有变形：
+   先查不规则表；否则走规则 work→works/worked/working、study→studies/studied/studying、
+   like→likes/liked/liking；含空格短语不变化，只精确匹配。 */
+function enForms(w){
+  w=w.trim(); if(!w) return [];
+  if(/\s/.test(w)) return [w]; /* 短语：精确匹配整串 */
+  var out=[w], low=w.toLowerCase();
+  function add(s){ if(s && out.indexOf(s)<0) out.push(s); }
+  if(IRREGULAR[low]){                    /* 常用不规则动词：直接用表 */
+    IRREGULAR[low].forEach(add);
+  } else if(/[^aeiou]y$/i.test(w)){      /* study → studies/studied/studying */
+    var stem=w.slice(0,-1);
+    add(stem+"ies"); add(stem+"ied"); add(w+"ing");
+  } else if(/e$/i.test(w)){              /* like → likes/liked/liking */
+    add(w+"s"); add(w+"d"); add(w.slice(0,-1)+"ing");
+  } else if(/(s|x|ch|sh)$/i.test(w)){    /* watch → watches/watched/watching */
+    add(w+"es"); add(w+"ed"); add(w+"ing");
+  } else {                                /* work → works/worked/working */
+    add(w+"s"); add(w+"ed"); add(w+"ing");
+  }
+  return out;
+}
+function regEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+/* 命中词（可能是变形，如 logs）反查词表中文：展开每个词条的变形来匹配 */
+function wordZh(word){
+  var w=String(word||"").toLowerCase();
+  for(var i=0;i<currentVocab.length;i++){
+    var v=currentVocab[i];
+    var forms=enForms(v.en).map(function(f){return String(f).toLowerCase();});
+    if(forms.indexOf(w)>=0) return v.zh||"";
+  }
+  return "";
+}
+/* 词表命中区间：返回 [{start,end,word}]，已合并重叠、长词优先。
+   挖空显示与打字测试共用这一套规则，避免两处判定跑偏。 */
+function vocabRanges(text, lang){
+  if(!text || !currentVocab.length) return [];
+  var hits=[];
+  if(lang==="en"){
+    var forms=[];
+    currentVocab.forEach(function(v){ enForms(v.en).forEach(function(f){ forms.push(f); }); });
+    forms=forms.filter(function(f){return f;}).sort(function(a,b){return b.length-a.length;});
+    if(forms.length){
+      var re=new RegExp("\\b("+forms.map(regEsc).join("|")+")\\b","gi"), m;
+      while((m=re.exec(text))!==null){ hits.push({start:m.index,end:m.index+m[0].length}); if(m[0].length===0) re.lastIndex++; }
+    }
+  } else {
+    currentVocab.forEach(function(v){
+      var term=v.zh.trim(); if(!term) return;
+      var from=0, idx;
+      while((idx=text.indexOf(term,from))>=0){ hits.push({start:idx,end:idx+term.length}); from=idx+term.length; }
+    });
+  }
+  if(!hits.length) return [];
+  hits.sort(function(a,b){return a.start-b.start||b.end-a.end;});
+  var merged=[], last=null;
+  hits.forEach(function(h){
+    if(last && h.start<last.end){ last.end=Math.max(last.end,h.end); }
+    else { last={start:h.start,end:h.end}; merged.push(last); }
+  });
+  merged.forEach(function(h){ h.word=text.slice(h.start,h.end); });
+  return merged;
+}
+/* 把一段文本按词表命中包成 <span>：
+   lang=en 原文 → 命中词 v-full 带下划线；lang=zh 译文 → 命中词 v-full 带高亮。
+   同时输出挖空占位 v-blank（默认隐藏，仅由 body[data-vocab] 切换显示）。 */
+function markVocab(text, lang){
+  if(!text) return "";
+  if(!currentVocab.length) return esc(text);
+  var merged=vocabRanges(text, lang);
+  if(!merged.length) return esc(text);
+  var out="", pos=0;
+  merged.forEach(function(h){
+    if(h.start>pos) out+=esc(text.slice(pos,h.start));
+    var word=text.slice(h.start,h.end);
+    var width=Math.max(1, Array.from(word).length);
+    out+='<span class="vocab" data-lang="'+lang+'">'+
+         '<span class="v-full">'+esc(word)+'</span>'+
+         '<span class="v-blank" style="min-width:'+(width*0.9).toFixed(1)+'em">&nbsp;</span>'+
+         '</span>';
+    pos=h.end;
+  });
+  if(pos<text.length) out+=esc(text.slice(pos));
+  return out;
+}
+
+/* =========================================================
+   渲染（原样）
+   ========================================================= */
+function firstLangByMode(mode){
+  if(mode==="zh" || mode==="zh-en") return "zh";
+  return "en";
+}
+
+/* 词汇表面板：按当前语言顺序像句子一样列出词条，可点击朗读 */
+function renderVocabBlock(){
+  var box=$("#vocabListBox");
+  if(!box) return;
+  if(!currentVocab.length){ box.innerHTML=""; box.hidden=true; return; }
+  var first=firstLangByMode(state.langMode);
+  var rows=currentVocab.map(function(v,i){
+    var en=v.en||"", zh=v.zh||"";
+    var main=first==="zh"?zh:en, alt=first==="zh"?en:zh;
+    return '<button type="button" class="vb-row" data-vi="'+i+'" title="点击朗读这个词">'+
+      '<span class="line">'+esc(main)+'</span>'+
+      (alt?'<span class="line">'+esc(alt)+'</span>':'')+
+    '</button>';
+  }).join("");
+  box.innerHTML='<div class="vocab-block"><div class="vb-head">📒 单词表 · '+currentVocab.length+' 词 · 点词朗读</div>'+rows+'</div>';
+  box.hidden=!state.vocabList;
+}
+/* 高亮正在朗读的词条 */
+function highlightVocab(i){
+  $$(".vb-row").forEach(function(el){el.classList.remove("active");});
+  if(i<0 || i>=currentVocab.length) return;
+  var el=document.querySelector('.vb-row[data-vi="'+i+'"]');
+  if(el){ el.classList.add("active"); el.scrollIntoView({behavior:"smooth",block:"center"}); }
+}
+/* 朗读词表：从第 i 词开始，按 langMode 顺序读；读一条 → 下一条链下去 */
+function playVocabSeq(i, autoNext){
+  if(!currentVocab.length || !state.vocabList){ stopPlayback(); return; }
+  if(i>=currentVocab.length){ stopPlayback(); return; }
+  player.playing=true;
+  highlightVocab(i);
+  var v=currentVocab[i], rate=player.rate, mode=state.langMode;
+  var en=v.en||"", zh=v.zh||"";
+  var next=function(){
+    if(!player.playing) return;
+    if(autoNext) playVocabSeq(i+1, true);
+    else stopPlayback();
+  };
+  if(mode==="en"){
+    if(en) speakOne(en,"en",rate,next); else next();
+  }else if(mode==="zh"){
+    if(zh) speakOne(zh,"zh",rate,next); else next();
+  }else if(mode==="en-zh"){
+    if(en) speakOne(en,"en",rate,function(){ if(zh) speakOne(zh,"zh",rate,next); else next(); });
+    else if(zh) speakOne(zh,"zh",rate,next); else next();
+  }else{ /* zh-en */
+    if(zh) speakOne(zh,"zh",rate,function(){ if(en) speakOne(en,"en",rate,next); else next(); });
+    else if(en) speakOne(en,"en",rate,next); else next();
+  }
+}
+/* 文章念完转词表：先念 Keywords 提示，再顺读整张表 */
+function playVocabAfterStory(){
+  if(!state.vocabList || !currentVocab.length){ stopPlayback(); return; }
+  highlightVocab(-1);
+  speakOne("Keywords","en",player.rate,function(){
+    if(player.playing) playVocabSeq(0, true);
+  });
+}
+function renderSentences(result){
+  currentSentences=result.items;
+  player.current=0;
+  player.continuous=false; /* 新会话：连播意图清零 */
+  stopPlayback();
+
+  var first = firstLangByMode(state.langMode);
+
+  var html="";
+  html+=result.items.map(function(s,i){
+    /* 显式追踪语言：标注按真实语言走，main/alt 互换时语言也跟着换 */
+    var mainText, altText, mainLang, altLang;
+    if(first==="zh"){
+      mainText=s.zh||""; mainLang="zh"; altText=s.en||""; altLang="en";
+    } else {
+      mainText=s.en||""; mainLang="en"; altText=s.zh||""; altLang="zh";
+    }
+    if(!mainText){ mainText=altText; mainLang=altLang; altText=""; }
+    /* # 分段符的小标题：只用于查看，不是按钮、不计句、不影响 data-idx */
+    var segHead = s.head
+      ? '<div class="seg-head">'+esc(s.head)+'</div>'
+      : '';
+    return segHead +
+      '<button class="sent" data-idx="'+i+'">'+
+      '<span class="line main-line"><span class="num">'+(i+1)+'.</span>'+markVocab(mainText, mainLang)+'</span>'+
+      (altText ? '<span class="line alt-line">'+markVocab(altText, altLang)+'</span>' : '')+
+    '</button>';
+  }).join("");
+  html+='<div id="vocabListBox" hidden></div>'; /* 词汇表放在句子列表最后 */
+  $("#readerBody").innerHTML=html;
+  renderVocabBlock();
+  $("#reader").hidden=false;
+  $("#sentCount").textContent=result.items.length+" 句";
+  updateProgress();
+}
+function updateProgress(){
+  $("#progress").textContent=(currentSentences.length?(player.current+1):0)+" / "+currentSentences.length;
+}
+function highlightSentence(idx){
+  $$(".sent").forEach(function(el){el.classList.remove("active");});
+  var el=document.querySelector('.sent[data-idx="'+idx+'"]');
+  if(el){el.classList.add("active");el.scrollIntoView({behavior:"smooth",block:"center"});}
+  updateProgress();
+}
+
+/* =========================================================
+   播放器（原样）
+   ========================================================= */
+function playSentence(idx, autoNext){
+  if(autoNext===undefined) autoNext=true;
+  if(idx<0 || idx>=currentSentences.length){ stopPlayback(); return; }
+  player.current=idx; player.playing=true;
+  $("#playBtn").textContent="⏸ 暂停"; $("#playBtn").classList.add("on");
+  highlightSentence(idx);
+
+  var s=currentSentences[idx];
+  var mode=state.langMode;
+  var rate=player.rate;
+  var enText=s.en||"", zhText=s.zh||"";
+
+  var goNext=function(){
+    if(!player.playing) return;
+    if(autoNext && player.current+1<currentSentences.length) playSentence(player.current+1, true);
+    else if(autoNext && state.vocabList && currentVocab.length) playVocabAfterStory(); /* 文章读完续读单词表 */
+    else stopPlayback();
+  };
+
+  if(mode==="en"){
+    if(!enText){ goNext(); return; }
+    speakOne(enText,"en",rate,goNext);
+  } else if(mode==="zh"){
+    if(!zhText){ goNext(); return; }
+    speakOne(zhText,"zh",rate,goNext);
+  } else if(mode==="en-zh"){
+    if(!enText && !zhText){ goNext(); return; }
+    if(enText){
+      speakOne(enText,"en",rate,function(){
+        if(!player.playing) return;
+        if(zhText) speakOne(zhText,"zh",rate,goNext);
+        else goNext();
+      });
+    } else {
+      speakOne(zhText,"zh",rate,goNext);
+    }
+  } else if(mode==="zh-en"){
+    if(!enText && !zhText){ goNext(); return; }
+    if(zhText){
+      speakOne(zhText,"zh",rate,function(){
+        if(!player.playing) return;
+        if(enText) speakOne(enText,"en",rate,goNext);
+        else goNext();
+      });
+    } else {
+      speakOne(enText,"en",rate,goNext);
+    }
+  }
+}
+function stopPlayback(){
+  player.playing=false; clearTimeout(player.timer);
+  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
+  $("#playBtn").textContent="▶ 播放"; $("#playBtn").classList.remove("on");
+  $$(".sent").forEach(function(el){el.classList.remove("active");});
+  highlightVocab(-1);
+}
+
+/* =========================================================
+   译文三态（原样）
+   ========================================================= */
+function applyTrans(){
+  document.body.setAttribute("data-trans", state.trans);
+  $("#transBtn").textContent = "译文：" + TRANS_LABEL[state.trans];
+  $("#transBtn").classList.toggle("on", state.trans!=="none");
+  $("#transBtn").classList.toggle("off", state.trans==="none");
+}
+function cycleTrans(){
+  var i = TRANS_ORDER.indexOf(state.trans);
+  state.trans = TRANS_ORDER[(i+1) % TRANS_ORDER.length];
+  save("trans", state.trans);
+  applyTrans();
+}
+
+/* 词汇记忆三态：全部 → 仅译文 → 仅原文 → 全部 */
+function applyVocab(){
+  document.body.setAttribute("data-vocab", state.vocab);
+  $("#vocabBtn").textContent = "词汇：" + VOCAB_LABEL[state.vocab];
+  var noMark = state.vocab==="none"; /* 不标注态：黄底；其余三态：绿底 */
+  $("#vocabBtn").classList.toggle("on", !noMark);
+  $("#vocabBtn").classList.toggle("vocab-off", noMark);
+}
+function cycleVocab(){
+  var i = VOCAB_ORDER.indexOf(state.vocab);
+  if(i<0) i=0;
+  state.vocab = VOCAB_ORDER[(i+1) % VOCAB_ORDER.length];
+  save("vocab", state.vocab);
+  applyVocab();
+}
+/* 词汇表面板：显示/隐藏两态，默认显示 */
+function applyVocabList(){
+  $("#vocabListBtn").textContent = "词汇表：" + (state.vocabList?"显示":"隐藏");
+  $("#vocabListBtn").classList.toggle("on", state.vocabList);
+  var box=$("#vocabListBox");
+  if(box) box.hidden=!state.vocabList;
+}
+function toggleVocabList(){
+  state.vocabList=!state.vocabList;
+  save("vocabList", state.vocabList);
+  applyVocabList();
+}
+
+/* ========================= 打字测试（句子里填词） ========================= */
+var tt={ items:[], idx:0, correct:0, total:0, results:[], drafts:[], timer:null, speakGen:0 };
+/* 归一化：小写、去标点、压空格 */
+function ttNorm(s){
+  return String(s||"").toLowerCase()
+    .replace(/[.,!?;:'"“”‘’]/g,"")
+    .replace(/\s+/g," ").trim();
+}
+/* 生成题目：每句英文里命中词表的词挖成空，提示取该句中文 */
+function ttBuild(){
+  var items=[];
+  currentSentences.forEach(function(s){
+    var en=s.en||"";
+    var ranges=vocabRanges(en,"en");
+    if(!ranges.length) return; /* 没有命中词的句子不考 */
+    items.push({ en:en, zh:s.zh||"", ranges:ranges });
+  });
+  return items;
+}
+/* ===== 手机软键盘适配：用 visualViewport 感知键盘，把输入框顶到可视区 ===== */
+var ttKb={ bound:false, open:false, baseH:0 };
+function ttKbInit(){
+  if(ttKb.bound) return;
+  var vv=window.visualViewport;
+  if(!vv) return; /* 不支持则退回原生 focus 行为 */
+  ttKb.baseH=vv.height;
+  function onResize(){
+    if($("#typeTest").hidden) return;
+    /* 键盘弹出后 vv.height 明显小于初始高度 → 视为键盘打开 */
+    var h=vv.height;
+    var kbOpen=(ttKb.baseH-h>120) || (window.innerHeight-h>120);
+    var mask=$("#typeTest");
+    if(kbOpen){
+      if(!ttKb.open){
+        ttKb.open=true;
+        document.body.classList.add("kb-open");
+      }
+      /* 覆盖层只占可视高度，内部滚动区随之缩小，输入框不会被键盘盖住 */
+      mask.style.height=h+"px";
+      mask.style.top=(vv.offsetTop||0)+"px";
+      /* 把当前聚焦的输入框滚进可视区中部 */
+      var a=document.activeElement;
+      if(a && a.classList && a.classList.contains("tt-input")){
+        setTimeout(function(){ try{ a.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} },80);
+      }
+    }else if(ttKb.open){
+      ttKb.open=false;
+      document.body.classList.remove("kb-open");
+      mask.style.height="";
+      mask.style.top="";
+    }
+  }
+  vv.addEventListener("resize",onResize);
+  vv.addEventListener("scroll",onResize);
+  /* 任何输入框被聚焦（含切题、点第二个空）都滚到可视区中部 */
+  $("#typeTest").addEventListener("focusin",function(e){
+    if($("#typeTest").hidden) return;
+    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
+    setTimeout(function(){ try{ e.target.scrollIntoView({block:"center",behavior:"smooth"}); }catch(err){} }, ttKb.open?60:20);
+  });
+  ttKb.bound=true;
+}
+function ttKbReset(){
+  if(!ttKb.open) return;
+  ttKb.open=false;
+  document.body.classList.remove("kb-open");
+  var mask=$("#typeTest");
+  mask.style.height=""; mask.style.top="";
+}
+function ttStart(){
+  ttKbInit();
+  if(!currentSentences.length){ toast("先点「识别并断句」"); return; }
+  if(!currentVocab.length){ toast("先在正文里写单词表（英文|中文）"); return; }
+  var items=ttBuild();
+  if(!items.length){ toast("句子里没有命中单词表的词，没得填"); return; }
+  stopPlayback();
+  clearTimeout(tt.timer);
+  tt.speakGen++; /* 失效上一局残留的答案朗读链 */
+  tt.items=items; tt.idx=0; tt.correct=0; tt.total=0;
+  tt.results=[]; tt.drafts=[];
+  /* 总空数 */
+  items.forEach(function(it){ tt.total+=it.ranges.length; });
+  document.body.classList.add("tt-on");
+  $("#typeTest").hidden=false;
+  $("#ttSubmitBtn").hidden=false; /* 重开一局恢复顶栏提交按钮 */
+  appleRender(); /* 刷新主页苹果显示 */
+  renderTT();
+}
+function ttExit(){
+  clearTimeout(tt.timer); /* 退出时取消闪答案/翻页定时，避免关掉后又动 */
+  tt.speakGen++; /* 失效正在进行的答案朗读链 */
+  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
+  ttKbReset();
+  $("#typeTest").hidden=true;
+  document.body.classList.remove("tt-on");
+}
+/* 逐字母拼读再读整词：W → O → R → K → work */
+function ttSpell(word){
+  if(!word) return;
+  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
+  var letters=Array.from(word).filter(function(c){return /[A-Za-z]/.test(c);});
+  var i=0;
+  function next(){
+    if(i<letters.length){
+      var ch=letters[i++];
+      speakOne(ch.toUpperCase(), "en", .8, function(){ setTimeout(next, 90); });
+    } else {
+      setTimeout(function(){ speakOne(word, "en", .85, function(){}); }, 160);
+    }
+  }
+  next();
+}
+/* 跳到第 i 题（可回退），恢复当时填的草稿。答题阶段一律不判分、不锁定。 */
+function ttGo(i){
+  if(i<0 || i>=tt.items.length) return;
+  clearTimeout(tt.timer);
+  tt.speakGen++; /* 回退时停掉正在念的答案 */
+  try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
+  ttClearPeek();
+  renderTT(i);
+}
+function renderTT(i){
+  if(typeof i==="number") tt.idx=i;
+  var it=tt.items[tt.idx];
+  if(!it){ ttFinish(); return; }
+  $("#ttProgress").textContent=(tt.idx+1)+" / "+tt.items.length;
+  $("#ttScore").textContent="共 "+tt.total+" 空";
+
+  /* 句子：命中词位置放输入框 */
+  var html="", pos=0;
+  it.ranges.forEach(function(r,k){
+    if(r.start>pos) html+=esc(it.en.slice(pos,r.start));
+    html+='<span class="tt-blank">'+
+      '<input class="tt-input" data-k="'+k+'" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" size="'+Math.max(5,r.word.length+2)+'">'+
+      '<button class="tt-spell" data-spell="'+k+'" type="button" title="逐字母拼读再读整词">🔤 拼读</button>'+
+      '</span>';
+    pos=r.end;
+  });
+  if(pos<it.en.length) html+=esc(it.en.slice(pos));
+  $("#ttBody").innerHTML=
+    '<div class="tt-hint-label">提示 · 中文</div>'+
+    '<div class="tt-hint-zh">'+esc(it.zh||"（无译文，靠朗读提示）")+'</div>'+
+    '<div class="tt-hint-label">在句子里填词（忽略大小写 / 标点）· 点「下一句」核对答案</div>'+
+    '<div class="tt-sentence">'+html+'</div>';
+
+  /* 答题阶段：输入框始终可填，恢复当时草稿，不锁定、不揭示对错 */
+  var draft=tt.drafts[tt.idx]||[];
+  $$("#ttBody .tt-input").forEach(function(inp,k){ inp.value=draft[k]||""; });
+
+  /* 固定按钮栏：上一句 / 下一句 / 朗读 / 跳过；「全部提交」在顶栏 */
+  $("#ttActions").innerHTML=
+    '<button class="sw icon-only" id="ttPrevBtn" type="button" title="上一句"'+(tt.idx===0?' disabled':'')+'>←</button>'+
+    '<button class="sw primary" id="ttNextBtn" type="button">下一句 →</button>'+
+    '<button class="sw" id="ttReadBtn" type="button">🔊 朗读整句</button>'+
+    '<button class="sw" id="ttSkipBtn" type="button">跳过</button>';
+  /* 水平线下的导航行：跳句滑块（长）+ 语速（小） */
+  var jump=$("#ttJump");
+  jump.max=Math.max(0, tt.items.length-1);
+  jump.value=tt.idx;
+  $("#ttJumpLabel").textContent=(tt.idx+1)+" / "+tt.items.length;
+  $("#ttRateInput").value=player.rate;
+  $("#ttRateLabel").textContent=Number(player.rate).toFixed(2)+"x";
+  var first=$("#ttBody .tt-input");
+  if(first) first.focus();
+}
+/* 把当前题的输入存进草稿 */
+function ttSaveDraft(){
+  tt.drafts[tt.idx]=$$("#ttBody .tt-input").map(function(i){return i.value;});
+}
+/* 移除闪现的答案条 */
+function ttClearPeek(){ var p=$("#ttPeek"); if(p) p.parentNode.removeChild(p); }
+/* 真正翻到下一题（闪答案结束后调用） */
+function ttFlip(){
+  ttClearPeek();
+  tt.idx++;
+  if(tt.idx>=tt.items.length){ tt.idx=tt.items.length-1; toast("已经是最后一句，点上方「全部提交」交卷"); return; }
+  renderTT();
+}
+/* ========================= 苹果奖励 =========================
+   每局提交得分 ≥90 奖励 1 个苹果，存 localStorage（key: mcr_apples）。
+   显示按十进制进位：个位=普通苹果 🍎，十位=金苹果 🥇（满 10 换 1 金）。 */
+var APPLE_KEY="apples";
+function appleGet(){
+  var n=load(APPLE_KEY,0);
+  return (typeof n==="number" && n>=0 && isFinite(n))?Math.floor(n):0;
+}
+function appleSet(n){ save(APPLE_KEY,n); appleRender(n); }
+/* 内联金色苹果 SVG（渐变 + 高光 + 果柄叶片） */
+var GOLD_APPLE_SVG='<svg class="ico-gold" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="金苹果">'+
+  '<defs><linearGradient id="gaG" x1="0" y1="0" x2="0" y2="1">'+
+  '<stop offset="0" stop-color="#fff3a6"/><stop offset="45%" stop-color="#ffd23f"/><stop offset="100%" stop-color="#e39400"/>'+
+  '</linearGradient></defs>'+
+  '<path d="M12 7.5c-1.2-1.8-3.8-2.3-5.5-1C4.2 8 3.8 11 4.6 14c.9 3.4 3.5 6.5 5.7 6.5.9 0 1.3-.5 1.7-.5s.8.5 1.7.5c2.2 0 4.8-3.1 5.7-6.5.8-3 .4-6-1.9-7.5-1.7-1.3-4.3-.8-5.5 1z" fill="url(#gaG)" stroke="#b97400" stroke-width=".6"/>'+
+  '<path d="M12 7.5V4.6" stroke="#7a4a10" stroke-width="1.4" stroke-linecap="round" fill="none"/>'+
+  '<path d="M12.2 5.4c.1-1.5 1.4-2.5 3-2.5-.1 1.5-1.2 2.5-3 2.5z" fill="#4f9b3f"/>'+
+  '<ellipse cx="8.4" cy="10.2" rx="1.5" ry="2.4" fill="#fff" opacity=".45" transform="rotate(-22 8.4 10.2)"/>'+
+  '</svg>';
+function appleRender(n){
+  var el=$("#ttApples"); if(!el) return;
+  if(typeof n!=="number") n=appleGet();
+  var gold=Math.floor(n/10), red=n%10, icos="", i;
+  for(i=0;i<gold;i++) icos+=GOLD_APPLE_SVG;
+  for(i=0;i<red;i++) icos+='<span class="ico">🍎</span>';
+  if(!icos) icos='<span class="ico" style="opacity:.35">🍎</span>';
+  el.innerHTML='<span class="icos">'+icos+'</span><span class="cnt">'+n+'</span>';
+}
+function appleAward(){ var n=appleGet()+1; appleSet(n); return n; }
+
+/* 取消正在进行的答案朗读，并让旧链失效（gen 不匹配即中止） */
+function ttCancelSpeak(){
+  tt.speakGen++;
+  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
+}
+/* 依次念出答案单词（不拼读）；gen 不匹配立即停，防止切题后旧链继续 */
+function ttSpeakWords(words, gen, done){
+  var i=0;
+  function next(){
+    if(gen!==tt.speakGen) return;
+    if(i>=words.length){ done&&done(); return; }
+    var w=words[i++];
+    speakOne(w,"en",player.rate,function(){ setTimeout(next,120); });
+  }
+  next();
+}
+/* 下一句：存草稿 → 闪答案 → 依次念命中词（不拼读）→ 念完再翻页。全程不判分。
+   朗读至少保留 2 秒可读时间；若朗读卡住不回调，8 秒兜底强制翻页。 */
+function ttNext(){
+  clearTimeout(tt.timer);
+  ttClearPeek();
+  ttSaveDraft();
+  var it=tt.items[tt.idx]; if(!it) return;
+  var words=it.ranges.map(function(r){return r.word;});
+  var div=document.createElement("div");
+  div.id="ttPeek"; div.className="tt-peek";
+  div.innerHTML='<span class="tt-peek-tag">答案对照 · 记住后再填</span>'+
+    words.map(function(w){var zh=wordZh(w);return '<div class="tt-peek-row"><b>'+esc(w)+'</b>'+(zh?'<span>'+esc(zh)+'</span>':'')+'</div>';}).join('');
+  $("#ttBody").appendChild(div);
+
+  var started=Date.now();
+  var gen=++tt.speakGen;
+  /* 兜底：朗读若不回调，8 秒后强制翻页 */
+  tt.timer=setTimeout(function(){ tt.timer=null; if(gen===tt.speakGen) ttFlip(); },8000);
+  ttSpeakWords(words, gen, function(){
+    if(gen!==tt.speakGen) return;
+    clearTimeout(tt.timer); /* 取消兜底，改按「念完 + 至少 2 秒」翻页 */
+    var left=2000-(Date.now()-started);
+    tt.timer=setTimeout(function(){ tt.timer=null; if(gen===tt.speakGen) ttFlip(); }, left>0?left:0);
+  });
+}
+/* 跳过：存草稿（留空），不闪答案，直接下一题 */
+function ttSkip(){
+  clearTimeout(tt.timer);
+  tt.speakGen++; /* 停掉正在念的答案 */
+  try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
+  ttClearPeek();
+  ttSaveDraft();
+  ttFlip();
+}
+/* 统一提交：对所有题按草稿一次性判分，再进成绩页 */
+function ttSubmitAll(){
+  clearTimeout(tt.timer);
+  tt.speakGen++; /* 提交时停掉正在念的答案 */
+  try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
+  ttClearPeek();
+  ttSaveDraft();
+  tt.results=[];
+  var correct=0;
+  tt.items.forEach(function(it,i){
+    var mine=tt.drafts[i]||[];
+    var oks=it.ranges.map(function(r,k){ return ttNorm(mine[k]||"")===ttNorm(r.word); });
+    var ok=oks.length>0 && oks.every(function(x){return x;});
+    if(ok) correct++;
+    tt.results.push({ zh:it.zh, answers:it.ranges.map(function(r){return r.word;}),
+                      mine:mine, oks:oks, ok:ok, skipped:false });
+  });
+  tt.correct=correct;
+  /* 得分 ≥90 奖励一个苹果；满 10 个自动进位成金苹果 */
+  var rate=tt.total? Math.round(correct/tt.items.length*100):0;
+  tt.gotApple=false; tt.goldApple=false; tt.appleTotal=appleGet();
+  if(rate>=90){
+    var before=appleGet();
+    var after=appleAward();
+    tt.gotApple=true;
+    tt.appleTotal=after;
+    tt.goldApple=(after%10===0 && after>before); /* 本次是否进位成金苹果 */
+  }
+  ttFinish();
+}
+function ttFinish(){
+  try{ var sy=getSynth(); if(sy) sy.cancel(); }catch(e){}
+  var rate=tt.total? Math.round(tt.correct/tt.items.length*100):0;
+  /* 按分数段给一句鼓励，成就感拉满 */
+  var cheer;
+  if(rate===100)      cheer='🏆 满分！一个都没错，你是单词之王！';
+  else if(rate>=90)   cheer='🌟 太棒了！只差一点点就满分啦！';
+  else if(rate>=75)   cheer='👏 很不错！再细心一点就更好了！';
+  else if(rate>=60)   cheer='💪 有进步！多练几次就一定行！';
+  else                cheer='🌱 每一次练习都在变强，继续加油！';
+  var h='<div class="tt-score"><div class="tt-cheer">'+cheer+'</div>'+
+    '<div class="big">'+rate+'%</div>'+
+    '<div class="sub">填对 '+tt.correct+' / '+tt.items.length+' 句 · 共 '+tt.total+' 空</div>';
+  if(tt.gotApple){
+    if(tt.goldApple){
+      /* 满 10 进位：升级成金苹果 */
+      h+='<div class="tt-reward gold"><div class="tt-reward-ico">'+GOLD_APPLE_SVG+'</div>'+
+        '<div class="tt-reward-txt"><b>🎉 你获得了 1 个金苹果！</b>'+
+        '<span>10 个苹果升级啦 · 战利品共 '+tt.appleTotal+' 个</span></div></div>';
+    }else{
+      h+='<div class="tt-reward"><div class="tt-reward-ico">🍎</div>'+
+        '<div class="tt-reward-txt"><b>你获得了 1 个苹果！</b>'+
+        '<span>成绩 '+rate+' 分达标（≥90）· 战利品共 '+tt.appleTotal+' 个</span></div></div>';
+    }
+  }else{
+    h+='<div class="tt-noharvest">成绩满 90 分就能抱走一个苹果，下一局加油！</div>';
+  }
+  var wrong=tt.results.filter(function(r){return r && !r.ok;});
+  if(wrong.length){
+    h+='<div class="tt-wrong"><div class="tt-hint-label">错题回顾</div>';
+    wrong.forEach(function(r){
+      h+='<div class="row"><div class="zh">'+esc(r.zh||"—")+'</div>'+
+        '<div class="a">正确：'+esc(r.answers.join(" / "))+'</div>'+
+        (r.mine.length?'<div class="y">你写：'+esc(r.mine.join(" / "))+'</div>':'<div class="y">已跳过</div>')+
+        '</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  $("#ttBody").innerHTML=h;
+  $("#ttActions").innerHTML=
+    '<button class="sw primary" id="ttAgainBtn" type="button">再来一次</button>'+
+    '<button class="sw" id="ttBackBtn" type="button">退出测试</button>';
+  $("#ttSubmitBtn").hidden=true; /* 成绩页不再需要提交 */
+}
+
+/* ========================= 历史文章 ========================= */
+var HIST_KEY="history", HIST_QUOTA=5*1024*1024; /* localStorage 通常约 5MB */
+function histGet(){ var a=load(HIST_KEY,null); return (a&&a.length&&Array.isArray(a))?a:[]; }
+/* 写入返回是否成功，失败通常是 QuotaExceededError */
+function histSet(list){
+  try{ localStorage.setItem("mcr_"+HIST_KEY, JSON.stringify(list)); return true; }
+  catch(e){ return false; }
+}
+/* 估算整个 localStorage 域已用字节（key+value 的 UTF-16 长度 ×2，偏保守） */
+function histUsage(){
+  var chars=0;
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      chars += (k?k.length:0) + (localStorage.getItem(k)||"").length;
+    }
+  }catch(e){}
+  return chars*2;
+}
+function fmtBytes(n){
+  if(n>=1024*1024) return (n/1024/1024).toFixed(1)+" MB";
+  if(n>=1024) return Math.round(n/1024)+" KB";
+  return n+" B";
+}
+/* 标题：首行去 # / 序号 / 列表符，取前 20 字 */
+function histTitle(raw){
+  var first=(raw||"").split("\n").map(function(s){return s.trim();}).filter(Boolean)[0]||"";
+  first=first.replace(/^#{1,6}\s*/,"").replace(/^\d+[.)、]\s*/,"").replace(/^[-*·•]\s*/,"").trim();
+  return first.slice(0,20)||"未命名";
+}
+function histDate(ts){
+  var d=new Date(ts);
+  function p(n){return n<10?"0"+n:""+n;}
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+/* 更新弹窗顶部的存储占用条 */
+function renderHistStore(){
+  var used=histUsage(), left=Math.max(0,HIST_QUOTA-used);
+  var ratio=Math.min(1,used/HIST_QUOTA), low=left/HIST_QUOTA<0.1;
+  $("#histUsed").textContent=fmtBytes(used);
+  $("#histLeft").textContent="剩余约 "+fmtBytes(left);
+  $("#histLeft").classList.toggle("warn-txt",low);
+  $("#histBarFill").style.width=(ratio*100).toFixed(1)+"%";
+  $("#histBar").classList.toggle("warn",low);
+}
+/* 渲染历史列表 */
+function renderHistList(){
+  var list=histGet(), el=$("#histList");
+  if(!list.length){ el.innerHTML='<div class="hist-empty">还没有保存的文章。<br>点上面「💾 保存到历史」把输入框里的文章存起来。</div>'; return; }
+  el.innerHTML=list.map(function(it,i){
+    var chars=(it.raw||"").length;
+    var lineCount=(it.raw||"").split("\n").filter(function(s){return s.trim();}).length;
+    return '<div class="hist-item">'+
+      '<div class="meta"><div class="t">'+esc(histTitle(it.raw))+'</div>'+
+      '<div class="d">'+histDate(it.ts)+' · '+chars+' 字 · '+lineCount+' 行</div></div>'+
+      '<button class="sw" data-open="'+i+'">打开</button>'+
+      '<button class="sw danger" data-delete="'+i+'">删除</button>'+
+    '</div>';
+  }).join("");
+}
+function openHistDialog(){
+  renderHistStore(); renderHistList();
+  $("#histMask").classList.add("show");
+}
+function closeHistDialog(){ $("#histMask").classList.remove("show"); }
+/* 把输入框原文交给现有的断句流程；返回是否成功 */
+/* 内置范文：我的世界第一天（标题 → 文章 → 单词表） */
+var SAMPLE_STORY=[
+  "# The First Day in Minecraft",
+  "",
+  "Steve wakes up on green grass with nothing in his hands.",
+  "史蒂夫在一片绿草上醒来，手里什么都没有。",
+  "There is no bed and no house, only tall trees all around.",
+  "这里没有床，也没有房子，只有四周高高的树。",
+  "He punches a tree again and again until the wood drops down.",
+  "他一遍又一遍地捶打大树，直到木头掉了下来。",
+  "He turns the logs into planks and makes a wooden pickaxe.",
+  "他把原木做成木板，造了一把木镐。",
+  "With the pickaxe he digs stone and coal in a dark cave.",
+  "他用镐在黑暗的洞穴里挖出石头和煤。",
+  "He finds ripe apples and eats them to stay strong.",
+  "他找到成熟的苹果，吃掉它们来补充体力。",
+  "The sky turns orange, and night is coming soon.",
+  "天空变成了橙色，夜晚很快就要来了。",
+  "He builds a small shelter and lights a bright torch.",
+  "他搭起一间小小的庇护所，点亮一支明亮的火把。",
+  "A zombie moans outside, but Steve feels safe inside.",
+  "一只僵尸在外面呻吟，但史蒂夫在里面很安全。",
+  "What a busy but wonderful first day in this new world!",
+  "在这个新世界里，这是多么忙碌又美好的第一天啊！",
+  "",
+  "grass|草",
+  "tree|树",
+  "wood|木头",
+  "log|原木",
+  "plank|木板",
+  "pickaxe|镐",
+  "stone|石头",
+  "coal|煤",
+  "cave|洞穴",
+  "apple|苹果",
+  "night|夜晚",
+  "shelter|庇护所",
+  "torch|火把",
+  "zombie|僵尸",
+  "world|世界"
+].join("\n");
+function loadSample(){
+  $("#inputBox").value=SAMPLE_STORY;
+  click();
+  doParse();
+  toast("已载入范文：我的世界第一天");
+}
+
+function doPrint(){
+  if($("#reader").hidden){ toast("先点「识别并断句」，再打印 🖨"); return; }
+  try{ window.print(); }catch(e){ toast("这个浏览器不支持直接打印"); }
+}
+
+function doParse(){
+  var raw=$("#inputBox").value;
+  if(!raw.trim()){ toast("先把文章粘贴进来吧 📋"); return false; }
+  var result=parseText(raw);
+  if(!result.items.length && !(result.vocab&&result.vocab.length)){ toast("没找到能读的句子"); return false; }
+  currentVocab=result.vocab||[];
+  $("#readerTitle").textContent="📖 阅读 · "+result.items.length+" 句";
+  renderSentences(result);
+  var s=result.stats;
+  var orderTxt=result.order==="zh-first"?"先中文后英文":"先英文后中文";
+  var html="识别结果：<b>"+orderTxt+"</b><br>"+
+    "英文行 <b>"+s.en+"</b> · 中文行 <b>"+s.zh+"</b> · 混排行 <b>"+s.mix+"</b>"+
+    " → 共 <b>"+result.items.length+"</b> 句"+
+    "<br>单词表 <b>"+currentVocab.length+"</b> 词（格式：英文|中文）";
+  var rp=$("#report"); rp.innerHTML=html; rp.classList.add("show");
+  window.scrollTo({top:$("#reader").offsetTop-70,behavior:"smooth"});
+  return true;
+}
+function histSaveCurrent(){
+  var raw=$("#inputBox").value;
+  if(!raw.trim()){ toast("输入框是空的，没东西可保存 📋"); return; }
+  var list=histGet();
+  list.unshift({ts:Date.now(), raw:raw});
+  if(!histSet(list)){ toast("保存失败：空间不足，请先删除几篇旧文章"); return; }
+  toast("已保存到历史："+histTitle(raw));
+}
+function histOpen(i){
+  var list=histGet(), it=list[i];
+  if(!it) return;
+  $("#inputBox").value=it.raw||"";
+  closeHistDialog();
+  click();
+  doParse();
+  toast("已打开："+histTitle(it.raw));
+}
+function histDelete(i){
+  var list=histGet();
+  if(i<0||i>=list.length) return;
+  list.splice(i,1);
+  histSet(list);
+  renderHistStore(); renderHistList();
+  toast("已删除该文章");
+}
+function histClearAll(){
+  var list=histGet();
+  if(!list.length){ toast("历史已经是空的"); return; }
+  if(!window.confirm("确定要删除全部历史文章吗？此操作不可恢复。")) return;
+  histSet([]);
+  renderHistStore(); renderHistList();
+  toast("已清空全部历史");
+}
+
+/* ========================= 绑定 ========================= */
+function bind(){
+  /* 头像：切换音色 + 试听 */
+  $("#creeper").addEventListener("click", function(){
+    unlockAudio();
+    var next = nextPref(state.voicePref);
+    applyPref(next);
+
+    this.classList.remove("pop");
+    void this.offsetWidth;
+    this.classList.add("pop");
+
+    var wasPlaying = player.playing;
+    var resumeAt = player.current;
+    stopPlayback();
+
+    var lang = (state.langMode==="zh" || state.langMode==="zh-en") ? "zh" : "en";
+    var line = "";
+    if(lang==="zh"){
+      line = next==="male" ? "你好，我是 Steve。我们一起读故事吧。"
+           : next==="female" ? "你好，我是 Alex。我们一起读故事吧。"
+           : "你好，我们一起读故事吧。";
+    } else {
+      line = next==="male" ? "Hello! I am Steve. Let's read together."
+           : next==="female" ? "Hi! I am Alex. Let's read together."
+           : "Hello! Let's read a story.";
+    }
+
+    var pick = pickVoice(next, lang);
+    if(pick.fallbackMsg){ toast(pick.fallbackMsg); }
+    else { toast("已切换到" + PREF_LABEL[next] + "音色"); }
+
+    speakOne(line, lang, player.rate, function(){
+      if(wasPlaying && currentSentences.length){
+        playSentence(Math.min(resumeAt, currentSentences.length-1));
+      }
+    });
+  });
+
+  $("#parseBtn").addEventListener("click", function(){
+    unlockAudio(); click(); doParse();
+  });
+
+  $("#clearBtn").addEventListener("click", function(){
+    click(); stopPlayback();
+    $("#inputBox").value="";
+    $("#reader").hidden=true;
+    currentSentences=[];
+    $("#report").classList.remove("show");
+  });
+
+  $("#langMode").addEventListener("change", function(e){
+    state.langMode=e.target.value;
+    save("langMode", state.langMode);
+    click();
+    if(currentSentences.length){
+      var keep = currentSentences.map(function(x){return {en:x.en,zh:x.zh,head:x.head};});
+      renderSentences({items:keep});
+      $("#sentCount").textContent=keep.length+" 句";
+    }
+  });
+
+  $("#transBtn").addEventListener("click", function(){
+    click(); cycleTrans();
+  });
+
+  $("#typeTestBtn").addEventListener("click", function(){ unlockAudio(); click(); ttStart(); });
+  $("#ttExitBtn").addEventListener("click", function(){ click(); ttExit(); });
+
+  $("#typeTest").addEventListener("click", function(e){
+    var sp=e.target.closest("[data-spell]");
+    if(sp){ unlockAudio(); click(); var it=tt.items[tt.idx]; if(it) ttSpell(it.ranges[Number(sp.getAttribute("data-spell"))].word); return; }
+    if(e.target.closest("#ttPrevBtn")){ click(); if(tt.idx>0) ttGo(tt.idx-1); return; }
+    if(e.target.closest("#ttNextBtn")){ unlockAudio(); click(); ttNext(); return; }
+    if(e.target.closest("#ttReadBtn")){
+      unlockAudio(); click(); var it2=tt.items[tt.idx];
+      if(it2) speakOne(it2.en,"en",player.rate,function(){});
+      return;
+    }
+    if(e.target.closest("#ttSkipBtn")){ click(); ttSkip(); return; }
+    if(e.target.closest("#ttSubmitBtn")){ click(); ttSubmitAll(); return; }
+    if(e.target.closest("#ttAgainBtn")){ click(); ttStart(); return; }
+    if(e.target.closest("#ttBackBtn")){ click(); ttExit(); return; }
+  });
+  /* 敲键音效 + 回车下一句 + Tab 在输入框间跳转 */
+  $("#typeTest").addEventListener("keydown", function(e){
+    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
+    if(e.key==="Enter"){ e.preventDefault(); ttNext(); return; }
+    if(e.key==="Tab"){
+      /* 阻止默认跳到「拼读」等按钮，改为只在填空之间移动 */
+      e.preventDefault();
+      var ins=$$("#ttBody .tt-input");
+      var k=ins.indexOf(e.target);
+      var nxt=e.shiftKey? k-1 : k+1;
+      if(nxt>=0 && nxt<ins.length){
+        ins[nxt].focus();
+      }else if(!e.shiftKey && tt.idx<tt.items.length-1){
+        /* 本句最后一个 → 下一句第一个（不判分、不念答案，草稿已实时保存） */
+        ttGo(tt.idx+1);
+      }else if(e.shiftKey && tt.idx>0){
+        /* 本句第一个 → 上一句最后一个 */
+        ttGo(tt.idx-1);
+        var prev=$$("#ttBody .tt-input"); if(prev.length) prev[prev.length-1].focus();
+      }else{
+        /* 到底/到头：循环回另一端 */
+        ins[e.shiftKey? ins.length-1 : 0].focus();
+      }
+      return;
+    }
+    if(e.key==="Backspace" || e.key==="Delete" || e.key.length===1){
+      if(e.key!==" " && !e.ctrlKey && !e.metaKey && !e.altKey) typeTick();
+    }
+  });
+  /* 记录草稿：回退时恢复用户当时填的内容 */
+  $("#typeTest").addEventListener("input", function(e){
+    if(e.target && e.target.id==="ttJump"){
+      /* 拖动跳句滑块时先预览句号，松手(change)才真正跳，避免焦点被输入框抢走中断拖动 */
+      $("#ttJumpLabel").textContent=(Number(e.target.value)+1)+" / "+tt.items.length;
+      return;
+    }
+    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
+    tt.drafts[tt.idx]=$$("#ttBody .tt-input").map(function(i){return i.value;});
+  });
+  /* 跳句滑块：松手后跳到对应句（草稿已实时保存，回退可恢复） */
+  $("#typeTest").addEventListener("change", function(e){
+    if(!e.target || e.target.id!=="ttJump") return;
+    ttGo(Number(e.target.value));
+  });
+
+  $("#vocabListBtn").addEventListener("click", function(){
+    click(); toggleVocabList();
+  });
+
+  $("#vocabBtn").addEventListener("click", function(){
+    click(); cycleVocab();
+  });
+
+  $("#playBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    if(!currentSentences.length){ toast("先粘贴文章并断句"); return; }
+    if(player.playing){
+      /* 人工点暂停：记录停止意图，后续单句点击都播完即停 */
+      player.continuous=false;
+      stopPlayback();
+    } else {
+      /* 人工点播放：恢复连播意图，从当前句一路往下读 */
+      player.continuous=true;
+      playSentence(player.current, true);
+    }
+  });
+
+  $("#prevBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    if(!currentSentences.length) return;
+    var was=player.playing; stopPlayback();
+    player.current=Math.max(0, player.current-1);
+    if(was) playSentence(player.current);
+    else highlightSentence(player.current);
+  });
+
+  $("#nextBtn").addEventListener("click", function(){
+    unlockAudio(); click();
+    if(!currentSentences.length) return;
+    var was=player.playing; stopPlayback();
+    player.current=Math.min(currentSentences.length-1, player.current+1);
+    if(was) playSentence(player.current);
+    else highlightSentence(player.current);
+  });
+
+  $("#rateInput").addEventListener("input", function(e){
+    player.rate=Number(e.target.value);
+    $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+    /* 同步打字测试里的语速滑块（若存在） */
+    var ttr=$("#ttRateInput"); if(ttr){ ttr.value=player.rate; $("#ttRateLabel").textContent=player.rate.toFixed(2)+"x"; }
+    save("rate", player.rate);
+  });
+  /* 打字测试里的语速滑块（动态生成，用委托）：与主界面共用 player.rate，并回写主界面显示 */
+  $("#typeTest").addEventListener("input", function(e){
+    if(!e.target || e.target.id!=="ttRateInput") return;
+    player.rate=Number(e.target.value);
+    $("#ttRateLabel").textContent=player.rate.toFixed(2)+"x";
+    $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+    $("#rateInput").value=player.rate;
+    save("rate", player.rate);
+  });
+
+  $("#readerBody").addEventListener("click", function(e){
+    /* 词表词条：点哪个词就从哪个词读起，连播意图同句子 */
+    var vb=e.target.closest(".vb-row");
+    if(vb){
+      unlockAudio(); click();
+      var continuous=player.continuous;
+      stopPlayback();
+      playVocabSeq(Number(vb.getAttribute("data-vi")), continuous);
+      return;
+    }
+    var btn=e.target.closest(".sent");
+    if(!btn) return;
+    unlockAudio(); click();
+    /* 是否连播取决于播放按钮记录的「连播意图」，不是 player.playing：
+       人工停止后（continuous=false）点单句→播完即停，且未播完再点别的句子仍播完即停；
+       连播中（continuous=true）点单句→从该句继续往下连播。 */
+    var cont=player.continuous;
+    stopPlayback();
+    playSentence(Number(btn.getAttribute("data-idx")), cont);
+  });
+
+  $("#soundBtn").addEventListener("click", function(){
+    unlockAudio(); state.muted=!state.muted; save("muted", state.muted);
+    this.textContent=state.muted?"🔇":"🔊";
+    this.classList.toggle("off", state.muted);
+    if(!state.muted) tone(880,.07,"triangle",.03);
+    else { try{ var s=getSynth(); if(s) s.cancel(); }catch(e){} }
+  });
+
+  /* 历史文章 */
+  $("#histSaveBtn").addEventListener("click", function(){ click(); histSaveCurrent(); });
+  $("#histOpenBtn").addEventListener("click", function(){ click(); openHistDialog(); });
+  $("#sampleBtn").addEventListener("click", function(){ click(); loadSample(); });
+  $("#printBtn").addEventListener("click", function(){ click(); doPrint(); });
+  $("#histCloseBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
+  $("#histCancelBtn").addEventListener("click", function(){ click(); closeHistDialog(); });
+  $("#histClearBtn").addEventListener("click", function(){ click(); histClearAll(); });
+  $("#histMask").addEventListener("click", function(e){ if(e.target===this) closeHistDialog(); });
+  document.addEventListener("keydown", function(e){
+    if(e.key!=="Escape") return;
+    if(!$("#typeTest").hidden){ ttExit(); return; }
+    closeHistDialog();
+  });
+  $("#histList").addEventListener("click", function(e){
+    var ob=e.target.closest("[data-open]"), db=e.target.closest("[data-delete]");
+    if(ob){ click(); histOpen(Number(ob.getAttribute("data-open"))); }
+    else if(db){ click(); histDelete(Number(db.getAttribute("data-delete"))); }
+  });
+
+  var hb=$("#soundHintBtn");
+  if(hb) hb.addEventListener("click", function(){
+    /* 用户手势里重新探测 + 立刻试听；不要把 speak 放进延时 */
+    unlockAudio(); primeTTS(); ttsWarned=false; hideHint();
+    if(state.muted){ state.muted=false; $("#soundBtn").textContent="🔊"; $("#soundBtn").classList.remove("off"); }
+    speakOne("Hello! Let us read a story.","en",.85,function(){});
+  });
+  var hc=$("#soundHintClose");
+  if(hc) hc.addEventListener("click", hideHint);
+}
+
+/* ========================= 启动 ========================= */
+function init(){
+  state.muted=load("muted",false);
+  $("#soundBtn").textContent=state.muted?"🔇":"🔊";
+  if(state.muted) $("#soundBtn").classList.add("off");
+
+  state.trans=load("trans","cur");
+  if(TRANS_ORDER.indexOf(state.trans)<0) state.trans="cur";
+  applyTrans();
+
+  state.vocab=load("vocab","all");
+  if(VOCAB_ORDER.indexOf(state.vocab)<0) state.vocab="all";
+  applyVocab();
+
+  state.vocabList=load("vocabList",true);
+  applyVocabList();
+
+  appleRender(); /* 主页苹果显示 */
+
+  state.langMode=load("langMode","en");
+  $("#langMode").value=state.langMode;
+
+  state.voicePref=load("voicePref","auto");
+  applyPref(state.voicePref);
+
+  player.rate=load("rate",0.85);
+  $("#rateInput").value=player.rate;
+  $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
+
+  bind();
+
+  /* 微信里 TTS 能力可能随 JSBridge 就绪后才挂上，再探测一次 */
+  document.addEventListener("WeixinJSBridgeReady", function(){ primeTTS(); }, false);
+
+  ["pointerdown","touchstart","touchend"].forEach(function(t){
+    document.addEventListener(t, unlockAudio, {passive:true});
+  });
+
+  var isTouch=("ontouchstart" in window)||(navigator.maxTouchPoints>0);
+  if(isTouch){
+    setTimeout(function(){
+      if(ttsPrimed) return;
+      primeTTS();
+      /* 关键：页面加载时不再断言「不支持」——微信 X5 常见语音列表为空/API 延迟挂载，
+         提前下结论会把本来能用的环境挡掉。只在用户真正点过且失败后给指引。 */
+      if(!IS_WECHAT && voices.length &&
+         !voices.some(function(v){ return /^en([-_]|$)/i.test(v.lang||""); })){
+        showHint("这台设备没装英文语音包，朗读会没声音。设置里添加英文语音后重开本页", true);
+      } else {
+        showHint(IS_WECHAT
+          ? "👆 点一下开启声音（若没声，点右上角『…』→ 在浏览器中打开）"
+          : "👆 点一下开启声音（手机需先点一次才能朗读）", false);
+      }
+    }, 1200);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
