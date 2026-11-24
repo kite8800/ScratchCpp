@@ -538,7 +538,7 @@ body.kb-open .type-mask{padding-top:8px}
       <button class="sw miss" id="wcNextBtn" title="没记住，跳到下一个没记住的词">✗ 没记住</button>
       <div class="row-break"></div>
       <button class="sw" id="wcChangePicBtn" title="为这个单词生成一张配图（免费图源，有额度限制）">🖼 生图</button>
-      <button class="sw on" id="wcTogglePicBtn" title="隐藏卡片配图（只隐藏，不再请求图片）">图片：开</button>
+      <button class="sw on" id="wcTogglePicBtn" title="隐藏这张卡的配图（只隐藏，不再请求图片）">图片：开</button>
       <div class="row-break"></div>
       <button class="sw" id="wcReadWordBtn" title="只读英文单词">🔊 读词</button>
       <button class="sw" id="wcReadZhBtn" title="先读英文词，再读中文释义">🔊 读词义</button>
@@ -991,7 +991,7 @@ function applyPref(pref){
 }
 
 /* ========================= 状态 ========================= */
-var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, cardPic:true, voicePref:"auto" };
+var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, voicePref:"auto" };
 var currentSentences=[];
 var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
 /* continuous = 用户的「连播意图」，只由播放按钮维护：
@@ -1510,19 +1510,29 @@ function toggleVocabList(){
   save("vocabList", state.vocabList);
   applyVocabList();
 }
-/* 卡片是否显示配图：纯显隐开关，关掉只是不显示已有图片，不触发任何请求；
-   卡片正面的词/义由「词汇」模式决定 */
+/* 配图显隐：按词（=每张卡）独立控制，只影响显示、不触发任何请求。
+   状态只在本次会话内有效（刷新重置为全部显示）。卡片正面的词/义由「词汇」模式决定 */
+function picShown(word){
+  var k=String(word||"").trim().toLowerCase();
+  return !k || !wc.picHidden[k];
+}
+function setPicShown(word, on){
+  var k=String(word||"").trim().toLowerCase(); if(!k) return;
+  if(on) delete wc.picHidden[k]; else wc.picHidden[k]=1;
+}
 function applyCardPic(){
   var btn=$("#wcTogglePicBtn"); if(!btn) return;
-  btn.textContent=state.cardPic?"图片：开":"图片：关";
-  btn.classList.toggle("on", !!state.cardPic);
-  btn.title=state.cardPic?"隐藏卡片配图（只隐藏，不再请求图片）":"显示卡片配图";
+  var v=currentVocab[wc.idx];
+  var on=picShown(v?v.en:"");
+  btn.textContent=on?"图片：开":"图片：关";
+  btn.classList.toggle("on", on);
+  btn.title=on?"隐藏这张卡的配图（只隐藏，不再请求图片）":"显示这张卡的配图";
 }
 function toggleCardPic(){
-  state.cardPic=!state.cardPic;
-  save("cardPic", state.cardPic);
+  var v=currentVocab[wc.idx]; if(!v) return;
+  setPicShown(v.en, !picShown(v.en)); /* 只切当前这个词，别的卡不受影响 */
   applyCardPic();
-  if(!$("#wordCards").hidden) wcRender(); /* 开着时立刻刷新卡面 */
+  if(!$("#wordCards").hidden) wcRenderPic(); /* 开着时立刻刷新卡面 */
 }
 
 /* ========================= 胡萝卜奖励（单词卡）=========================
@@ -1563,6 +1573,8 @@ function carrotAward(){ var n=carrotGet()+1; carrotSet(n); return n; }
 var wc={
   idx:0, flipped:false, gen:0,
   imgCache:{},      /* word -> {ok,url} 只在点「生图」成功后写入，翻卡只读不请求 */
+  variant:{},       /* word -> 已点「生图」次数；>0 时给 URL 加 ?i=n，绕过缓存重新取图 */
+  picHidden:{},     /* word -> 1：该词的配图被手动隐藏（每个词独立，会话内有效） */
   remembered:{},    /* 本轮已点「记住了」的词下标，全部点完才算一轮 */
   roundStart:0,     /* 本轮开始时间，汇总页显示用时 */
   speakGen:0,       /* 朗读令牌：切词/退出时让旧朗读链失效 */
@@ -1570,14 +1582,14 @@ var wc={
   picCoolUntil:0,   /* 冷却截止时间，防连点 */
   timer:null
 };
-/* 卡片正面显隐（背面的词+中文+例句不变）：图片由「图片：开/关」控制，词/义跟随「词汇」四态
-   all=词+义 / en(仅原文)=仅词 / zh(仅译文)=仅义 / none(不标注)=都不显示 */
+/* 卡片正面显隐（背面的词+中文+例句不变）：词/义跟随「词汇」四态
+   all=词+义 / en(仅原文)=仅词 / zh(仅译文)=仅义 / none(不标注)=都不显示；
+   图片不在这里判断——由每个词自己的「图片：开/关」+ 缓存共同决定（见 wcRenderPic） */
 function wcFaceParts(){
-  var pic =!!state.cardPic;
   var word=(state.vocab==="all"||state.vocab==="en");
   var zh  =(state.vocab==="all"||state.vocab==="zh");
-  if(!pic && !word && !zh) word=true; /* 全都不显示时至少露出英文词，避免空白卡面 */
-  return { pic:pic, word:word, zh:zh };
+  if(!word && !zh) word=true; /* 全都不显示时至少露出英文词，避免空白卡面 */
+  return { word:word, zh:zh };
 }
 function toQuery(word){
   return String(word||"").trim().toLowerCase()
@@ -1605,14 +1617,14 @@ function wcPicCached(word){
 function wcRenderPic(){
   var v=currentVocab[wc.idx];
   var wrap=$("#wcPicWrap"), pic=$("#wcPic"), noimg=$("#wcNoimg");
-  var url=(v && state.cardPic) ? wcPicCached(v.en) : "";
+  var url=(v && picShown(v.en)) ? wcPicCached(v.en) : "";
   if(pic) pic.hidden=true;
   if(noimg){ noimg.classList.remove("loading"); noimg.hidden=true; }
   if(wrap) wrap.hidden=!url;
   if(url && pic){ pic.src=url; pic.hidden=false; }
 }
 /* 生成当前词的配图：只有点「🖼 生图」才会走到这里 —— 不预取、不排队、失败不自动重试。
-   URL 只拼词本身（短语用 + 连），不加任何查询参数；成功后写缓存并立即显示。 */
+   URL 只拼词本身（短语用 + 连），再点一次递增 ?i=n；成功后写缓存并立即显示。 */
 function wcGenerate(){
   var v=currentVocab[wc.idx]; if(!v) return;
   var key=String(v.en||"").trim().toLowerCase();
@@ -1621,8 +1633,8 @@ function wcGenerate(){
   if(wc.picBusy){ toast("图片还在生成，稍等一下"); return; }
   if(now<wc.picCoolUntil){ toast("点太快啦，缓一缓"); return; }
   wc.picCoolUntil=now+900;
-  /* 开关关着的话点了也看不见，替用户打开 */
-  if(!state.cardPic){ state.cardPic=true; save("cardPic",state.cardPic); applyCardPic(); }
+  /* 这个词的图被手动隐藏过就先打开，否则点了看不见 */
+  if(!picShown(key)){ setPicShown(key, true); applyCardPic(); }
   var btn=$("#wcChangePicBtn");
   wc.picBusy=true;
   if(btn){ btn.disabled=true; btn.textContent="🖼 生成中…"; }
@@ -1631,8 +1643,10 @@ function wcGenerate(){
   if(wrap) wrap.hidden=false;
   if(pic) pic.hidden=true;
   if(noimg){ noimg.textContent="图片生成中…"; noimg.classList.add("loading"); noimg.hidden=false; }
-  /* 短语不能带空格，统一转成 a+b；不加 ?i= 之类的查询参数 */
-  var url="https://direct-img.link/"+toQuery(key);
+  /* 短语不能带空格，统一转成 a+b；每点一次递增 ?i=n 让地址变化，绕过浏览器缓存真正重新取一张 */
+  var times=wc.variant[key]||0;
+  wc.variant[key]=times+1;
+  var url="https://direct-img.link/"+toQuery(key)+(times?("?i="+times):"");
   function finish(ok, finalUrl, transient){
     wc.picBusy=false;
     if(btn){ btn.disabled=false; btn.textContent="🖼 生图"; }
@@ -1699,12 +1713,11 @@ function wcRender(){
   $("#wcProgress").textContent=(wc.idx+1)+" / "+total+" · 已记住 "+wcMemoCount()+"/"+total;
   $("#wcJumpLabel").textContent=(wc.idx+1)+" / "+total;
   $("#wcJump").max=String(total-1); $("#wcJump").value=String(wc.idx);
-  /* 正面内容由「卡片」按钮控制；背面始终是英文+中文+例句 */
+  /* 正面内容由「词汇」模式控制；背面始终是英文+中文+例句 */
   var parts=wcFaceParts();
   $("#wcWord").hidden=!parts.word;
   $("#wcWord").textContent=parts.word?(v.en||""):"";
   var zf=$("#wcZhFront"); zf.hidden=!parts.zh; zf.textContent=parts.zh?(v.zh||""):"";
-  $("#wcPicWrap").hidden=!parts.pic;
   $("#wcWordBack").textContent=v.en||"";
   $("#wcZh").textContent=v.zh||"";
   /* 例句 */
@@ -1714,8 +1727,9 @@ function wcRender(){
   /* 复位翻面 */
   $("#wcCard").classList.remove("flipped");
   wc.flipped=false;
-  /* 配图：只显示已生成并缓存的图；没生成过就整块隐藏，绝不在这里发请求 */
+  /* 配图：只显示已生成并缓存、且该词没被手动隐藏的图；没生成过就整块隐藏，绝不在这里发请求 */
   wcRenderPic();
+  applyCardPic(); /* 「图片：开/关」按钮跟随当前这张卡的状态 */
 }
 function wcFlip(){
   wc.flipped=!wc.flipped;
@@ -2229,9 +2243,7 @@ function init(){
   state.vocabList=load("vocabList",true);
   applyVocabList();
 
-  state.cardPic=load("cardPic",true);
-  if(typeof state.cardPic!=="boolean") state.cardPic=true;
-  applyCardPic();
+  applyCardPic(); /* 配图显隐按词独立、不持久化：初始化时一律显示 */
 
   carrotRender(); /* 主页胡萝卜显示 */
 
