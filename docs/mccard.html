@@ -1568,12 +1568,12 @@ function carrotAward(){ var n=carrotGet()+1; carrotSet(n); return n; }
 
 /* ========================= 单词卡 =========================
    词表来自 currentVocab=[{en,zh}]；例句取文章里含该词的原句（按 enForms 匹配变形）。
-   配图来自 direct-img.link（短语转 +），只在用户点「🖼 生图」时才请求一次，不预取、不排队；
+   配图来自 direct-img.link（裸域 / free / ai 三个源按点击次序轮换，短语转 +），只在用户点「🖼 生图」时才请求一次，不预取、不排队；
    结果写进会话缓存，翻卡只读缓存，没生成过的词永远不发请求。 */
 var wc={
   idx:0, flipped:false, gen:0,
   imgCache:{},      /* word -> {ok,url} 只在点「生图」成功后写入，翻卡只读不请求 */
-  variant:{},       /* word -> 已点「生图」次数；>0 时给 URL 加 ?i=n，绕过缓存重新取图 */
+  variant:{},       /* word -> 已点「生图」次数；按它轮换图源并加 ?i=n，绕过缓存重新取图 */
   picHidden:{},     /* word -> 1：该词的配图被手动隐藏（每个词独立，会话内有效） */
   remembered:{},    /* 本轮已点「记住了」的词下标，全部点完才算一轮 */
   roundStart:0,     /* 本轮开始时间，汇总页显示用时 */
@@ -1595,6 +1595,8 @@ function toQuery(word){
   return String(word||"").trim().toLowerCase()
     .replace(/\//g,"%2F").replace(/\./g,"%2E").replace(/\s+/g,"+");
 }
+/* 图源轮换：第 1 次裸域名，第 2 次 free，第 3 次 ai，之后循环（free/ai 额度各自独立） */
+var PIC_SRCS=["direct-img.link","free.direct-img.link","ai.direct-img.link"];
 /* 从文章原句里找含该词的英文句（enForms 覆盖变形/不规则），返回 {en,zh} 或 null */
 function wcExample(word){
   if(!word || !currentSentences.length) return null;
@@ -1624,7 +1626,7 @@ function wcRenderPic(){
   if(url && pic){ pic.src=url; pic.hidden=false; }
 }
 /* 生成当前词的配图：只有点「🖼 生图」才会走到这里 —— 不预取、不排队、失败不自动重试。
-   URL 只拼词本身（短语用 + 连），再点一次递增 ?i=n；成功后写缓存并立即显示。 */
+   URL 只拼词本身（短语用 + 连），再点依次切源并递增 ?i=n；成功后写缓存并立即显示。 */
 function wcGenerate(){
   var v=currentVocab[wc.idx]; if(!v) return;
   var key=String(v.en||"").trim().toLowerCase();
@@ -1643,10 +1645,12 @@ function wcGenerate(){
   if(wrap) wrap.hidden=false;
   if(pic) pic.hidden=true;
   if(noimg){ noimg.textContent="图片生成中…"; noimg.classList.add("loading"); noimg.hidden=false; }
-  /* 短语不能带空格，统一转成 a+b；每点一次递增 ?i=n 让地址变化，绕过浏览器缓存真正重新取一张 */
+  /* 短语不能带空格，统一转成 a+b；每点一次按 裸域 → free → ai 循环切源（第 2、3 次分别用 free、ai），
+     同时递增 ?i=n 让地址变化，绕过浏览器缓存真正重新取一张 */
   var times=wc.variant[key]||0;
   wc.variant[key]=times+1;
-  var url="https://direct-img.link/"+toQuery(key)+(times?("?i="+times):"");
+  var src=PIC_SRCS[times%PIC_SRCS.length];
+  var url="https://"+src+"/"+toQuery(key)+(times?("?i="+times):"");
   function finish(ok, finalUrl, transient){
     wc.picBusy=false;
     if(btn){ btn.disabled=false; btn.textContent="🖼 生图"; }
