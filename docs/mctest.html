@@ -78,6 +78,8 @@ main{padding-top:14px}
 }
 .sw:hover{transform:translateY(-1px)}
 .sw:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(47,36,24,.15)}
+.sw:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.sw:disabled:hover,.sw:disabled:active{transform:none}
 .sw.primary{background:var(--grass);color:#fff;border-color:var(--grass-d);box-shadow:0 3px 0 var(--grass-d)}
 .sw.on{background:#eaf7e2;border-color:var(--grass-d);color:#3c6b2a}
 .sw.vocab-off{background:#fff;color:#8b7a67}
@@ -1822,6 +1824,9 @@ var wc={
   remembered:{},    /* 本轮已点「记住了」的词下标，全部点完才算一轮 */
   roundStart:0,     /* 本轮开始时间，汇总页显示用时 */
   speakGen:0,       /* 朗读令牌：切词/退出时让旧朗读链失效 */
+  picBusy:false,    /* 换图进行中，防连点堆请求 */
+  picCoolUntil:0,   /* 换图冷却截止时间 */
+  picChangeToken:0, /* 换图令牌：回调/兜底只放行一次 */
   timer:null
 };
 /* 卡面是否显示图片/英文/中文（仅用于卡片正面；背面的词+中文+例句不变） */
@@ -1918,6 +1923,8 @@ function wcStart(){
   stopPlayback();
   clearTimeout(wc.timer);
   wcCancelSpeak();
+  wc.picBusy=false; wc.picCoolUntil=0; wc.picChangeToken++;
+  var cpb=$("#wcChangePicBtn"); if(cpb){ cpb.disabled=false; cpb.textContent="🖼 换图"; }
   wc.idx=0; wc.flipped=false; wc.gen++; wc.remembered={};
   wc.roundStart=Date.now();
   document.body.classList.add("tt-on");
@@ -2072,9 +2079,27 @@ function wcSpeak(kind){
     });
   }
 }
-/* 换图：该词换图计数 +1（切源 + ?i= 变体），清缓存重新取 */
+/* 换图令牌：回调与 8 秒兜底只有先到的那个能释放按钮，防重复解锁 */
+function wcPicRelease(token, btn){
+  if(token!==wc.picChangeToken) return;
+  wc.picChangeToken++;
+  wc.picBusy=false;
+  if(btn){ btn.disabled=false; btn.textContent="🖼 换图"; }
+}
+/* 换图：该词换图计数 +1（切源 + ?i= 变体），清缓存重新取。
+   加载中禁用按钮 + 900ms 冷却，防止连点批量刷额度；8 秒兜底防请求卡死。 */
 function wcChangePic(){
   var v=currentVocab[wc.idx]; if(!v || !wcFaceParts().pic) return; /* 卡面不显示图片就不用换 */
+  var now=Date.now();
+  if(wc.picBusy || now<wc.picCoolUntil){
+    toast(wc.picBusy?"图片加载中，稍等一下":"换图太快啦，缓一缓");
+    return;
+  }
+  wc.picCoolUntil=now+900;
+  var btn=$("#wcChangePicBtn");
+  var token=++wc.picChangeToken;
+  wc.picBusy=true;
+  if(btn){ btn.disabled=true; btn.textContent="🖼 换图中…"; }
   var key=String(v.en||"").trim().toLowerCase();
   wc.variant[key]=(wc.variant[key]||0)+1;
   var old=wc.imgCache[key];
@@ -2084,7 +2109,9 @@ function wcChangePic(){
   var gen=wc.gen;
   var pic=$("#wcPic"), noimg=$("#wcNoimg");
   pic.hidden=true; noimg.textContent="图片加载中…"; noimg.classList.add("loading"); noimg.hidden=false;
+  setTimeout(function(){ wcPicRelease(token, btn); },8000);
   wcLoadPic(v.en, function(ok, url){
+    wcPicRelease(token, btn); /* 先解锁按钮，再判断是否已翻到别处 */
     if(gen!==wc.gen) return;
     noimg.classList.remove("loading");
     noimg.textContent="暂无图片";
