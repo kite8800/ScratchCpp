@@ -450,7 +450,7 @@ body.kb-open .type-mask{padding-top:8px}
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；「卡片」切换单词卡正面内容（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：断句后点「🃏 单词卡」进入翻卡背诵；正面内容由「卡片」按钮控制（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义），背面是词 + 中文 + 例句。点卡片或按空格/回车翻面，←→切词（→ 等同「✗ 没记住」），Esc 退出；点「✓ 记住了」或「✗ 没记住」切到下一张时会自动念出那张卡的英文单词；「🔊 读词」只读英文词，「🔊 读词义」先读英文词再读中文释义，「🔊 例句」先读英文例句再读中文翻译。每个词都点过「✓ 记住了」才算完成一轮，下一张会跳过已记住的词；全部记住后弹出汇总奖励页，奖励 1 个胡萝卜（满 10 进位金胡萝卜）。「🖼 换图」可换配图，图片来自外部热链、有每日额度，已做缓存和防连点。<br><b>打单词</b>：断句后点「⌨️ 打单词」进入专注模式，句子里命中词变成空格，看中文提示填英文；每空「🔤 拼读」逐字母读再读整词，「🔊 朗读整句」听语境。<b>整卷作答、统一交卷</b>：填完点「下一句」会闪本题答案并逐个念出（不拼读，念完再翻页，不判分），可「上一句」回改；全部填完点顶栏绿色「✓ 全部提交」一次性判分出成绩。回车 = 下一句。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文）；「卡片」切换单词卡正面内容（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：断句后点「🃏 单词卡」进入翻卡背诵；正面内容由「卡片」按钮控制（图+词 / 图+词+义 / 仅词 / 词+义 / 仅图 / 图+义），背面是词 + 中文 + 例句。点卡片或按空格/回车翻面，←→切词（→ 等同「✗ 没记住」），Esc 退出；点「✓ 记住了」或「✗ 没记住」切到下一张时会自动念出那张卡的英文单词；「🔊 读词」只读英文词，「🔊 读词义」先读英文词再读中文释义，「🔊 例句」先读英文例句再读中文翻译。每个词都点过「✓ 记住了」才算完成一轮，下一张会跳过已记住的词；全部记住后弹出汇总奖励页，奖励 1 个胡萝卜（满 10 进位金胡萝卜）。「🖼 换图」可换配图，图片来自外部热链、有每日额度，已做缓存和防连点。
     </div>
 
     <div class="action-row">
@@ -481,10 +481,8 @@ body.kb-open .type-mask{padding-top:8px}
       <span class="action-label">测试：</span>
       <span class="loot-label">你的战利品</span>
       <span class="tt-apples" id="wcCarrots" title="🥕 普通胡萝卜 · 🥕 金胡萝卜(10个兑换)"></span>
-      <span class="tt-apples" id="ttApples" title="🍎 普通苹果 · 🥇 金苹果(10个兑换)"></span>
       <div class="row-break"></div>
       <button class="sw" id="wordCardBtn" title="翻卡背单词，配图辅助记忆">🃏 单词卡</button>
-      <button class="sw" id="typeTestBtn" title="在句子里填出命中的单词">⌨️ 打单词</button>
     </div>
 
     <div id="report"></div>
@@ -509,26 +507,6 @@ body.kb-open .type-mask{padding-top:8px}
     </div>
   </div>
 </main>
-
-<!-- 打字测试：专注模式覆盖层（进入时隐藏阅读界面） -->
-<div id="typeTest" class="type-mask" hidden>
-  <div class="type-panel">
-    <div class="tt-head">
-      <span class="tt-title" id="ttTitle">⌨️ 打单词测试</span>
-      <span class="tt-progress" id="ttProgress">0 / 0</span>
-      <span class="tt-right" id="ttScore">已对 0</span>
-      <button class="tt-submit" id="ttSubmitBtn" type="button" title="全部作答完成后统一交卷">✓ 全部提交</button>
-      <button class="tt-exit" id="ttExitBtn" title="退出测试">退出 ✕</button>
-    </div>
-    <div class="tt-body" id="ttBody"></div>
-    <div class="tt-actions" id="ttActions"></div>
-    <div class="tt-navrow">
-      <span class="tt-jump-label" id="ttJumpLabel">1 / 1</span>
-      <input class="tt-jump" id="ttJump" type="range" min="0" max="0" step="1" value="0" aria-label="跳转句子">
-      <span class="tt-rate"><span class="tt-rate-ico">🐢</span><input id="ttRateInput" type="range" min="0.5" max="2.0" step="0.05" value="0.85" aria-label="打单词语速"><span class="tt-rate-val" id="ttRateLabel">0.85x</span><span class="tt-rate-ico">🐇</span></span>
-    </div>
-  </div>
-</div>
 
 <!-- 单词卡：点击翻卡的背单词全屏覆盖层 -->
 <div id="wordCards" class="type-mask" hidden>
@@ -667,32 +645,6 @@ function tone(freq,dur,type,vol){
   else if(c.resume){ c.resume().then(play).catch(function(){}); }
 }
 function click(){ tone(560,.05,"square",.022); }
-/* 打字机敲击音：清脆「咔-哒」双层——高频点击 + 中低频机身回响，硬起音 */
-var typeTickLast=0;
-function typeTick(){
-  var now=Date.now();
-  if(now-typeTickLast<28) return; /* 节流，避免长按/连打糊成一片 */
-  typeTickLast=now;
-  if(state.muted) return;
-  var c=ac(); if(!c) return;
-  var play=function(){
-    try{
-      var t=c.currentTime+.004;
-      /* [频率, 时长, 音量, 延迟]：先高频脆响，再一声略低的机身哒 */
-      [[2100,.016,.020,0],[880,.032,.013,.006]].forEach(function(p){
-        var st=t+p[3], o=c.createOscillator(), g=c.createGain();
-        o.type="square"; o.frequency.setValueAtTime(p[0],st);
-        g.gain.setValueAtTime(.0001,st);
-        g.gain.exponentialRampToValueAtTime(p[2],st+.002); /* 2ms 硬起音 → 清脆 */
-        g.gain.exponentialRampToValueAtTime(.0001,st+p[1]);
-        o.connect(g); g.connect(c.destination); o.start(st); o.stop(st+p[1]+.02);
-      });
-    }catch(e){}
-  };
-  if(c.state==="running") play();
-  else if(c.resume) c.resume().then(play).catch(function(){});
-}
-
 /* ========================= 朗读 + 音色 =========================
    微信内置浏览器兼容要点（2026-11-20）：
    1) 安卓微信 X5 / 老 WebView 可能只暴露带前缀的 webkitSpeechSynthesis，
@@ -1576,214 +1528,6 @@ function cycleCardFace(){
   if(!$("#wordCards").hidden) wcRender(); /* 覆盖层开着时立刻换正面 */
 }
 
-/* ========================= 打字测试（句子里填词） ========================= */
-var tt={ items:[], idx:0, correct:0, total:0, results:[], drafts:[], timer:null, speakGen:0 };
-/* 归一化：小写、去标点、压空格 */
-function ttNorm(s){
-  return String(s||"").toLowerCase()
-    .replace(/[.,!?;:'"“”‘’]/g,"")
-    .replace(/\s+/g," ").trim();
-}
-/* 生成题目：每句英文里命中词表的词挖成空，提示取该句中文 */
-function ttBuild(){
-  var items=[];
-  currentSentences.forEach(function(s){
-    var en=s.en||"";
-    var ranges=vocabRanges(en,"en");
-    if(!ranges.length) return; /* 没有命中词的句子不考 */
-    items.push({ en:en, zh:s.zh||"", ranges:ranges });
-  });
-  return items;
-}
-/* ===== 手机软键盘适配：用 visualViewport 感知键盘，把输入框顶到可视区 ===== */
-var ttKb={ bound:false, open:false, baseH:0 };
-function ttKbInit(){
-  if(ttKb.bound) return;
-  var vv=window.visualViewport;
-  if(!vv) return; /* 不支持则退回原生 focus 行为 */
-  ttKb.baseH=vv.height;
-  function onResize(){
-    if($("#typeTest").hidden) return;
-    /* 键盘弹出后 vv.height 明显小于初始高度 → 视为键盘打开 */
-    var h=vv.height;
-    var kbOpen=(ttKb.baseH-h>120) || (window.innerHeight-h>120);
-    var mask=$("#typeTest");
-    if(kbOpen){
-      if(!ttKb.open){
-        ttKb.open=true;
-        document.body.classList.add("kb-open");
-      }
-      /* 覆盖层只占可视高度，内部滚动区随之缩小，输入框不会被键盘盖住 */
-      mask.style.height=h+"px";
-      mask.style.top=(vv.offsetTop||0)+"px";
-      /* 把当前聚焦的输入框滚进可视区中部 */
-      var a=document.activeElement;
-      if(a && a.classList && a.classList.contains("tt-input")){
-        setTimeout(function(){ try{ a.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} },80);
-      }
-    }else if(ttKb.open){
-      ttKb.open=false;
-      document.body.classList.remove("kb-open");
-      mask.style.height="";
-      mask.style.top="";
-    }
-  }
-  vv.addEventListener("resize",onResize);
-  vv.addEventListener("scroll",onResize);
-  /* 任何输入框被聚焦（含切题、点第二个空）都滚到可视区中部 */
-  $("#typeTest").addEventListener("focusin",function(e){
-    if($("#typeTest").hidden) return;
-    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
-    setTimeout(function(){ try{ e.target.scrollIntoView({block:"center",behavior:"smooth"}); }catch(err){} }, ttKb.open?60:20);
-  });
-  ttKb.bound=true;
-}
-function ttKbReset(){
-  if(!ttKb.open) return;
-  ttKb.open=false;
-  document.body.classList.remove("kb-open");
-  var mask=$("#typeTest");
-  mask.style.height=""; mask.style.top="";
-}
-function ttStart(){
-  ttKbInit();
-  if(!currentSentences.length){ toast("先点「识别并断句」"); return; }
-  if(!currentVocab.length){ toast("先在正文里写单词表（英文|中文）"); return; }
-  var items=ttBuild();
-  if(!items.length){ toast("句子里没有命中单词表的词，没得填"); return; }
-  stopPlayback();
-  clearTimeout(tt.timer);
-  tt.speakGen++; /* 失效上一局残留的答案朗读链 */
-  tt.items=items; tt.idx=0; tt.correct=0; tt.total=0;
-  tt.results=[]; tt.drafts=[];
-  /* 总空数 */
-  items.forEach(function(it){ tt.total+=it.ranges.length; });
-  document.body.classList.add("tt-on");
-  $("#typeTest").hidden=false;
-  $("#ttSubmitBtn").hidden=false; /* 重开一局恢复顶栏提交按钮 */
-  appleRender(); /* 刷新主页苹果显示 */
-  renderTT();
-}
-function ttExit(){
-  clearTimeout(tt.timer); /* 退出时取消闪答案/翻页定时，避免关掉后又动 */
-  tt.speakGen++; /* 失效正在进行的答案朗读链 */
-  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
-  ttKbReset();
-  $("#typeTest").hidden=true;
-  document.body.classList.remove("tt-on");
-}
-/* 逐字母拼读再读整词：W → O → R → K → work */
-function ttSpell(word){
-  if(!word) return;
-  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
-  var letters=Array.from(word).filter(function(c){return /[A-Za-z]/.test(c);});
-  var i=0;
-  function next(){
-    if(i<letters.length){
-      var ch=letters[i++];
-      speakOne(ch.toUpperCase(), "en", .8, function(){ setTimeout(next, 90); });
-    } else {
-      setTimeout(function(){ speakOne(word, "en", .85, function(){}); }, 160);
-    }
-  }
-  next();
-}
-/* 跳到第 i 题（可回退），恢复当时填的草稿。答题阶段一律不判分、不锁定。 */
-function ttGo(i){
-  if(i<0 || i>=tt.items.length) return;
-  clearTimeout(tt.timer);
-  tt.speakGen++; /* 回退时停掉正在念的答案 */
-  try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
-  ttClearPeek();
-  renderTT(i);
-}
-function renderTT(i){
-  if(typeof i==="number") tt.idx=i;
-  var it=tt.items[tt.idx];
-  if(!it){ ttFinish(); return; }
-  $("#ttProgress").textContent=(tt.idx+1)+" / "+tt.items.length;
-  $("#ttScore").textContent="共 "+tt.total+" 空";
-
-  /* 句子：命中词位置放输入框 */
-  var html="", pos=0;
-  it.ranges.forEach(function(r,k){
-    if(r.start>pos) html+=esc(it.en.slice(pos,r.start));
-    html+='<span class="tt-blank">'+
-      '<input class="tt-input" data-k="'+k+'" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" size="'+Math.max(5,r.word.length+2)+'">'+
-      '<button class="tt-spell" data-spell="'+k+'" type="button" title="逐字母拼读再读整词">🔤 拼读</button>'+
-      '</span>';
-    pos=r.end;
-  });
-  if(pos<it.en.length) html+=esc(it.en.slice(pos));
-  $("#ttBody").innerHTML=
-    '<div class="tt-hint-label">提示 · 中文</div>'+
-    '<div class="tt-hint-zh">'+esc(it.zh||"（无译文，靠朗读提示）")+'</div>'+
-    '<div class="tt-hint-label">在句子里填词（忽略大小写 / 标点）· 点「下一句」核对答案</div>'+
-    '<div class="tt-sentence">'+html+'</div>';
-
-  /* 答题阶段：输入框始终可填，恢复当时草稿，不锁定、不揭示对错 */
-  var draft=tt.drafts[tt.idx]||[];
-  $$("#ttBody .tt-input").forEach(function(inp,k){ inp.value=draft[k]||""; });
-
-  /* 固定按钮栏：上一句 / 下一句 / 朗读 / 跳过；「全部提交」在顶栏 */
-  $("#ttActions").innerHTML=
-    '<button class="sw icon-only" id="ttPrevBtn" type="button" title="上一句"'+(tt.idx===0?' disabled':'')+'>←</button>'+
-    '<button class="sw primary" id="ttNextBtn" type="button">下一句 →</button>'+
-    '<button class="sw" id="ttReadBtn" type="button">🔊 朗读整句</button>'+
-    '<button class="sw" id="ttSkipBtn" type="button">跳过</button>';
-  /* 水平线下的导航行：跳句滑块（长）+ 语速（小） */
-  var jump=$("#ttJump");
-  jump.max=Math.max(0, tt.items.length-1);
-  jump.value=tt.idx;
-  $("#ttJumpLabel").textContent=(tt.idx+1)+" / "+tt.items.length;
-  $("#ttRateInput").value=player.rate;
-  $("#ttRateLabel").textContent=Number(player.rate).toFixed(2)+"x";
-  var first=$("#ttBody .tt-input");
-  if(first) first.focus();
-}
-/* 把当前题的输入存进草稿 */
-function ttSaveDraft(){
-  tt.drafts[tt.idx]=$$("#ttBody .tt-input").map(function(i){return i.value;});
-}
-/* 移除闪现的答案条 */
-function ttClearPeek(){ var p=$("#ttPeek"); if(p) p.parentNode.removeChild(p); }
-/* 真正翻到下一题（闪答案结束后调用） */
-function ttFlip(){
-  ttClearPeek();
-  tt.idx++;
-  if(tt.idx>=tt.items.length){ tt.idx=tt.items.length-1; toast("已经是最后一句，点上方「全部提交」交卷"); return; }
-  renderTT();
-}
-/* ========================= 苹果奖励 =========================
-   每局提交得分 ≥90 奖励 1 个苹果，存 localStorage（key: mcr_apples）。
-   显示按十进制进位：个位=普通苹果 🍎，十位=金苹果 🥇（满 10 换 1 金）。 */
-var APPLE_KEY="apples";
-function appleGet(){
-  var n=load(APPLE_KEY,0);
-  return (typeof n==="number" && n>=0 && isFinite(n))?Math.floor(n):0;
-}
-function appleSet(n){ save(APPLE_KEY,n); appleRender(n); }
-/* 内联金色苹果 SVG（渐变 + 高光 + 果柄叶片） */
-var GOLD_APPLE_SVG='<svg class="ico-gold" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="金苹果">'+
-  '<defs><linearGradient id="gaG" x1="0" y1="0" x2="0" y2="1">'+
-  '<stop offset="0" stop-color="#fff3a6"/><stop offset="45%" stop-color="#ffd23f"/><stop offset="100%" stop-color="#e39400"/>'+
-  '</linearGradient></defs>'+
-  '<path d="M12 7.5c-1.2-1.8-3.8-2.3-5.5-1C4.2 8 3.8 11 4.6 14c.9 3.4 3.5 6.5 5.7 6.5.9 0 1.3-.5 1.7-.5s.8.5 1.7.5c2.2 0 4.8-3.1 5.7-6.5.8-3 .4-6-1.9-7.5-1.7-1.3-4.3-.8-5.5 1z" fill="url(#gaG)" stroke="#b97400" stroke-width=".6"/>'+
-  '<path d="M12 7.5V4.6" stroke="#7a4a10" stroke-width="1.4" stroke-linecap="round" fill="none"/>'+
-  '<path d="M12.2 5.4c.1-1.5 1.4-2.5 3-2.5-.1 1.5-1.2 2.5-3 2.5z" fill="#4f9b3f"/>'+
-  '<ellipse cx="8.4" cy="10.2" rx="1.5" ry="2.4" fill="#fff" opacity=".45" transform="rotate(-22 8.4 10.2)"/>'+
-  '</svg>';
-function appleRender(n){
-  var el=$("#ttApples"); if(!el) return;
-  if(typeof n!=="number") n=appleGet();
-  var gold=Math.floor(n/10), red=n%10, icos="", i;
-  for(i=0;i<gold;i++) icos+=GOLD_APPLE_SVG;
-  for(i=0;i<red;i++) icos+='<span class="ico">🍎</span>';
-  if(!icos) icos='<span class="ico" style="opacity:.35">🍎</span>';
-  el.innerHTML='<span class="icos">'+icos+'</span><span class="cnt">'+n+'</span>';
-}
-function appleAward(){ var n=appleGet()+1; appleSet(n); return n; }
-
 /* ========================= 胡萝卜奖励（单词卡）=========================
    单词卡这一轮每个词都点过「记住了」才奖 1 个胡萝卜，存 localStorage（mcr_carrots）。
    个位=普通胡萝卜 🥕，十位=金胡萝卜（内联 SVG，满 10 换 1），与苹果系统互相独立。 */
@@ -2196,132 +1940,6 @@ function wcChangePic(){
   }, true);
 }
 
-/* 取消正在进行的答案朗读，并让旧链失效（gen 不匹配即中止） */
-function ttCancelSpeak(){
-  tt.speakGen++;
-  try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
-}
-/* 依次念出答案单词（不拼读）；gen 不匹配立即停，防止切题后旧链继续 */
-function ttSpeakWords(words, gen, done){
-  var i=0;
-  function next(){
-    if(gen!==tt.speakGen) return;
-    if(i>=words.length){ done&&done(); return; }
-    var w=words[i++];
-    speakOne(w,"en",player.rate,function(){ setTimeout(next,120); });
-  }
-  next();
-}
-/* 下一句：存草稿 → 闪答案 → 依次念命中词（不拼读）→ 念完再翻页。全程不判分。
-   朗读至少保留 2 秒可读时间；若朗读卡住不回调，8 秒兜底强制翻页。 */
-function ttNext(){
-  clearTimeout(tt.timer);
-  ttClearPeek();
-  ttSaveDraft();
-  var it=tt.items[tt.idx]; if(!it) return;
-  var words=it.ranges.map(function(r){return r.word;});
-  var div=document.createElement("div");
-  div.id="ttPeek"; div.className="tt-peek";
-  div.innerHTML='<span class="tt-peek-tag">答案对照 · 记住后再填</span>'+
-    words.map(function(w){var zh=wordZh(w);return '<div class="tt-peek-row"><b>'+esc(w)+'</b>'+(zh?'<span>'+esc(zh)+'</span>':'')+'</div>';}).join('');
-  $("#ttBody").appendChild(div);
-
-  var started=Date.now();
-  var gen=++tt.speakGen;
-  /* 兜底：朗读若不回调，8 秒后强制翻页 */
-  tt.timer=setTimeout(function(){ tt.timer=null; if(gen===tt.speakGen) ttFlip(); },8000);
-  ttSpeakWords(words, gen, function(){
-    if(gen!==tt.speakGen) return;
-    clearTimeout(tt.timer); /* 取消兜底，改按「念完 + 至少 2 秒」翻页 */
-    var left=2000-(Date.now()-started);
-    tt.timer=setTimeout(function(){ tt.timer=null; if(gen===tt.speakGen) ttFlip(); }, left>0?left:0);
-  });
-}
-/* 跳过：存草稿（留空），不闪答案，直接下一题 */
-function ttSkip(){
-  clearTimeout(tt.timer);
-  tt.speakGen++; /* 停掉正在念的答案 */
-  try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
-  ttClearPeek();
-  ttSaveDraft();
-  ttFlip();
-}
-/* 统一提交：对所有题按草稿一次性判分，再进成绩页 */
-function ttSubmitAll(){
-  clearTimeout(tt.timer);
-  tt.speakGen++; /* 提交时停掉正在念的答案 */
-  try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
-  ttClearPeek();
-  ttSaveDraft();
-  tt.results=[];
-  var correct=0;
-  tt.items.forEach(function(it,i){
-    var mine=tt.drafts[i]||[];
-    var oks=it.ranges.map(function(r,k){ return ttNorm(mine[k]||"")===ttNorm(r.word); });
-    var ok=oks.length>0 && oks.every(function(x){return x;});
-    if(ok) correct++;
-    tt.results.push({ zh:it.zh, answers:it.ranges.map(function(r){return r.word;}),
-                      mine:mine, oks:oks, ok:ok, skipped:false });
-  });
-  tt.correct=correct;
-  /* 得分 ≥90 奖励一个苹果；满 10 个自动进位成金苹果 */
-  var rate=tt.total? Math.round(correct/tt.items.length*100):0;
-  tt.gotApple=false; tt.goldApple=false; tt.appleTotal=appleGet();
-  if(rate>=90){
-    var before=appleGet();
-    var after=appleAward();
-    tt.gotApple=true;
-    tt.appleTotal=after;
-    tt.goldApple=(after%10===0 && after>before); /* 本次是否进位成金苹果 */
-  }
-  ttFinish();
-}
-function ttFinish(){
-  try{ var sy=getSynth(); if(sy) sy.cancel(); }catch(e){}
-  var rate=tt.total? Math.round(tt.correct/tt.items.length*100):0;
-  /* 按分数段给一句鼓励，成就感拉满 */
-  var cheer;
-  if(rate===100)      cheer='🏆 满分！一个都没错，你是单词之王！';
-  else if(rate>=90)   cheer='🌟 太棒了！只差一点点就满分啦！';
-  else if(rate>=75)   cheer='👏 很不错！再细心一点就更好了！';
-  else if(rate>=60)   cheer='💪 有进步！多练几次就一定行！';
-  else                cheer='🌱 每一次练习都在变强，继续加油！';
-  var h='<div class="tt-score"><div class="tt-cheer">'+cheer+'</div>'+
-    '<div class="big">'+rate+'%</div>'+
-    '<div class="sub">填对 '+tt.correct+' / '+tt.items.length+' 句 · 共 '+tt.total+' 空</div>';
-  if(tt.gotApple){
-    if(tt.goldApple){
-      /* 满 10 进位：升级成金苹果 */
-      h+='<div class="tt-reward gold"><div class="tt-reward-ico">'+GOLD_APPLE_SVG+'</div>'+
-        '<div class="tt-reward-txt"><b>🎉 你获得了 1 个金苹果！</b>'+
-        '<span>10 个苹果升级啦 · 战利品共 '+tt.appleTotal+' 个</span></div></div>';
-    }else{
-      h+='<div class="tt-reward"><div class="tt-reward-ico">🍎</div>'+
-        '<div class="tt-reward-txt"><b>你获得了 1 个苹果！</b>'+
-        '<span>成绩 '+rate+' 分达标（≥90）· 战利品共 '+tt.appleTotal+' 个</span></div></div>';
-    }
-  }else{
-    h+='<div class="tt-noharvest">成绩满 90 分就能抱走一个苹果，下一局加油！</div>';
-  }
-  var wrong=tt.results.filter(function(r){return r && !r.ok;});
-  if(wrong.length){
-    h+='<div class="tt-wrong"><div class="tt-hint-label">错题回顾</div>';
-    wrong.forEach(function(r){
-      h+='<div class="row"><div class="zh">'+esc(r.zh||"—")+'</div>'+
-        '<div class="a">正确：'+esc(r.answers.join(" / "))+'</div>'+
-        (r.mine.length?'<div class="y">你写：'+esc(r.mine.join(" / "))+'</div>':'<div class="y">已跳过</div>')+
-        '</div>';
-    });
-    h+='</div>';
-  }
-  h+='</div>';
-  $("#ttBody").innerHTML=h;
-  $("#ttActions").innerHTML=
-    '<button class="sw primary" id="ttAgainBtn" type="button">再来一次</button>'+
-    '<button class="sw" id="ttBackBtn" type="button">退出测试</button>';
-  $("#ttSubmitBtn").hidden=true; /* 成绩页不再需要提交 */
-}
-
 /* ========================= 历史文章 ========================= */
 var HIST_KEY="history", HIST_QUOTA=5*1024*1024; /* localStorage 通常约 5MB */
 function histGet(){ var a=load(HIST_KEY,null); return (a&&a.length&&Array.isArray(a))?a:[]; }
@@ -2559,9 +2177,6 @@ function bind(){
     click(); cycleTrans();
   });
 
-  $("#typeTestBtn").addEventListener("click", function(){ unlockAudio(); click(); ttStart(); });
-  $("#ttExitBtn").addEventListener("click", function(){ click(); ttExit(); });
-
   /* ---- 单词卡 ---- */
   $("#wordCardBtn").addEventListener("click", function(){ unlockAudio(); click(); wcStart(); });
   $("#wcExitBtn").addEventListener("click", function(){ click(); wcExit(); });
@@ -2597,72 +2212,11 @@ function bind(){
       $("#wcRateLabel").textContent=player.rate.toFixed(2)+"x";
       $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
       $("#rateInput").value=player.rate;
-      var ttr=$("#ttRateInput"); if(ttr) ttr.value=player.rate;
       save("rate", player.rate);
     }
   });
   $("#wordCards").addEventListener("change", function(e){
     if(e.target && e.target.id==="wcJump") wcGo(Number(e.target.value));
-  });
-
-  $("#typeTest").addEventListener("click", function(e){
-    var sp=e.target.closest("[data-spell]");
-    if(sp){ unlockAudio(); click(); var it=tt.items[tt.idx]; if(it) ttSpell(it.ranges[Number(sp.getAttribute("data-spell"))].word); return; }
-    if(e.target.closest("#ttPrevBtn")){ click(); if(tt.idx>0) ttGo(tt.idx-1); return; }
-    if(e.target.closest("#ttNextBtn")){ unlockAudio(); click(); ttNext(); return; }
-    if(e.target.closest("#ttReadBtn")){
-      unlockAudio(); click(); var it2=tt.items[tt.idx];
-      if(it2) speakOne(it2.en,"en",player.rate,function(){});
-      return;
-    }
-    if(e.target.closest("#ttSkipBtn")){ click(); ttSkip(); return; }
-    if(e.target.closest("#ttSubmitBtn")){ click(); ttSubmitAll(); return; }
-    if(e.target.closest("#ttAgainBtn")){ click(); ttStart(); return; }
-    if(e.target.closest("#ttBackBtn")){ click(); ttExit(); return; }
-  });
-  /* 敲键音效 + 回车下一句 + Tab 在输入框间跳转 */
-  $("#typeTest").addEventListener("keydown", function(e){
-    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
-    if(e.key==="Enter"){ e.preventDefault(); ttNext(); return; }
-    if(e.key==="Tab"){
-      /* 阻止默认跳到「拼读」等按钮，改为只在填空之间移动 */
-      e.preventDefault();
-      var ins=$$("#ttBody .tt-input");
-      var k=ins.indexOf(e.target);
-      var nxt=e.shiftKey? k-1 : k+1;
-      if(nxt>=0 && nxt<ins.length){
-        ins[nxt].focus();
-      }else if(!e.shiftKey && tt.idx<tt.items.length-1){
-        /* 本句最后一个 → 下一句第一个（不判分、不念答案，草稿已实时保存） */
-        ttGo(tt.idx+1);
-      }else if(e.shiftKey && tt.idx>0){
-        /* 本句第一个 → 上一句最后一个 */
-        ttGo(tt.idx-1);
-        var prev=$$("#ttBody .tt-input"); if(prev.length) prev[prev.length-1].focus();
-      }else{
-        /* 到底/到头：循环回另一端 */
-        ins[e.shiftKey? ins.length-1 : 0].focus();
-      }
-      return;
-    }
-    if(e.key==="Backspace" || e.key==="Delete" || e.key.length===1){
-      if(e.key!==" " && !e.ctrlKey && !e.metaKey && !e.altKey) typeTick();
-    }
-  });
-  /* 记录草稿：回退时恢复用户当时填的内容 */
-  $("#typeTest").addEventListener("input", function(e){
-    if(e.target && e.target.id==="ttJump"){
-      /* 拖动跳句滑块时先预览句号，松手(change)才真正跳，避免焦点被输入框抢走中断拖动 */
-      $("#ttJumpLabel").textContent=(Number(e.target.value)+1)+" / "+tt.items.length;
-      return;
-    }
-    if(!e.target.classList || !e.target.classList.contains("tt-input")) return;
-    tt.drafts[tt.idx]=$$("#ttBody .tt-input").map(function(i){return i.value;});
-  });
-  /* 跳句滑块：松手后跳到对应句（草稿已实时保存，回退可恢复） */
-  $("#typeTest").addEventListener("change", function(e){
-    if(!e.target || e.target.id!=="ttJump") return;
-    ttGo(Number(e.target.value));
   });
 
   $("#vocabListBtn").addEventListener("click", function(){
@@ -2713,20 +2267,9 @@ function bind(){
     player.rate=Number(e.target.value);
     $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
     /* 同步打字测试 / 单词卡里的语速滑块（若存在） */
-    var ttr=$("#ttRateInput"); if(ttr){ ttr.value=player.rate; $("#ttRateLabel").textContent=player.rate.toFixed(2)+"x"; }
     var wcr=$("#wcRateInput"); if(wcr){ wcr.value=player.rate; $("#wcRateLabel").textContent=player.rate.toFixed(2)+"x"; }
     save("rate", player.rate);
   });
-  /* 打字测试里的语速滑块（动态生成，用委托）：与主界面共用 player.rate，并回写主界面显示 */
-  $("#typeTest").addEventListener("input", function(e){
-    if(!e.target || e.target.id!=="ttRateInput") return;
-    player.rate=Number(e.target.value);
-    $("#ttRateLabel").textContent=player.rate.toFixed(2)+"x";
-    $("#rateLabel").textContent=player.rate.toFixed(2)+"x";
-    $("#rateInput").value=player.rate;
-    save("rate", player.rate);
-  });
-
   $("#readerBody").addEventListener("click", function(e){
     /* 词表词条：点哪个词就从哪个词读起，连播意图同句子 */
     var vb=e.target.closest(".vb-row");
@@ -2768,7 +2311,6 @@ function bind(){
   document.addEventListener("keydown", function(e){
     if(e.key!=="Escape") return;
     if(!$("#wordCards").hidden){ wcExit(); return; }
-    if(!$("#typeTest").hidden){ ttExit(); return; }
     closeHistDialog();
   });
   $("#histList").addEventListener("click", function(e){
@@ -2809,7 +2351,6 @@ function init(){
   if(CARD_FACE_ORDER.indexOf(state.cardFace)<0) state.cardFace="pw";
   applyCardFace();
 
-  appleRender(); /* 主页苹果显示 */
   carrotRender(); /* 主页胡萝卜显示 */
 
   state.langMode=load("langMode","en");
