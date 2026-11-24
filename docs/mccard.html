@@ -2187,7 +2187,7 @@ function bind(){
     if(e.target.closest("#wcCard")){ unlockAudio(); click(); wcFlip(); return; } /* 点卡片翻面 */
     if(e.target.closest("#wcReadWordBtn")){ wcSpeak("word"); return; }
     if(e.target.closest("#wcReadZhBtn")){ wcSpeak("wordZh"); return; }
-    if(e.target.closest("#wcReadExBtn")){ wcSpeak("ex"); return; }
+    if(e.target.closest("#wcReadExBtn")){ if(!wc.flipped) wcFlip(); wcSpeak("ex"); return; } /* 例句在背面，先翻过去 */
     if(e.target.closest("#wcChangePicBtn")){ wcChangePic(); return; }
     if(e.target.closest("#wcTogglePicBtn")){ click(); toggleCardPic(); return; }
   });
