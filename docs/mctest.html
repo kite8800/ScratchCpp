@@ -559,8 +559,8 @@ body.kb-open .type-mask{padding-top:8px}
       <button class="sw primary" id="wcKnowBtn" title="记住了这个词，跳到下一个没记住的">✓ 记住了</button>
       <button class="sw miss" id="wcNextBtn" title="没记住，跳到下一个没记住的词">✗ 没记住</button>
       <div class="row-break"></div>
-      <button class="sw" id="wcChangePicBtn" title="换一张图片">🖼 换图</button>
-      <button class="sw on" id="wcTogglePicBtn" title="隐藏卡片配图（隐藏后不再取图）">图片：开</button>
+      <button class="sw" id="wcChangePicBtn" title="为这个单词生成一张配图（免费图源，有额度限制）">🖼 生图</button>
+      <button class="sw on" id="wcTogglePicBtn" title="隐藏这张卡的配图（只隐藏，不再请求图片）">图片：开</button>
       <div class="row-break"></div>
       <button class="sw" id="wcReadWordBtn" title="只读英文单词">🔊 读词</button>
       <button class="sw" id="wcReadZhBtn" title="先读英文词，再读中文释义">🔊 读词义</button>
@@ -1039,7 +1039,7 @@ function applyPref(pref){
 }
 
 /* ========================= 状态 ========================= */
-var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, cardPic:true, voicePref:"auto" };
+var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, voicePref:"auto" };
 var currentSentences=[];
 var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
 /* continuous = 用户的「连播意图」，只由播放按钮维护：
@@ -1558,19 +1558,29 @@ function toggleVocabList(){
   save("vocabList", state.vocabList);
   applyVocabList();
 }
-/* 卡片是否显示配图：关掉时不取图/不预取，省 direct-img 额度；卡片正面的词/义由「词汇」模式决定 */
+/* 配图显隐：按词（=每张卡）独立控制，只影响显示、不触发任何请求。
+   状态只在本次会话内有效（刷新重置为全部显示）。卡片正面的词/义由「词汇」模式决定 */
+function picShown(word){
+  var k=String(word||"").trim().toLowerCase();
+  return !k || !wc.picHidden[k];
+}
+function setPicShown(word, on){
+  var k=String(word||"").trim().toLowerCase(); if(!k) return;
+  if(on) delete wc.picHidden[k]; else wc.picHidden[k]=1;
+}
 function applyCardPic(){
   var btn=$("#wcTogglePicBtn"); if(!btn) return;
-  btn.textContent=state.cardPic?"图片：开":"图片：关";
-  btn.classList.toggle("on", !!state.cardPic);
-  btn.title=state.cardPic?"隐藏卡片配图（隐藏后不再取图）":"显示卡片配图";
+  var v=currentVocab[wc.idx];
+  var on=picShown(v?v.en:"");
+  btn.textContent=on?"图片：开":"图片：关";
+  btn.classList.toggle("on", on);
+  btn.title=on?"隐藏这张卡的配图（只隐藏，不再请求图片）":"显示这张卡的配图";
 }
 function toggleCardPic(){
-  state.cardPic=!state.cardPic;
-  save("cardPic", state.cardPic);
+  var v=currentVocab[wc.idx]; if(!v) return;
+  setPicShown(v.en, !picShown(v.en)); /* 只切当前这个词，别的卡不受影响 */
   applyCardPic();
-  if(!state.cardPic) wcPicClearQueue(); /* 关图时撤掉还没发出的取图/预取 */
-  if(!$("#wordCards").hidden) wcRender(); /* 开着时立刻刷新卡面 */
+  if(!$("#wordCards").hidden) wcRenderPic(); /* 开着时立刻刷新卡面 */
 }
 
 /* ========================= 打字测试（句子里填词） ========================= */
@@ -1814,39 +1824,35 @@ function carrotAward(){ var n=carrotGet()+1; carrotSet(n); return n; }
 
 /* ========================= 单词卡 =========================
    词表来自 currentVocab=[{en,zh}]；例句取文章里含该词的原句（按 enForms 匹配变形）。
-   图片来自 free/ai.direct-img.link，两个子域额度独立，交替使用充分消耗；
-   会话内缓存取图结果，翻卡不重复请求；free 源搜不到返回 bad.webp → 隐藏图片区。 */
+   配图来自 direct-img.link（裸域 / free / ai 三个源按点击次序轮换，短语转 +），只在用户点「🖼 生图」时才请求一次，不预取、不排队；
+   结果写进会话缓存，翻卡只读缓存，没生成过的词永远不发请求。 */
 var wc={
   idx:0, flipped:false, gen:0,
-  imgCache:{},      /* word -> {ok:bool, url:string} 本次页面内的取图结果，翻回不重取 */
-  loading:{},       /* word|variant -> 回调队列，同一张图只发一次请求 */
-  variant:{},       /* word -> 换图计数（>0 时给 URL 加 ?i=） */
+  imgCache:{},      /* word -> {ok,url} 只在点「生图」成功后写入，翻卡只读不请求 */
+  variant:{},       /* word -> 已点「生图」次数；按它轮换图源并加 ?i=n，绕过缓存重新取图 */
+  picHidden:{},     /* word -> 1：该词的配图被手动隐藏（每个词独立，会话内有效） */
   remembered:{},    /* 本轮已点「记住了」的词下标，全部点完才算一轮 */
   roundStart:0,     /* 本轮开始时间，汇总页显示用时 */
   speakGen:0,       /* 朗读令牌：切词/退出时让旧朗读链失效 */
-  picBusy:false,    /* 换图进行中，防连点堆请求 */
-  picCoolUntil:0,   /* 换图冷却截止时间 */
-  picChangeToken:0, /* 换图令牌：回调/兜底只放行一次 */
-  picQueue:[],      /* 全局取图队列：{loadKey, waiters, start, cancelled, urgent} */
-  picTasks:{},      /* loadKey -> 队列任务，便于插队/取消 */
-  picRunning:0,     /* 同时最多 1 个在途请求 */
-  picLastStart:0,   /* 上次发起请求时间，保证最小间隔 */
-  picTimer:null,    /* 队列调度定时器 */
+  picBusy:false,    /* 单次生成进行中：同一时刻最多 1 个请求，也防连点刷额度 */
+  picCoolUntil:0,   /* 冷却截止时间，防连点 */
   timer:null
 };
-/* 卡片正面显隐（背面的词+中文+例句不变）：图片由「图片：开/关」控制，词/义跟随「词汇」四态
-   all=词+义 / en(仅原文)=仅词 / zh(仅译文)=仅义 / none(不标注)=都不显示 */
+/* 卡片正面显隐（背面的词+中文+例句不变）：词/义跟随「词汇」四态
+   all=词+义 / en(仅原文)=仅词 / zh(仅译文)=仅义 / none(不标注)=都不显示；
+   图片不在这里判断——由每个词自己的「图片：开/关」+ 缓存共同决定（见 wcRenderPic） */
 function wcFaceParts(){
-  var pic =!!state.cardPic;
   var word=(state.vocab==="all"||state.vocab==="en");
   var zh  =(state.vocab==="all"||state.vocab==="zh");
-  if(!pic && !word && !zh) word=true; /* 全都不显示时至少露出英文词，避免空白卡面 */
-  return { pic:pic, word:word, zh:zh };
+  if(!word && !zh) word=true; /* 全都不显示时至少露出英文词，避免空白卡面 */
+  return { word:word, zh:zh };
 }
 function toQuery(word){
   return String(word||"").trim().toLowerCase()
     .replace(/\//g,"%2F").replace(/\./g,"%2E").replace(/\s+/g,"+");
 }
+/* 图源轮换：第 1 次裸域名，第 2 次 free，第 3 次 ai，之后循环（free/ai 额度各自独立） */
+var PIC_SRCS=["direct-img.link","free.direct-img.link","ai.direct-img.link"];
 /* 从文章原句里找含该词的英文句（enForms 覆盖变形/不规则），返回 {en,zh} 或 null */
 function wcExample(word){
   if(!word || !currentSentences.length) return null;
@@ -1859,133 +1865,90 @@ function wcExample(word){
   }
   return null;
 }
-/* 取图：全局串行队列 + 最小间隔，避免连点「下一个」时 burst direct-img。
-   cb(ok, url, transient)：transient=true 表示 429/5xx 临时失败，不写无图缓存，稍后可重试。 */
-var PIC_MIN_GAP=550; /* 约 1.8 次/秒，低于突发阈值；当前卡 urgent 插队优先 */
-function wcPicPump(){
-  if(wc.picRunning || !wc.picQueue.length) return;
-  var wait=wc.picLastStart+PIC_MIN_GAP-Date.now();
-  if(wait>0){
-    clearTimeout(wc.picTimer);
-    wc.picTimer=setTimeout(wcPicPump, wait);
-    return;
-  }
-  var task=null;
-  while(wc.picQueue.length){
-    var t=wc.picQueue.shift();
-    if(!t.cancelled && wc.loading[t.loadKey]===t.waiters){ task=t; break; }
-  }
-  if(!task){ return; }
-  wc.picRunning=1;
-  wc.picLastStart=Date.now();
-  task.start();
-  clearTimeout(wc.picTimer);
-  wc.picTimer=setTimeout(wcPicPump, PIC_MIN_GAP);
-}
-function wcPicCancelLoad(loadKey){
-  var task=wc.picTasks[loadKey];
-  if(task){ task.cancelled=true; delete wc.picTasks[loadKey]; }
-  for(var i=wc.picQueue.length-1;i>=0;i--){
-    if(wc.picQueue[i].loadKey===loadKey) wc.picQueue.splice(i,1);
-  }
-  delete wc.loading[loadKey];
-}
-function wcPicClearQueue(){
-  clearTimeout(wc.picTimer);
-  wc.picQueue.forEach(function(t){ t.cancelled=true; delete wc.loading[t.loadKey]; });
-  wc.picQueue=[];
-  wc.picTasks={};
-}
-function wcLoadPic(word, cb, urgent){
+/* 读缓存：只有点「生图」成功过的词才有图；没生成过返回空串，这里绝不发请求 */
+function wcPicCached(word){
   var key=String(word||"").trim().toLowerCase();
-  var fn=cb||function(){};
-  if(!key){ fn(false,""); return; }
-  var cached=wc.imgCache[key];
-  if(cached){ fn(cached.ok,cached.url); return; }
-  var variant=wc.variant[key]||0;
-  var loadKey=key+"|"+variant;
-  /* 同一词同一变体只发一次请求；当前卡再次请求时把还没启动的任务提到队首 */
-  if(wc.loading[loadKey]){
-    wc.loading[loadKey].push(fn);
-    if(urgent && wc.picTasks[loadKey]){
-      var t=wc.picTasks[loadKey], idx=wc.picQueue.indexOf(t);
-      if(idx>0){ wc.picQueue.splice(idx,1); wc.picQueue.unshift(t); wcPicPump(); }
-    }
-    return;
-  }
-  var waiters=[fn];
-  wc.loading[loadKey]=waiters;
-  /* 按词在词表里的序号分源，free/ai 各占一半额度；换图时 variant 让源翻转 */
-  var srcIdx=0, q;
-  for(q=0;q<currentVocab.length;q++){ if(String(currentVocab[q].en||"").trim().toLowerCase()===key){ srcIdx=q; break; } }
-  var src=(srcIdx+variant)%2===0 ? "free" : "ai";
-  var url="https://"+src+".direct-img.link/"+toQuery(key)+(variant?("?i="+variant):"");
-  function finish(ok, finalUrl, transient){
-    wc.picRunning=0;
-    delete wc.loading[loadKey];
-    delete wc.picTasks[loadKey];
-    var stale=(wc.variant[key]||0)!==variant;
-    if(ok && finalUrl && finalUrl.indexOf("blob:")===0 && (transient||stale)){
-      try{ URL.revokeObjectURL(finalUrl); }catch(e){}
-    }
-    /* 429/5xx 与过期结果都不写无图缓存，下次翻回来能重试 */
-    if(!transient && !stale) wc.imgCache[key]={ok:!!ok, url:finalUrl||""};
-    waiters.forEach(function(f){ f(!!ok, finalUrl||"", !!transient); });
-    wcPicPump();
-  }
-  var task={
-    loadKey:loadKey, waiters:waiters, cancelled:false,
-    start:function(){
-      if(window.fetch){
-        fetch(url,{mode:"cors"}).then(function(resp){
-          if(resp.status===429 || resp.status>=500){ finish(false,"",true); return; }
-          if((resp.url&&/bad\.webp/i.test(resp.url)) || !resp.ok){ finish(false); return; }
-          return resp.blob().then(function(b){
-            if(!b || b.size<700){ finish(false); return; }
-            finish(true, URL.createObjectURL(b));
-          });
-        }).catch(function(){
-          /* CORS 不可读：退回直接图片加载（能显示即用，bad.webp 此路径无法识别） */
-          var im=new Image();
-          im.onload=function(){ finish(im.naturalWidth>2); };
-          im.onerror=function(){ finish(false); };
-          im.src=url;
-        });
-      } else {
-        var im2=new Image();
-        im2.onload=function(){ finish(im2.naturalWidth>2); };
-        im2.onerror=function(){ finish(false); };
-        im2.src=url;
-      }
-    }
-  };
-  wc.picTasks[loadKey]=task;
-  if(urgent) wc.picQueue.unshift(task); else wc.picQueue.push(task);
-  wcPicPump();
+  var c=key?wc.imgCache[key]:null;
+  return (c && c.ok && c.url) ? c.url : "";
 }
-/* 预取：后两张 + 前一张，只填缓存不渲染；全局队列已限速，这里不再自己起定时器 */
-function wcPrefetch(i){
-  if(!wcFaceParts().pic || !currentVocab.length) return; /* 卡片正面不显示图片就不预取，省额度 */
-  var n=currentVocab.length, targets=[];
-  if(i+1<n) targets.push(i+1);
-  if(i+2<n) targets.push(i+2);
-  if(i-1>=0) targets.push(i-1);
-  targets.forEach(function(idx){
-    var v=currentVocab[idx]; if(!v) return;
-    var key=String(v.en||"").trim().toLowerCase();
-    var variant=wc.variant[key]||0;
-    if(wc.imgCache[key] || wc.loading[key+"|"+variant]) return;
-    wcLoadPic(v.en, function(){}, false);
-  });
+/* 按当前词刷新配图区：有缓存才显示，没有就整块隐藏（唯一的不发请求的渲染入口） */
+function wcRenderPic(){
+  var v=currentVocab[wc.idx];
+  var wrap=$("#wcPicWrap"), pic=$("#wcPic"), noimg=$("#wcNoimg");
+  var url=(v && picShown(v.en)) ? wcPicCached(v.en) : "";
+  if(pic) pic.hidden=true;
+  if(noimg){ noimg.classList.remove("loading"); noimg.hidden=true; }
+  if(wrap) wrap.hidden=!url;
+  if(url && pic){ pic.src=url; pic.hidden=false; }
+}
+/* 生成当前词的配图：只有点「🖼 生图」才会走到这里 —— 不预取、不排队、失败不自动重试。
+   URL 只拼词本身（短语用 + 连），再点依次切源并递增 ?i=n；成功后写缓存并立即显示。 */
+function wcGenerate(){
+  var v=currentVocab[wc.idx]; if(!v) return;
+  var key=String(v.en||"").trim().toLowerCase();
+  if(!key){ toast("这个词没有英文，取不到图"); return; }
+  var now=Date.now();
+  if(wc.picBusy){ toast("图片还在生成，稍等一下"); return; }
+  if(now<wc.picCoolUntil){ toast("点太快啦，缓一缓"); return; }
+  wc.picCoolUntil=now+900;
+  /* 这个词的图被手动隐藏过就先打开，否则点了看不见 */
+  if(!picShown(key)){ setPicShown(key, true); applyCardPic(); }
+  var btn=$("#wcChangePicBtn");
+  wc.picBusy=true;
+  if(btn){ btn.disabled=true; btn.textContent="🖼 生成中…"; }
+  /* 生成中的占位提示（不是图片，生成完按缓存决定显示或隐藏） */
+  var wrap=$("#wcPicWrap"), pic=$("#wcPic"), noimg=$("#wcNoimg");
+  if(wrap) wrap.hidden=false;
+  if(pic) pic.hidden=true;
+  if(noimg){ noimg.textContent="图片生成中…"; noimg.classList.add("loading"); noimg.hidden=false; }
+  /* 短语不能带空格，统一转成 a+b；每点一次按 裸域 → free → ai 循环切源（第 2、3 次分别用 free、ai），
+     同时递增 ?i=n 让地址变化，绕过浏览器缓存真正重新取一张 */
+  var times=wc.variant[key]||0;
+  wc.variant[key]=times+1;
+  var src=PIC_SRCS[times%PIC_SRCS.length];
+  var url="https://"+src+"/"+toQuery(key)+(times?("?i="+times):"");
+  function finish(ok, finalUrl, transient){
+    wc.picBusy=false;
+    if(btn){ btn.disabled=false; btn.textContent="🖼 生图"; }
+    if(ok && finalUrl){
+      var old=wc.imgCache[key];
+      if(old && old.url && old.url.indexOf("blob:")===0 && old.url!==finalUrl){
+        try{ URL.revokeObjectURL(old.url); }catch(e){} /* 换掉旧图时释放 blob */
+      }
+      wc.imgCache[key]={ok:true, url:finalUrl};
+    }
+    wcRenderPic(); /* 成功就显示，失败/翻到别处就按缓存隐藏 */
+    if(!ok) toast(transient?"图片服务繁忙，稍后再点一次":"这个词没找到图");
+  }
+  if(window.fetch){
+    fetch(url,{mode:"cors"}).then(function(resp){
+      if(resp.status===429 || resp.status>=500){ finish(false,"",true); return; }
+      if((resp.url&&/bad\.webp/i.test(resp.url)) || !resp.ok){ finish(false); return; }
+      return resp.blob().then(function(b){
+        if(!b || b.size<700){ finish(false); return; }
+        finish(true, URL.createObjectURL(b));
+      });
+    }).catch(function(){
+      /* CORS 不可读：退回直接图片加载（能显示即用，bad.webp 此路径无法识别） */
+      var im=new Image();
+      im.onload=function(){ finish(im.naturalWidth>2, url); };
+      im.onerror=function(){ finish(false); };
+      im.src=url;
+    });
+  } else {
+    var im2=new Image();
+    im2.onload=function(){ finish(im2.naturalWidth>2, url); };
+    im2.onerror=function(){ finish(false); };
+    im2.src=url;
+  }
 }
 function wcStart(){
   if(!currentVocab.length){ toast("先在正文里写单词表（英文|中文）"); return; }
   stopPlayback();
   clearTimeout(wc.timer);
   wcCancelSpeak();
-  wcPicClearQueue(); /* 丢掉上一轮还没启动的预取，避免退出后继续刷额度 */
-  wc.picBusy=false; wc.picCoolUntil=0; wc.picChangeToken++;
-  var cpb=$("#wcChangePicBtn"); if(cpb){ cpb.disabled=false; cpb.textContent="🖼 换图"; }
+  wc.picBusy=false; wc.picCoolUntil=0;
+  var cpb=$("#wcChangePicBtn"); if(cpb){ cpb.disabled=false; cpb.textContent="🖼 生图"; }
   wc.idx=0; wc.flipped=false; wc.gen++; wc.remembered={};
   wc.roundStart=Date.now();
   document.body.classList.add("tt-on");
@@ -1997,7 +1960,6 @@ function wcStart(){
 }
 function wcExit(){
   clearTimeout(wc.timer);
-  wcPicClearQueue();
   wc.gen++;
   wcCancelSpeak();
   $("#wordCards").hidden=true;
@@ -2011,12 +1973,11 @@ function wcRender(){
   $("#wcProgress").textContent=(wc.idx+1)+" / "+total+" · 已记住 "+wcMemoCount()+"/"+total;
   $("#wcJumpLabel").textContent=(wc.idx+1)+" / "+total;
   $("#wcJump").max=String(total-1); $("#wcJump").value=String(wc.idx);
-  /* 正面内容由「卡片」按钮控制；背面始终是英文+中文+例句 */
+  /* 正面内容由「词汇」模式控制；背面始终是英文+中文+例句 */
   var parts=wcFaceParts();
   $("#wcWord").hidden=!parts.word;
   $("#wcWord").textContent=parts.word?(v.en||""):"";
   var zf=$("#wcZhFront"); zf.hidden=!parts.zh; zf.textContent=parts.zh?(v.zh||""):"";
-  $("#wcPicWrap").hidden=!parts.pic;
   $("#wcWordBack").textContent=v.en||"";
   $("#wcZh").textContent=v.zh||"";
   /* 例句 */
@@ -2026,22 +1987,9 @@ function wcRender(){
   /* 复位翻面 */
   $("#wcCard").classList.remove("flipped");
   wc.flipped=false;
-  /* 图片：先给「加载中」反馈；卡面不显示图片时不请求 */
-  var pic=$("#wcPic"), noimg=$("#wcNoimg");
-  pic.hidden=true; noimg.hidden=true;
-  if(parts.pic){
-    noimg.textContent="图片加载中…";
-    noimg.classList.add("loading");
-    noimg.hidden=false;
-    wcLoadPic(v.en, function(ok, url, transient){
-      if(gen!==wc.gen) return;
-      noimg.classList.remove("loading");
-      noimg.textContent=transient?"图片暂时取不到，稍后再试":"暂无图片";
-      if(ok && url){ pic.src=url; pic.hidden=false; noimg.hidden=true; }
-      else { pic.hidden=true; noimg.hidden=false; }
-    }, true); /* 当前卡片插队优先 */
-  }
-  wcPrefetch(wc.idx);
+  /* 配图：只显示已生成并缓存、且该词没被手动隐藏的图；没生成过就整块隐藏，绝不在这里发请求 */
+  wcRenderPic();
+  applyCardPic(); /* 「图片：开/关」按钮跟随当前这张卡的状态 */
 }
 function wcFlip(){
   wc.flipped=!wc.flipped;
@@ -2149,48 +2097,6 @@ function wcSpeak(kind){
       if(ex.zh) speakOne(ex.zh,"zh",player.rate,function(){});
     });
   }
-}
-/* 换图令牌：回调与 8 秒兜底只有先到的那个能释放按钮，防重复解锁 */
-function wcPicRelease(token, btn){
-  if(token!==wc.picChangeToken) return;
-  wc.picChangeToken++;
-  wc.picBusy=false;
-  if(btn){ btn.disabled=false; btn.textContent="🖼 换图"; }
-}
-/* 换图：该词换图计数 +1（切源 + ?i= 变体），清缓存重新取。
-   加载中禁用按钮 + 900ms 冷却，防止连点批量刷额度；8 秒兜底防请求卡死。 */
-function wcChangePic(){
-  var v=currentVocab[wc.idx]; if(!v || !wcFaceParts().pic) return; /* 卡片正面不显示图片就不用换 */
-  var now=Date.now();
-  if(wc.picBusy || now<wc.picCoolUntil){
-    toast(wc.picBusy?"图片加载中，稍等一下":"换图太快啦，缓一缓");
-    return;
-  }
-  wc.picCoolUntil=now+900;
-  var btn=$("#wcChangePicBtn");
-  var token=++wc.picChangeToken;
-  wc.picBusy=true;
-  if(btn){ btn.disabled=true; btn.textContent="🖼 换图中…"; }
-  var key=String(v.en||"").trim().toLowerCase();
-  var oldVariant=wc.variant[key]||0;
-  wcPicCancelLoad(key+"|"+oldVariant); /* 还没启动的旧变体请求直接撤掉，别白刷额度 */
-  wc.variant[key]=oldVariant+1;
-  var old=wc.imgCache[key];
-  if(old && old.url && old.url.indexOf("blob:")===0){ try{ URL.revokeObjectURL(old.url); }catch(e){} }
-  delete wc.imgCache[key];
-  click();
-  var gen=wc.gen;
-  var pic=$("#wcPic"), noimg=$("#wcNoimg");
-  pic.hidden=true; noimg.textContent="图片加载中…"; noimg.classList.add("loading"); noimg.hidden=false;
-  setTimeout(function(){ wcPicRelease(token, btn); },8000);
-  wcLoadPic(v.en, function(ok, url, transient){
-    wcPicRelease(token, btn); /* 先解锁按钮，再判断是否已翻到别处 */
-    if(gen!==wc.gen) return;
-    noimg.classList.remove("loading");
-    noimg.textContent=transient?"图片暂时取不到，稍后再试":"暂无图片";
-    if(ok && url){ pic.src=url; pic.hidden=false; noimg.hidden=true; }
-    else { pic.hidden=true; noimg.hidden=false; }
-  }, true);
 }
 
 /* 取消正在进行的答案朗读，并让旧链失效（gen 不匹配即中止） */
@@ -2573,7 +2479,7 @@ function bind(){
     if(e.target.closest("#wcReadWordBtn")){ wcSpeak("word"); return; }
     if(e.target.closest("#wcReadZhBtn")){ wcSpeak("wordZh"); return; }
     if(e.target.closest("#wcReadExBtn")){ if(!wc.flipped) wcFlip(); wcSpeak("ex"); return; } /* 例句在背面，先翻过去 */
-    if(e.target.closest("#wcChangePicBtn")){ wcChangePic(); return; }
+    if(e.target.closest("#wcChangePicBtn")){ wcGenerate(); return; }
     if(e.target.closest("#wcTogglePicBtn")){ click(); toggleCardPic(); return; }
   });
   /* 方向键翻词、空格翻卡（单词卡全屏时） */
@@ -2799,9 +2705,7 @@ function init(){
   state.vocabList=load("vocabList",true);
   applyVocabList();
 
-  state.cardPic=load("cardPic",true);
-  if(typeof state.cardPic!=="boolean") state.cardPic=true;
-  applyCardPic();
+  applyCardPic(); /* 配图显隐按词独立、不持久化：初始化时一律显示 */
 
   appleRender(); /* 主页苹果显示 */
   carrotRender(); /* 主页胡萝卜显示 */
