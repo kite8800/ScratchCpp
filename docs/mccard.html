@@ -450,7 +450,7 @@ body.kb-open .type-mask{padding-top:8px}
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文 / 不标注）；「卡片」切换单词卡正面显示（全部 / 仅译文 / 仅原文 / 不标注，默认仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：点「🃏 单词卡」翻卡背诵；点卡片/空格翻面，← 上一张、→ 没记住，Esc 退出；点「✓ 记住了」标记该词、「✗ 没记住」跳过，两者都会切到下一张，全部记住后出汇总页奖 1 个胡萝卜。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（仅原文 / 仅译文 / 全部 / 不标注，默认全部）；「卡片」切换单词卡正面显示（仅原文 / 仅译文 / 全部 / 不标注，默认仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：断句后点「🃏 单词卡」翻卡背诵；点卡片/按空格翻面；点生图生成图片；点「✓ 记住了」标记该词、「✗ 没记住」跳过，两者都会切到下一张；全部记住奖 1 个胡萝卜。
     </div>
 
     <div class="action-row">
@@ -470,8 +470,8 @@ body.kb-open .type-mask{padding-top:8px}
       <div class="row-break"></div>
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
       <button class="sw on" id="vocabListBtn" title="单词表列表 显示/隐藏">词汇表：显示</button>
-      <button class="sw on" id="vocabBtn" title="词汇标注模式：全部 / 仅译文 / 仅原文 / 不标注">词汇：全部</button>
-      <button class="sw on" id="cardFaceBtn" title="单词卡正面：全部 / 仅译文 / 仅原文 / 不标注">卡片：仅原文</button>
+      <button class="sw on" id="vocabBtn" title="词汇标注模式：仅原文 / 仅译文 / 全部 / 不标注">词汇：全部</button>
+      <button class="sw on" id="cardFaceBtn" title="单词卡正面：仅原文 / 仅译文 / 全部 / 不标注">卡片：仅原文</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
@@ -1005,10 +1005,12 @@ var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
 var TRANS_ORDER = ["cur","all","none"];
 /* 词汇记忆模式：all=原文下划线+译文高亮都显示；zh=只显示译文(原文命中词挖空)；en=只显示原文(译文命中词挖空) */
 var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文", none:"不标注" };
-var VOCAB_ORDER = ["all","zh","en","none"];
-/* 单词卡正面：与「词汇」同值域（全部=词+义 / 仅译文=仅义 / 仅原文=仅词 / 不标注=什么都不写），默认「仅原文」 */
+/* 切换顺序：仅原文 → 仅译文 → 全部 → 不标注（默认「全部」） */
+var VOCAB_ORDER = ["en","zh","all","none"];
+/* 单词卡正面：与「词汇」同值域（全部=词+义 / 仅译文=仅义 / 仅原文=仅词 / 不标注=什么都不写），
+   切换顺序同「词汇」，默认「仅原文」 */
 var CARD_FACE_DEFAULT = "en";
-var CARD_FACE_ORDER = ["all","zh","en","none"];
+var CARD_FACE_ORDER = ["en","zh","all","none"];
 /* =========================================================
    格式识别 + 断句（原样保留）
    ========================================================= */
@@ -1486,11 +1488,11 @@ function cycleTrans(){
   applyTrans();
 }
 
-/* 词汇记忆三态：全部 → 仅译文 → 仅原文 → 全部 */
+/* 词汇记忆四态：仅原文 → 仅译文 → 全部 → 不标注 */
 function applyVocab(){
   document.body.setAttribute("data-vocab", state.vocab);
   $("#vocabBtn").textContent = "词汇：" + VOCAB_LABEL[state.vocab];
-  var noMark = state.vocab==="none"; /* 不标注态：黄底；其余三态：绿底 */
+  var noMark = state.vocab==="none"; /* 不标注态：白底；其余三态：绿底 */
   $("#vocabBtn").classList.toggle("on", !noMark);
   $("#vocabBtn").classList.toggle("vocab-off", noMark);
 }
@@ -1505,7 +1507,7 @@ function cycleVocab(){
 function applyCardFace(){
   var btn=$("#cardFaceBtn"); if(!btn) return;
   btn.textContent="卡片："+VOCAB_LABEL[state.cardFace];
-  var off=state.cardFace==="none"; /* 不标注态：与「词汇」同款黄底 */
+  var off=state.cardFace==="none"; /* 不标注态：与「词汇」同款白底 */
   btn.classList.toggle("on", !off);
   btn.classList.toggle("vocab-off", off);
 }
