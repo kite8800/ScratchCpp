@@ -287,6 +287,20 @@ body.kb-open .type-mask{padding-top:8px}
 .wc-pic-wrap{width:190px;height:190px;flex:none;border:2.5px dashed rgba(47,36,24,.2);border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px}
 .wc-pic-wrap[hidden]{display:none}
 .wc-pic-wrap img{width:100%;height:100%;object-fit:contain}
+/* ---- 卡片打印：屏幕不可见，打印时只出当前卡的正、反两面（扑克牌 63.5×88.9mm，白底黑字） ---- */
+#cardPrintArea{display:none}
+.cp-sheet{display:flex;gap:8mm;justify-content:center;align-items:flex-start}
+.cp-card{width:63.5mm;height:88.9mm;box-sizing:border-box;overflow:hidden;padding:5mm;
+  border:0.3mm dashed #c8c8c8;border-radius:2.5mm;background:#fff;color:#111;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  page-break-inside:avoid;break-inside:avoid}
+.cp-card img{max-width:100%;max-height:46mm;object-fit:contain;margin-bottom:2.5mm}
+.cp-card .cp-word{font-size:5mm;line-height:1.2;font-weight:800;text-align:center;word-break:break-word}
+.cp-card .cp-zh{font-size:3.4mm;line-height:1.35;margin-top:1.5mm;text-align:center;color:#222}
+.cp-card .cp-ex{margin-top:3mm;padding-top:2.5mm;border-top:0.2mm solid #d8d8d8;
+  font-size:2.5mm;line-height:1.45;text-align:left;color:#333;max-height:30mm;overflow:hidden}
+.cp-card.has-pic .cp-word{font-size:4.2mm}
+.cp-card.has-pic .cp-zh{font-size:3.1mm}
 .wc-noimg{font-size:12px;color:var(--ink2);opacity:.55}
 .wc-word{font-family:var(--pixel);font-weight:900;font-size:30px;color:var(--ink);text-align:center;line-height:1.2;word-break:break-word;padding:0 6px}
 .wc-zh-front{font-family:inherit;font-size:24px;color:var(--grass-d);text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:6px}
@@ -415,6 +429,10 @@ body.kb-open .type-mask{padding-top:8px}
     padding:1.5mm 0!important; margin:0!important; box-shadow:none!important;
     page-break-inside:avoid; }
   .vocab-block .vb-row .line{ font-size:10.5pt!important; }
+  /* 卡片打印：只出当前卡的正反两面，正文与其他界面全部隐藏 */
+  body.card-print > main.wrap{ display:none!important; }
+  body.card-print > #cardPrintArea{ display:block!important; }
+  body.card-print .cp-card{ background:#fff!important; color:#111!important; box-shadow:none!important; }
 }
 </style>
 </head>
@@ -562,6 +580,7 @@ body.kb-open .type-mask{padding-top:8px}
       <div class="row-break"></div>
       <button class="sw" id="wcChangePicBtn" title="为这个单词生成一张配图（免费图源，有额度限制）">🖼 生图</button>
       <button class="sw on" id="wcTogglePicBtn" title="隐藏这张卡的配图（只隐藏，不再请求图片）">图片：开</button>
+      <button class="sw" id="wcPrintBtn" title="打印这张卡的正、反两面（扑克牌大小，白底）">🖨 打印</button>
       <div class="row-break"></div>
       <button class="sw" id="wcReadWordBtn" title="只读英文单词">🔊 读词</button>
       <button class="sw" id="wcReadZhBtn" title="先读英文词，再读中文释义">🔊 读词义</button>
@@ -2013,6 +2032,42 @@ function wcRender(){
   wcRenderPic();
   applyCardPic(); /* 「图片：开/关」按钮跟随当前这张卡的状态 */
 }
+/* 打印当前这张卡：正面 + 反面各一张（扑克牌尺寸），白底黑字，只出这两张 */
+function wcPrint(){
+  var v=currentVocab[wc.idx]; if(!v) return;
+  var key=String(v.en||"").trim().toLowerCase();
+  var area=$("#cardPrintArea"); if(!area) return;
+  var parts=wcFaceParts();
+  var url=(key && picShown(key)) ? wcPicCached(key) : "";
+  var ex=wcExample(v.en);
+  var front="";
+  if(url) front+='<img src="'+esc(url)+'" alt="">';
+  if(parts.word && v.en) front+='<div class="cp-word">'+esc(v.en)+'</div>';
+  if(parts.zh && v.zh) front+='<div class="cp-zh">'+esc(v.zh)+'</div>';
+  var back='<div class="cp-word">'+esc(v.en||"")+'</div>';
+  if(v.zh) back+='<div class="cp-zh">'+esc(v.zh)+'</div>';
+  if(ex && ex.en) back+='<div class="cp-ex">'+esc(ex.en)+(ex.zh?'<br>'+esc(ex.zh):'')+'</div>';
+  area.innerHTML='<div class="cp-sheet">'
+    +'<div class="cp-card'+(url?' has-pic':'')+'">'+front+'</div>'
+    +'<div class="cp-card">'+back+'</div>'
+    +'</div>';
+  var fire=function(){
+    document.body.classList.add("card-print");
+    window.print();
+  };
+  var done=function(){
+    document.body.classList.remove("card-print");
+    area.innerHTML="";
+    window.removeEventListener("afterprint", done);
+  };
+  window.addEventListener("afterprint", done);
+  setTimeout(done, 3000); /* 兜底：个别浏览器不派发 afterprint 时也要复原，免得下次打印正文全白 */
+  var im=area.querySelector("img");
+  if(im && !im.complete){
+    im.addEventListener("load", fire, {once:true});
+    im.addEventListener("error", fire, {once:true});
+  } else fire();
+}
 function wcFlip(){
   wc.flipped=!wc.flipped;
   $("#wcCard").classList.toggle("flipped", wc.flipped);
@@ -2503,6 +2558,7 @@ function bind(){
     if(e.target.closest("#wcReadExBtn")){ if(!wc.flipped) wcFlip(); wcSpeak("ex"); return; } /* 例句在背面，先翻过去 */
     if(e.target.closest("#wcChangePicBtn")){ wcGenerate(); return; }
     if(e.target.closest("#wcTogglePicBtn")){ click(); toggleCardPic(); return; }
+    if(e.target.closest("#wcPrintBtn")){ click(); wcPrint(); return; }
   });
   /* 方向键翻词、空格翻卡（单词卡全屏时） */
   $("#wordCards").addEventListener("keydown", function(e){
@@ -2780,5 +2836,7 @@ function init(){
 
 init();
 </script>
+<div id="cardPrintArea" aria-hidden="true"></div>
+
 </body>
 </html>
