@@ -299,6 +299,36 @@ body.kb-open .type-mask{padding-top:8px}
 .hist-foot .sw{font-size:12.5px}
 .hist-foot #histClearAll{border-color:#d64545;color:#c0392b}
 
+/* 头像右键 / 长按：语音与音调高级设置浮层 */
+.voice-panel{position:fixed;z-index:9600;width:340px;max-width:calc(100vw - 20px);max-height:calc(100vh - 20px);display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;font-size:13px}
+.voice-panel[hidden]{display:none}
+.vp-head{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:2px dashed rgba(47,36,24,.15)}
+.vp-head .t{flex:1;min-width:0}
+.vp-head .t b{display:block;font-family:var(--pixel);font-size:14px;font-weight:900}
+.vp-head .t small{display:block;margin-top:3px;color:var(--ink2);font-size:11px;line-height:1.35}
+.vp-x{flex:none;width:26px;height:26px;padding:0;border:2px solid var(--ink);border-radius:8px;background:var(--cream);font-weight:900;line-height:1}
+.vp-src{display:flex;gap:6px;padding:8px 12px 2px}
+.vp-src .sw{font-size:11.5px;padding:4px 10px;box-shadow:none}
+.vp-list{flex:1;min-height:70px;max-height:190px;overflow-y:auto;margin:6px 12px;border:2px solid rgba(47,36,24,.18);border-radius:10px;background:#fff}
+.vp-group{position:sticky;top:0;padding:5px 8px 2px;font-size:10.5px;font-weight:800;color:var(--ink2);background:#f7f2e4}
+.vp-item{display:block;width:100%;text-align:left;padding:7px 9px;border:0;border-bottom:1px solid rgba(47,36,24,.08);background:#fff;font-size:12.5px;line-height:1.3}
+.vp-item:hover{background:#f0f8e9}
+.vp-item.sel{background:#eaf7e2;box-shadow:inset 3px 0 0 var(--grass-d)}
+.vp-item .n{font-weight:700}
+.vp-item .l{color:var(--ink2);font-size:10.5px;margin-left:5px}
+.vp-item .tag{float:right;font-size:10px;font-weight:800;color:#3c6b2a}
+.vp-empty{padding:22px 10px;text-align:center;color:var(--ink2);font-size:12px;line-height:1.6}
+.vp-pitch{padding:8px 12px 4px;border-top:2px dashed rgba(47,36,24,.15)}
+.vp-pitch .lab{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800}
+.vp-pitch .lab b{font-family:var(--pixel);font-size:13px;color:var(--grass-d)}
+.vp-pitch input{width:100%;margin:6px 0 2px;accent-color:var(--grass-d)}
+.vp-pitch .note{font-size:10.5px;color:var(--ink2);line-height:1.45}
+.vp-foot{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:9px 12px;border-top:2px dashed rgba(47,36,24,.15);flex-wrap:wrap}
+.vp-foot .hint{flex:1;min-width:100%;font-size:10.5px;color:var(--ink2);line-height:1.35}
+.vp-foot .sw{font-size:12px;padding:6px 10px}
+.vp-foot #vpResetCurBtn{background:#fff6dc;border-color:#c9a227;color:#8b6d12}
+.vp-foot #vpResetBtn{border-color:#c2536f;color:#a83252}
+
 @media (max-width:720px){
   .hero-inner{padding:12px;gap:10px}
   .creeper{width:48px;height:48px}
@@ -372,7 +402,7 @@ body.kb-open .type-mask{padding-top:8px}
 
 <header class="hero">
   <div class="hero-inner">
-    <button class="creeper" id="creeper" aria-label="切换音色" title="点击切换：自动 / 男声(Steve) / 女声(Alex)&#10;Author: Hayden KWOK, Version 0.9"></button>
+    <button class="creeper" id="creeper" aria-label="切换音色" title="点击切换：自动 / 男声(Steve) / 女声(Alex)&#10;右键或长按：语音与音调详细设置&#10;Author: Hayden KWOK, Version 0.9"></button>
     <div class="hero-text">
       <h1>MC MINI STORY READER<span class="h1-sub">MC小作文阅读器 | Kite, Ver0.9</span></h1>
     </div>
@@ -499,6 +529,29 @@ body.kb-open .type-mask{padding-top:8px}
         <button class="sw" id="histClearBtn">全部删除</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="voicePanel" class="voice-panel" role="dialog" aria-label="语音与音调设置" hidden>
+  <div class="vp-head">
+    <div class="t"><b>🎛 语音与音调</b><small id="vpCurPref">当前音色：自动 · 不指定语音</small></div>
+    <button class="vp-x" id="vpCloseBtn" title="关闭（预览不会保存）" aria-label="关闭">✕</button>
+  </div>
+  <div class="vp-src">
+    <button type="button" class="sw on" id="vpSrcLocal">本地语音</button>
+    <button type="button" class="sw" id="vpSrcOnline">联网语音</button>
+  </div>
+  <div class="vp-list" id="vpList"></div>
+  <div class="vp-pitch">
+    <div class="lab"><span>音调 <b id="vpPitchVal">1.00</b></span><span>0.5 – 2.0 · 覆盖默认值</span></div>
+    <input id="vpPitch" type="range" min="0.5" max="2" step="0.05" value="1" aria-label="音调">
+    <div class="note">点语音或拖动音调会立即试听，但不保存；满意后点「确认」。联网语音在部分网络下可能无声。Windows + Chromium 念中文可能吞掉 pitch，中文音调或许听不出变化。</div>
+  </div>
+  <div class="vp-foot">
+    <div class="hint" id="vpHint">关闭或按 Esc 会丢弃这次预览</div>
+    <button type="button" class="sw" id="vpResetCurBtn">复位此音色</button>
+    <button type="button" class="sw" id="vpResetBtn">全部复位</button>
+    <button type="button" class="sw primary" id="vpOkBtn">确认</button>
   </div>
 </div>
 
@@ -699,22 +752,51 @@ function findMaleVoice(lang){
       若指定后 2.2 秒没出声，speakOne 会自动退回「不指定引擎」重试一次（等价于 creeper 的用法）。
    ⚠️ Windows + Chromium 朗读中文时会把 pitch 吞掉（只传语速），本机听感可能变化不明显；
       换到支持 pitch 的浏览器/系统上，这几个值会真正生效。 */
+/* ---------- 用户自定义语音/音调：按音色分别记（2026-11-25） ----------
+   localStorage: mcr_voiceCfg = { auto:{pitch}, male:{voiceURI,pitch}, female:{...} }
+   · 不写 voiceURI → 沿用三态自动挑的语音；不写 pitch → 沿用三态默认音调
+   · auto 刻意忽略 voiceURI（保持「绝不指定引擎」的兜底语义），但音调仍可覆盖
+   · 语音 URI 失效（系统更新换名）→ 静默回退到三态挑的语音，音调保留用户设置
+*/
+var VP_KEY="voiceCfg";
+var VP_PREF_NAME={auto:"自动（苦力怕）",male:"男声 Steve",female:"女声 Alex"};
+function voiceCfg(){
+  var c=load(VP_KEY,null);
+  return (c && typeof c==="object" && !Array.isArray(c)) ? c : {};
+}
+function saveVoiceCfg(c){ save(VP_KEY,c); }
+function clampPitch(p){ p=Number(p); if(!isFinite(p)) return 1; return Math.max(.5,Math.min(2,p)); }
+function findVoiceByURI(uri){
+  if(!uri) return null;
+  if(!voices.length) loadVoices();
+  for(var i=0;i<voices.length;i++) if(voices[i].voiceURI===uri) return voices[i];
+  return null;
+}
+
 function pickVoice(pref, lang){
   if(!voices.length) loadVoices();
-
-  /* creeper：默认语音，什么都不指定（跨平台最稳） */
+  var pick;
   if(pref !== "male" && pref !== "female"){
-    return { voice: null, pitch: 1.0, fallbackMsg: "" };
+    /* creeper：默认语音，什么都不指定（跨平台最稳） */
+    pick = { voice: null, pitch: 1.0, fallbackMsg: "" };
+  } else {
+    var base = bestVoiceFor(lang);
+    if(pref === "male"){
+      var mv = findMaleVoice(lang);
+      pick = mv ? { voice: mv, pitch: 1.0, fallbackMsg: "" }
+                : { voice: base, pitch: 0.5, fallbackMsg: "没有专用男音，已压低音调模拟" };
+    } else {
+      pick = { voice: base, pitch: 1.5, fallbackMsg: "" };
+    }
   }
-  var base = bestVoiceFor(lang);
-
-  if(pref === "male"){
-    var mv = findMaleVoice(lang);
-    if(mv) return { voice: mv, pitch: 1.0, fallbackMsg: "" };
-    return { voice: base, pitch: 0.5, fallbackMsg: "没有专用男音，已压低音调模拟" };
+  /* 用户手动设置覆盖三态默认值；语音失效就留在上面的三态结果 */
+  var cfg = voiceCfg()[pref] || {};
+  if(cfg.pitch != null) pick.pitch = clampPitch(cfg.pitch);
+  if(pref !== "auto" && cfg.voiceURI){
+    var uv = findVoiceByURI(cfg.voiceURI);
+    if(uv){ pick.voice = uv; pick.fallbackMsg = ""; }
   }
-  /* female */
-  return { voice: base, pitch: 1.5, fallbackMsg: "" };
+  return pick;
 }
 
 function showHint(msg,sticky){
@@ -729,8 +811,9 @@ function hideHint(){
 }
 function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true); }
 
-/* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色 */
-function speakOne(text, lang, rate, onDone){
+/* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色
+   override 仅供语音面板试听用：{voiceURI, pitch}，不写盘、不影响三态设置 */
+function speakOne(text, lang, rate, onDone, override){
   if(state.muted){ onDone&&onDone(); return; }
   /* 每次朗读前重新探测：微信里 API 可能在 WeixinJSBridgeReady / 首次触摸后才出现 */
   if(!primeTTS()){
@@ -743,6 +826,13 @@ function speakOne(text, lang, rate, onDone){
   var c=ac(); if(c && c.state==="suspended" && c.resume) c.resume().catch(function(){});
 
   var pick = pickVoice(state.voicePref, lang);
+  if(override){
+    if(override.pitch != null) pick.pitch = clampPitch(override.pitch);
+    if(override.voiceURI){
+      var ov = findVoiceByURI(override.voiceURI);
+      if(ov){ pick.voice = ov; pick.fallbackMsg = ""; }
+    }
+  }
   var textLang = (lang==="zh") ? "zh-CN" : "en-US";
   /* lang 只在「本机真有该语言本地语音」时才给；否则留空走平台默认，
      免得 Chrome 按 en-US 去找 Google 联网语音而静音 */
@@ -923,6 +1013,135 @@ function applyPref(pref){
   state.voicePref = pref;
   buildFace(pref);
   save("voicePref", pref);
+}
+
+/* ---------- 头像右键 / 长按：语音面板（预览 → 确认，不写盘直到点确认） ---------- */
+var vpOpenFlag=false, vpSrc="local", vpDraft=null, vpSavedPref="auto";
+var vpPitchTimer=null, vpLongTimer=null, vpLongFired=false;
+
+function vpSampleLine(lang){
+  var p=state.voicePref;
+  if(lang==="zh"){
+    return p==="male" ? "你好，我是 Steve。我们一起读故事吧。"
+         : p==="female" ? "你好，我是 Alex。我们一起读故事吧。"
+         : "你好，我们一起读故事吧。";
+  }
+  return p==="male" ? "Hello! I am Steve. Let's read together."
+       : p==="female" ? "Hi! I am Alex. Let's read together."
+       : "Hello! Let's read a story.";
+}
+function vpLang(){ return (state.langMode==="zh"||state.langMode==="zh-en") ? "zh" : "en"; }
+function vpSavedVoiceURI(pref){
+  var c=voiceCfg()[pref]||{};
+  return (pref!=="auto" && c.voiceURI) ? c.voiceURI : "";
+}
+function vpBasePitch(pref){
+  var c=voiceCfg()[pref]||{};
+  return c.pitch!=null ? clampPitch(c.pitch) : (pref==="female" ? 1.5 : 1);
+}
+function vpPosition(){
+  var panel=$("#voicePanel"), av=$("#creeper");
+  if(!panel || panel.hidden || !av) return;
+  var r=av.getBoundingClientRect();
+  var w=panel.offsetWidth||340, h=panel.offsetHeight||320;
+  var left=Math.max(10,Math.min(r.left+16, window.innerWidth-w-10)); /* 相对头像右移一点，像从头像旁边冒出的对话气泡 */
+  var top=r.bottom+8;
+  if(top+h > window.innerHeight-10) top=Math.max(10, r.top-h-8);
+  panel.style.left=left+"px";
+  panel.style.top=top+"px";
+}
+function vpRenderList(){
+  var box=$("#vpList"); if(!box) return;
+  if(vpSavedPref==="auto"){
+    box.innerHTML='<div class="vp-empty">「自动」音色刻意不指定语音（跨平台最稳），<br>这里只保留音调设置。</div>';
+    return;
+  }
+  var list=(voices||[]).filter(function(v){
+    var local=isLocalVoice(v);
+    return vpSrc==="local" ? local : !local;
+  });
+  if(!list.length){
+    box.innerHTML='<div class="vp-empty">'+(vpSrc==="online"
+      ? '这台设备没有可列出的联网语音。<br>可切到「本地语音」看看。'
+      : '这台设备没有可列出的本地语音。<br>可切到「联网语音」看看。')+'</div>';
+    return;
+  }
+  var groups=[["zh","中文"],["en","英文"],["other","其他"]], html="";
+  groups.forEach(function(g){
+    var arr=list.filter(function(v){
+      return g[0]==="other" ? (!langIs(v,"zh") && !langIs(v,"en")) : langIs(v,g[0]);
+    });
+    if(!arr.length) return;
+    html+='<div class="vp-group">'+g[1]+'</div>';
+    arr.forEach(function(v){
+      var uri=v.voiceURI||"";
+      var sel=uri===vpDraft.voiceURI;
+      var saved=uri===vpSavedVoiceURI(vpSavedPref);
+      var tag=sel ? '<span class="tag">'+(saved?'当前':'待确认')+'</span>' : '';
+      html+='<button type="button" class="vp-item'+(sel?' sel':'')+'" data-uri="'+esc(uri)+'">'+tag
+           +'<span class="n">'+esc(v.name||"(未命名)")+'</span><span class="l">'+esc(v.lang||"")+'</span></button>';
+    });
+  });
+  box.innerHTML=html;
+}
+function vpPreview(){
+  if(!vpOpenFlag) return;
+  unlockAudio(); primeTTS();
+  var lang=vpLang(), over={ pitch: clampPitch(vpDraft.pitch) };
+  if(vpDraft.voiceURI) over.voiceURI=vpDraft.voiceURI;
+  if(player.playing) stopPlayback();
+  speakOne(vpSampleLine(lang), lang, player.rate, function(){}, over);
+}
+function vpSetSrc(s){
+  vpSrc=s;
+  $("#vpSrcLocal").classList.toggle("on",s==="local");
+  $("#vpSrcOnline").classList.toggle("on",s==="online");
+  vpRenderList();
+}
+function vpOpen(){
+  unlockAudio(); primeTTS(); loadVoices();
+  vpSavedPref=state.voicePref;
+  vpDraft={ voiceURI: vpSavedVoiceURI(vpSavedPref), pitch: vpBasePitch(vpSavedPref) };
+  vpOpenFlag=true;
+  $("#vpCurPref").textContent = vpSavedPref==="auto"
+    ? "当前音色：自动（苦力怕） · 不指定语音，只可调音调"
+    : "当前音色："+VP_PREF_NAME[vpSavedPref]+" · 设置只对他生效";
+  $("#vpPitch").value=vpDraft.pitch;
+  $("#vpPitchVal").textContent=vpDraft.pitch.toFixed(2);
+  $("#vpHint").textContent="关闭或按 Esc 会丢弃这次预览";
+  vpSetSrc("local");
+  $("#voicePanel").hidden=false;
+  vpPosition();
+}
+function vpClose(commit){
+  if(!vpOpenFlag) return;
+  clearTimeout(vpPitchTimer); vpPitchTimer=null;
+  if(commit){
+    var cfg=voiceCfg(), c=cfg[vpSavedPref]||{};
+    if(vpDraft.voiceURI) c.voiceURI=vpDraft.voiceURI; else delete c.voiceURI;
+    c.pitch=clampPitch(vpDraft.pitch);
+    cfg[vpSavedPref]=c;
+    saveVoiceCfg(cfg);
+    toast("已保存"+VP_PREF_NAME[vpSavedPref]+"的语音设置");
+  }
+  vpOpenFlag=false;
+  $("#voicePanel").hidden=true;
+}
+function vpResetCurrent(){
+  var cfg=voiceCfg(), pref=vpSavedPref;
+  delete cfg[pref]; /* 只清当前音色，其他音色与当前音色选择都不动 */
+  saveVoiceCfg(cfg);
+  vpDraft={ voiceURI: vpSavedVoiceURI(pref), pitch: vpBasePitch(pref) };
+  $("#vpPitch").value=vpDraft.pitch;
+  $("#vpPitchVal").textContent=vpDraft.pitch.toFixed(2);
+  vpRenderList(); /* 面板保持打开，方便接着调 */
+  toast("已复位"+VP_PREF_NAME[pref]+"的语音与音调");
+}
+function vpResetAll(){
+  saveVoiceCfg({});
+  applyPref("auto");
+  vpClose(false);
+  toast("已全部复位：音色回到自动，语音与音调已清空");
 }
 
 /* ========================= 状态 ========================= */
@@ -1956,6 +2175,7 @@ function histClearAll(){
 function bind(){
   /* 头像：切换音色 + 试听 */
   $("#creeper").addEventListener("click", function(){
+    if(vpLongFired){ vpLongFired=false; return; } /* 长按弹面板后不误切音色 */
     unlockAudio();
     var next = nextPref(state.voicePref);
     applyPref(next);
@@ -1990,6 +2210,57 @@ function bind(){
       }
     });
   });
+
+  /* 头像右键 / 长按：语音与音调面板 */
+  var creeperEl=$("#creeper");
+  creeperEl.addEventListener("contextmenu", function(e){
+    e.preventDefault(); vpOpen();
+  });
+  creeperEl.addEventListener("pointerdown", function(e){
+    if(e.pointerType==="mouse") return; /* 鼠标只走右键 */
+    vpLongFired=false;
+    clearTimeout(vpLongTimer);
+    vpLongTimer=setTimeout(function(){ vpLongFired=true; vpOpen(); },500);
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(function(t){
+    creeperEl.addEventListener(t,function(){ clearTimeout(vpLongTimer); });
+  });
+
+  $("#vpCloseBtn").addEventListener("click", function(){ click(); vpClose(false); });
+  $("#vpOkBtn").addEventListener("click", function(){ click(); vpClose(true); });
+  $("#vpResetCurBtn").addEventListener("click", function(){ click(); vpResetCurrent(); });
+  $("#vpResetBtn").addEventListener("click", function(){
+    click();
+    if(window.confirm("确定全部复位？音色回到自动，所有语音与音调设置都会清空。")) vpResetAll();
+  });
+  $("#vpSrcLocal").addEventListener("click", function(){ click(); vpSetSrc("local"); });
+  $("#vpSrcOnline").addEventListener("click", function(){ click(); vpSetSrc("online"); });
+  $("#vpList").addEventListener("click", function(e){
+    var it=e.target.closest(".vp-item"); if(!it) return;
+    click();
+    vpDraft.voiceURI=it.getAttribute("data-uri")||"";
+    vpRenderList();
+    vpPreview();
+  });
+  var vpPitchEl=$("#vpPitch");
+  vpPitchEl.addEventListener("input", function(){
+    vpDraft.pitch=clampPitch(this.value);
+    $("#vpPitchVal").textContent=vpDraft.pitch.toFixed(2);
+    clearTimeout(vpPitchTimer);
+    vpPitchTimer=setTimeout(vpPreview,250); /* 停手约 250ms 后试听一次 */
+  });
+  vpPitchEl.addEventListener("change", function(){
+    clearTimeout(vpPitchTimer);
+    vpPitchTimer=setTimeout(vpPreview,250);
+  });
+  document.addEventListener("pointerdown", function(e){
+    if(!vpOpenFlag) return;
+    var p=$("#voicePanel");
+    if(p.contains(e.target) || creeperEl.contains(e.target)) return;
+    vpClose(false);
+  }, true);
+  window.addEventListener("resize", vpPosition);
+  window.addEventListener("scroll", vpPosition, true);
 
   $("#parseBtn").addEventListener("click", function(){
     unlockAudio(); click(); doParse();
@@ -2178,6 +2449,7 @@ function bind(){
   $("#histMask").addEventListener("click", function(e){ if(e.target===this) closeHistDialog(); });
   document.addEventListener("keydown", function(e){
     if(e.key!=="Escape") return;
+    if(vpOpenFlag){ vpClose(false); return; }
     if(!$("#typeTest").hidden){ ttExit(); return; }
     closeHistDialog();
   });
