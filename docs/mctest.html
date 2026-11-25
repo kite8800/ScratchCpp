@@ -450,7 +450,7 @@ body.kb-open .type-mask{padding-top:8px}
 会自动判断先英还是先中。"></textarea>
 
     <div class="paste-help">
-      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文 / 不标注，同时决定单词卡正面显示词还是义）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：点「🃏 单词卡」翻卡背诵；点卡片/空格翻面，← 上一张、→ 没记住，Esc 退出；点「✓ 记住了」标记该词、「✗ 没记住」跳过，两者都会切到下一张，全部记住后出汇总页奖 1 个胡萝卜。<br><b>打单词</b>：断句后点「⌨️ 打单词」进入专注模式，句子里命中词变成空格，看中文提示填英文；每空「🔤 拼读」逐字母读再读整词，「🔊 朗读整句」听语境。<b>整卷作答、统一交卷</b>：填完点「下一句」会闪本题答案并逐个念出，可「上一句」回改；全部填完点顶栏绿色「✓ 全部提交」一次性判分出成绩。回车 = 下一句。
+      <b>怎么用</b>：粘贴 → 选「朗读」语言 → 点「识别并断句」→ 点播放。点任意句子从该句朗读；拖动 🐢 调语速；「译文」切换三态（不显示 / 当前句 / 全文）；「词汇表」显示/隐藏词条列表（默认显示）；「词汇」切换记忆模式（全部 / 仅译文 / 仅原文 / 不标注）；「卡片」切换单词卡正面显示（全部 / 仅译文 / 仅原文 / 不标注，默认仅原文）；点头像切换音色。<br><b>单词表</b>：在正文里按 <b>英文|中文</b> 写一行一个词（如 work|工作），这些行不计入句子；命中词在原文加下划线、译文加高亮，「词汇」按钮可把某一侧命中词挖空做填空记忆。<br><b>单词卡</b>：点「🃏 单词卡」翻卡背诵；点卡片/空格翻面，← 上一张、→ 没记住，Esc 退出；点「✓ 记住了」标记该词、「✗ 没记住」跳过，两者都会切到下一张，全部记住后出汇总页奖 1 个胡萝卜。<br><b>打单词</b>：断句后点「⌨️ 打单词」进入专注模式，句子里命中词变成空格，看中文提示填英文；每空「🔤 拼读」逐字母读再读整词，「🔊 朗读整句」听语境。<b>整卷作答、统一交卷</b>：填完点「下一句」会闪本题答案并逐个念出，可「上一句」回改；全部填完点顶栏绿色「✓ 全部提交」一次性判分出成绩。回车 = 下一句。
     </div>
 
     <div class="action-row">
@@ -471,6 +471,7 @@ body.kb-open .type-mask{padding-top:8px}
       <button class="sw on" id="transBtn" title="译文显示模式">译文：当前</button>
       <button class="sw on" id="vocabListBtn" title="单词表列表 显示/隐藏">词汇表：显示</button>
       <button class="sw on" id="vocabBtn" title="词汇标注模式：全部 / 仅译文 / 仅原文 / 不标注">词汇：全部</button>
+      <button class="sw on" id="cardFaceBtn" title="单词卡正面：全部 / 仅译文 / 仅原文 / 不标注">卡片：仅原文</button>
       <button class="sw" id="soundBtn" title="音效开关">🔊</button>
       <div class="row-break"></div>
       <button class="sw" id="histSaveBtn" title="把当前文章存到历史">💾 保存到历史</button>
@@ -1039,7 +1040,7 @@ function applyPref(pref){
 }
 
 /* ========================= 状态 ========================= */
-var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, voicePref:"auto" };
+var state={ muted:false, langMode:"en", trans:"cur", vocab:"all", vocabList:true, cardFace:"en", voicePref:"auto" };
 var currentSentences=[];
 var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
 /* continuous = 用户的「连播意图」，只由播放按钮维护：
@@ -1053,6 +1054,9 @@ var TRANS_ORDER = ["cur","all","none"];
 /* 词汇记忆模式：all=原文下划线+译文高亮都显示；zh=只显示译文(原文命中词挖空)；en=只显示原文(译文命中词挖空) */
 var VOCAB_LABEL = { all:"全部", zh:"仅译文", en:"仅原文", none:"不标注" };
 var VOCAB_ORDER = ["all","zh","en","none"];
+/* 单词卡正面：与「词汇」同值域（全部=词+义 / 仅译文=仅义 / 仅原文=仅词 / 不标注=什么都不写），默认「仅原文」 */
+var CARD_FACE_DEFAULT = "en";
+var CARD_FACE_ORDER = ["all","zh","en","none"];
 /* =========================================================
    格式识别 + 断句（原样保留）
    ========================================================= */
@@ -1544,7 +1548,22 @@ function cycleVocab(){
   state.vocab = VOCAB_ORDER[(i+1) % VOCAB_ORDER.length];
   save("vocab", state.vocab);
   applyVocab();
-  if(!$("#wordCards").hidden) wcRender(); /* 卡片正面跟随词汇：覆盖层开着时立刻刷新 */
+}
+/* 单词卡正面：与「词汇」同四态，但独立控制——只影响卡片正面的词/义，不影响正文标注 */
+function applyCardFace(){
+  var btn=$("#cardFaceBtn"); if(!btn) return;
+  btn.textContent="卡片："+VOCAB_LABEL[state.cardFace];
+  var off=state.cardFace==="none"; /* 不标注态：与「词汇」同款黄底 */
+  btn.classList.toggle("on", !off);
+  btn.classList.toggle("vocab-off", off);
+}
+function cycleCardFace(){
+  var i=CARD_FACE_ORDER.indexOf(state.cardFace);
+  if(i<0) i=CARD_FACE_ORDER.indexOf(CARD_FACE_DEFAULT);
+  state.cardFace=CARD_FACE_ORDER[(i+1) % CARD_FACE_ORDER.length];
+  save("cardFace", state.cardFace);
+  applyCardFace();
+  if(!$("#wordCards").hidden) wcRender(); /* 覆盖层开着时立刻刷新卡面 */
 }
 /* 词汇表面板：显示/隐藏两态，默认显示 */
 function applyVocabList(){
@@ -1559,7 +1578,7 @@ function toggleVocabList(){
   applyVocabList();
 }
 /* 配图显隐：按词（=每张卡）独立控制，只影响显示、不触发任何请求。
-   状态只在本次会话内有效（刷新重置为全部显示）。卡片正面的词/义由「词汇」模式决定 */
+   状态只在本次会话内有效（刷新重置为全部显示）。卡片正面的词/义由「卡片」按钮决定 */
 function picShown(word){
   var k=String(word||"").trim().toLowerCase();
   return !k || !wc.picHidden[k];
@@ -1838,14 +1857,15 @@ var wc={
   picCoolUntil:0,   /* 冷却截止时间，防连点 */
   timer:null
 };
-/* 卡片正面显隐（背面的词+中文+例句不变）：词/义跟随「词汇」四态
-   all=词+义 / en(仅原文)=仅词 / zh(仅译文)=仅义 / none(不标注)=都不显示；
+/* 卡片正面显隐（背面的词+中文+例句不变）：由「卡片」按钮控制，与「词汇」同四态
+   all=词+义 / zh(仅译文)=仅义 / en(仅原文)=仅词 / none(不标注)=什么都不写；
    图片不在这里判断——由每个词自己的「图片：开/关」+ 缓存共同决定（见 wcRenderPic） */
 function wcFaceParts(){
-  var word=(state.vocab==="all"||state.vocab==="en");
-  var zh  =(state.vocab==="all"||state.vocab==="zh");
-  if(!word && !zh) word=true; /* 全都不显示时至少露出英文词，避免空白卡面 */
-  return { word:word, zh:zh };
+  var f=state.cardFace;
+  return {
+    word: f==="all"||f==="en",
+    zh:   f==="all"||f==="zh"
+  };
 }
 function toQuery(word){
   return String(word||"").trim().toLowerCase()
@@ -1973,7 +1993,7 @@ function wcRender(){
   $("#wcProgress").textContent=(wc.idx+1)+" / "+total+" · 已记住 "+wcMemoCount()+"/"+total;
   $("#wcJumpLabel").textContent=(wc.idx+1)+" / "+total;
   $("#wcJump").max=String(total-1); $("#wcJump").value=String(wc.idx);
-  /* 正面内容由「词汇」模式控制；背面始终是英文+中文+例句 */
+  /* 正面内容由「卡片」按钮控制；背面始终是英文+中文+例句 */
   var parts=wcFaceParts();
   $("#wcWord").hidden=!parts.word;
   $("#wcWord").textContent=parts.word?(v.en||""):"";
@@ -2577,6 +2597,10 @@ function bind(){
     click(); cycleVocab();
   });
 
+  $("#cardFaceBtn").addEventListener("click", function(){
+    click(); cycleCardFace();
+  });
+
   $("#playBtn").addEventListener("click", function(){
     unlockAudio(); click();
     if(!currentSentences.length){ toast("先粘贴文章并断句"); return; }
@@ -2704,6 +2728,10 @@ function init(){
 
   state.vocabList=load("vocabList",true);
   applyVocabList();
+
+  state.cardFace=load("cardFace",CARD_FACE_DEFAULT);
+  if(CARD_FACE_ORDER.indexOf(state.cardFace)<0) state.cardFace=CARD_FACE_DEFAULT;
+  applyCardFace();
 
   applyCardPic(); /* 配图显隐按词独立、不持久化：初始化时一律显示 */
 
