@@ -1235,9 +1235,11 @@ var currentSentences=[];
 var currentVocab=[]; /* 当前文章的词表：[{en,zh}]，由 parseText 抽取 */
 /* continuous = 用户的「连播意图」，只由播放按钮维护：
    点播放→true（想连播），点暂停→false（人工停止）。
-   单句点击是否连播看它，而不是看 player.playing——后者会被
-   playSentence 自身置 true，导致「停止后点单句、未播完又点别的句子」被误判成连播。 */
-var player={ playing:false, continuous:false, current:0, rate:0.85, timer:null };
+   单句 / 词条点击是否连播都看它，而不是看 player.playing——后者会被
+   playSentence / playVocabSeq 自身置 true，导致「停止后点单条、未播完又点别的」被误判成连播。
+   focus 记最后朗读的位置（sent=正文句 / vocab=词表词条），vocabCurrent 是最后点过的词条下标；
+   顶栏播放按钮据此从上次位置续播，词表与正文行为一致。 */
+var player={ playing:false, continuous:false, current:0, vocabCurrent:0, focus:"sent", rate:0.85, timer:null };
 
 var TRANS_LABEL = { none:"不显示", cur:"当前", all:"全文" };
 var TRANS_ORDER = ["cur","all","none"];
@@ -1572,17 +1574,22 @@ function highlightVocab(i){
   var el=document.querySelector('.vb-row[data-vi="'+i+'"]');
   if(el){ el.classList.add("active"); el.scrollIntoView({behavior:"smooth",block:"center"}); }
 }
-/* 朗读词表：从第 i 词开始，按 langMode 顺序读；读一条 → 下一条链下去 */
+/* 朗读词表：从第 i 词开始，按 langMode 顺序读；读一条 → 下一条链下去。
+   与正文 playSentence 对齐：记录 focus/vocabCurrent、同步播放按钮状态，
+   点顶栏播放即可从上次点过的词条继续连播。 */
 function playVocabSeq(i, autoNext){
   if(!currentVocab.length || !state.vocabList){ stopPlayback(); return; }
+  if(i<0) i=0;
   if(i>=currentVocab.length){ stopPlayback(); return; }
-  player.playing=true;
+  player.vocabCurrent=i; player.focus="vocab"; player.playing=true;
+  $("#playBtn").textContent="⏸ 暂停"; $("#playBtn").classList.add("on");
+  $$(".sent").forEach(function(el){el.classList.remove("active");});
   highlightVocab(i);
   var v=currentVocab[i], rate=player.rate, mode=state.langMode;
   var en=v.en||"", zh=v.zh||"";
   var next=function(){
     if(!player.playing) return;
-    if(autoNext) playVocabSeq(i+1, true);
+    if(autoNext && i+1<currentVocab.length) playVocabSeq(i+1, true);
     else stopPlayback();
   };
   if(mode==="en"){
@@ -1608,6 +1615,7 @@ function playVocabAfterStory(){
 function renderSentences(result){
   currentSentences=result.items;
   player.current=0;
+  player.vocabCurrent=0; player.focus="sent";
   player.continuous=false; /* 新会话：连播意图清零 */
   stopPlayback();
 
@@ -1656,8 +1664,9 @@ function highlightSentence(idx){
 function playSentence(idx, autoNext){
   if(autoNext===undefined) autoNext=true;
   if(idx<0 || idx>=currentSentences.length){ stopPlayback(); return; }
-  player.current=idx; player.playing=true;
+  player.current=idx; player.focus="sent"; player.playing=true;
   $("#playBtn").textContent="⏸ 暂停"; $("#playBtn").classList.add("on");
+  highlightVocab(-1);
   highlightSentence(idx);
 
   var s=currentSentences[idx];
@@ -1768,6 +1777,7 @@ function toggleVocabList(){
   state.vocabList=!state.vocabList;
   save("vocabList", state.vocabList);
   applyVocabList();
+  if(!state.vocabList && player.playing && player.focus==="vocab") stopPlayback(); /* 收起词表时停掉正在读的词 */
 }
 /* 配图显隐：按词（=每张卡）独立控制，只影响显示、不触发任何请求。
    状态只在本次会话内有效（刷新重置为全部显示）。卡片正面的词/义由「卡片」按钮决定 */
@@ -2325,6 +2335,8 @@ function bind(){
 
     var wasPlaying = player.playing;
     var resumeAt = player.current;
+    var resumeVocabAt = player.vocabCurrent;
+    var resumeFocus = player.focus;
     stopPlayback();
 
     var lang = (state.langMode==="zh" || state.langMode==="zh-en") ? "zh" : "en";
@@ -2344,8 +2356,9 @@ function bind(){
     else { toast("已切换到" + PREF_LABEL[next] + "音色"); }
 
     speakOne(line, lang, player.rate, function(){
-      if(wasPlaying && currentSentences.length){
-        playSentence(Math.min(resumeAt, currentSentences.length-1));
+      if(wasPlaying){
+        if(resumeFocus==="vocab" && state.vocabList && currentVocab.length) playVocabSeq(Math.min(resumeVocabAt,currentVocab.length-1));
+        else if(currentSentences.length) playSentence(Math.min(resumeAt, currentSentences.length-1));
       }
     });
   });
@@ -2486,15 +2499,20 @@ function bind(){
 
   $("#playBtn").addEventListener("click", function(){
     unlockAudio(); click();
-    if(!currentSentences.length){ toast("先粘贴文章并断句"); return; }
+    if(!currentSentences.length && !currentVocab.length){ toast("先粘贴文章并断句"); return; }
     if(player.playing){
-      /* 人工点暂停：记录停止意图，后续单句点击都播完即停 */
+      /* 人工点暂停：记录停止意图，后续单条点击都播完即停 */
       player.continuous=false;
       stopPlayback();
     } else {
-      /* 人工点播放：恢复连播意图，从当前句一路往下读 */
+      /* 人工点播放：恢复连播意图，从上次位置续播——
+         上次点的是词条就从该词读到表尾；否则从当前句读到文章末尾再续读词表。 */
       player.continuous=true;
-      playSentence(player.current, true);
+      var canPlayVocab = state.vocabList && currentVocab.length &&
+                         (player.focus==="vocab" || !currentSentences.length);
+      if(canPlayVocab) playVocabSeq(player.vocabCurrent, true);
+      else if(currentSentences.length) playSentence(player.current, true);
+      else stopPlayback();
     }
   });
 
@@ -2524,7 +2542,7 @@ function bind(){
     save("rate", player.rate);
   });
   $("#readerBody").addEventListener("click", function(e){
-    /* 词表词条：点哪个词就从哪个词读起，连播意图同句子 */
+    /* 词表词条：点哪个词就从哪个词读起，连播意图与正文句子完全一致 */
     var vb=e.target.closest(".vb-row");
     if(vb){
       unlockAudio(); click();
