@@ -946,8 +946,29 @@ function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true)
 
 /* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色
    override 仅供语音面板试听用：{voiceURI, pitch}，不写盘、不影响三态设置 */
+/* Chrome / Edge 首次 getVoices() 常返回空，voiceschanged 随后才派发。
+   若在列表就绪前朗读前几句，会退回平台默认语音且丢掉 lang 提示，
+   与后续句子音色不一致（2026-11-26 修复）。微信 / iOS 必须同步 speak，不等待。 */
 function speakOne(text, lang, rate, onDone, override){
   if(state.muted){ onDone&&onDone(); return; }
+  if(!voices.length && !NEED_SYNC_SPEAK && getSynth()){
+    var waitDone=false, waitTimer=null;
+    var begin=function(){
+      if(waitDone) return;
+      waitDone=true;
+      clearTimeout(waitTimer);
+      var s=getSynth();
+      try{ if(s) s.removeEventListener("voiceschanged", begin); }catch(e){}
+      speakOneNow(text, lang, rate, onDone, override);
+    };
+    waitTimer=setTimeout(begin, 600); /* 最多等 600ms，超时就按现状发声 */
+    try{ getSynth().addEventListener("voiceschanged", begin); }catch(e){}
+    return;
+  }
+  speakOneNow(text, lang, rate, onDone, override);
+}
+
+function speakOneNow(text, lang, rate, onDone, override){
   /* 每次朗读前重新探测：微信里 API 可能在 WeixinJSBridgeReady / 首次触摸后才出现 */
   if(!primeTTS()){
     warnOnce(IS_WECHAT
