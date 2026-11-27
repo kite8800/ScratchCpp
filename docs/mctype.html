@@ -875,13 +875,24 @@ function speakOneNow(text, lang, rate, onDone, override){
     u.lang  = safeLang;
   }
 
-  var done=false, started=false, wakeTimer=null;
+  var done=false, started=false, wakeTimer=null, retried=false;
   function finish(){
     if(done) return;
     done=true;
     clearTimeout(wakeTimer);
     clearTimeout(player.timer);
     onDone&&onDone();
+  }
+  /* 语音/网络异常 → 不指定引擎（用系统默认）念一次，音调沿用 */
+  function speakDefault(){
+    try{
+      var u2=newUtt(text);
+      if(!u2){ finish(); return; }
+      u2.lang = safeLang;
+      u2.rate = rate||.85; u2.pitch = pick.pitch; u2.volume = 1;
+      u2.onend = finish;
+      synth.speak(u2);
+    }catch(x){ finish(); }
   }
   u.onstart=function(){ started=true; clearTimeout(wakeTimer); ttsPrimed=true; ttsWarned=false; hideHint(); };
   u.onend=finish;
@@ -892,16 +903,28 @@ function speakOneNow(text, lang, rate, onDone, override){
       showHint(IS_WECHAT?"微信拦住了声音，请点播放按钮再试一次 👆":"浏览器拦住了播放，请再点一次播放按钮 👆");
       return;
     }
-    /* 语音/网络异常 → 不指定引擎（用系统默认）再来一次，音调沿用 */
     if(/synthesis|voice|audio|network/i.test(e)){
-      try{
-        var u2=newUtt(text);
-        if(!u2){ finish(); return; }
-        u2.lang = safeLang;
-        u2.rate = rate||.85; u2.pitch = pick.pitch; u2.volume = 1;
-        u2.onend = finish;
-        synth.speak(u2);
-      }catch(x){ finish(); }
+      /* 偶发抖动：指定了语音就先原样重试一次（仅一次），再失败才退默认 */
+      if(!retried && pick.voice){
+        retried=true;
+        try{
+          var ur=newUtt(text);
+          if(!ur){ speakDefault(); return; }
+          ur.voice = pick.voice;
+          ur.lang  = pick.voice.lang || textLang;
+          ur.rate = rate||.85; ur.pitch = pick.pitch; ur.volume = 1;
+          ur.onstart=function(){ started=true; clearTimeout(wakeTimer); ttsPrimed=true; ttsWarned=false; hideHint(); };
+          ur.onend=finish;
+          ur.onerror=function(ev2){
+            var e2=(ev2&&ev2.error)||"";
+            if(e2==="interrupted"||e2==="canceled") return;
+            speakDefault(); /* 重试仍失败 → 退默认，不再重试 */
+          };
+          synth.speak(ur);
+        }catch(x){ speakDefault(); }
+        return;
+      }
+      speakDefault();
       return;
     }
     finish();
