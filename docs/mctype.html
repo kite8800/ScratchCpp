@@ -813,11 +813,12 @@ function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true)
 
 /* 朗读单句：lang = "en" | "zh"；用全局 state.voicePref 选音色
    override 仅供语音面板试听用：{voiceURI, pitch}，不写盘、不影响三态设置 */
-/* Chrome / Edge 首次 getVoices() 常返回空，voiceschanged 随后才派发。
-   若在列表就绪前朗读前几句，会退回平台默认语音且丢掉 lang 提示，
-   与后续句子音色不一致（2026-11-26 修复）。微信 / iOS 必须同步 speak，不等待。 */
+/* Chrome / Edge 首次 getVoices() 常返回空：加载时先取一次，点朗读时同步再取一次。
+   若仍为空，等一次 voiceschanged（最多 600ms，事件到立刻发声），避免前几句退回
+   平台默认语音而与后文音色不一致；微信 / iOS 必须同步 speak，不等待。 */
 function speakOne(text, lang, rate, onDone, override){
   if(state.muted){ onDone&&onDone(); return; }
+  if(!voices.length) loadVoices();
   if(!voices.length && !NEED_SYNC_SPEAK && getSynth()){
     var waitDone=false, waitTimer=null;
     var begin=function(){
@@ -826,9 +827,10 @@ function speakOne(text, lang, rate, onDone, override){
       clearTimeout(waitTimer);
       var s=getSynth();
       try{ if(s) s.removeEventListener("voiceschanged", begin); }catch(e){}
+      loadVoices(); /* 事件到达时重取一次，确保用上已就绪的列表 */
       speakOneNow(text, lang, rate, onDone, override);
     };
-    waitTimer=setTimeout(begin, 600); /* 最多等 600ms，超时就按现状发声 */
+    waitTimer=setTimeout(begin, 600);
     try{ getSynth().addEventListener("voiceschanged", begin); }catch(e){}
     return;
   }
