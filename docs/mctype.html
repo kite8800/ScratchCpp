@@ -652,7 +652,7 @@ function typeTick(){
       原先 Chrome 用的 cancel → setTimeout(90ms) → speak 会被直接拒绝；
    3) 微信里语音列表经常为空或延迟出现，不能在页面加载时据此断言不支持。
    ================================================================ */
-var voices=[],ttsPrimed=false,ttsWarned=false,hintTimer=null;
+var voices=[],ttsPrimed=false,ttsWarned=false,hintTimer=null,speakToken=0;
 var UA=(navigator.userAgent||""),
     IS_WECHAT=/MicroMessenger/i.test(UA),
     IS_IOS=/iPad|iPhone|iPod/i.test(UA)||(/Macintosh/i.test(UA)&&navigator.maxTouchPoints>0),
@@ -828,27 +828,28 @@ function warnOnce(msg){ if(ttsWarned) return; ttsWarned=true; showHint(msg,true)
    若仍为空，等一次 voiceschanged（最多 600ms，事件到立刻发声），避免前几句退回
    平台默认语音而与后文音色不一致；微信 / iOS 必须同步 speak，不等待。 */
 function speakOne(text, lang, rate, onDone, override){
+  var gen=++speakToken; /* 新朗读作废之前所有延迟回调（等语音/90ms speak/2.2s兜底） */
   if(state.muted){ onDone&&onDone(); return; }
   if(!voices.length) loadVoices();
   if(!voices.length && !NEED_SYNC_SPEAK && getSynth()){
     var waitDone=false, waitTimer=null;
     var begin=function(){
-      if(waitDone) return;
+      if(waitDone||gen!==speakToken) return;
       waitDone=true;
       clearTimeout(waitTimer);
       var s=getSynth();
       try{ if(s) s.removeEventListener("voiceschanged", begin); }catch(e){}
       loadVoices(); /* 事件到达时重取一次，确保用上已就绪的列表 */
-      speakOneNow(text, lang, rate, onDone, override);
+      speakOneNow(text, lang, rate, onDone, override, gen);
     };
     waitTimer=setTimeout(begin, 600);
     try{ getSynth().addEventListener("voiceschanged", begin); }catch(e){}
     return;
   }
-  speakOneNow(text, lang, rate, onDone, override);
+  speakOneNow(text, lang, rate, onDone, override, gen);
 }
 
-function speakOneNow(text, lang, rate, onDone, override){
+function speakOneNow(text, lang, rate, onDone, override, gen){
   /* 每次朗读前重新探测：微信里 API 可能在 WeixinJSBridgeReady / 首次触摸后才出现 */
   if(!primeTTS()){
     warnOnce(IS_WECHAT
@@ -892,10 +893,12 @@ function speakOneNow(text, lang, rate, onDone, override){
     done=true;
     clearTimeout(wakeTimer);
     clearTimeout(player.timer);
-    onDone&&onDone();
+    /* 已被取消或被新朗读取代：只清 timer，不触发 onDone，避免连读链继续往下念 */
+    if(gen===speakToken) onDone&&onDone();
   }
   /* 语音/网络异常 → 不指定引擎（用系统默认）念一次，音调沿用 */
   function speakDefault(){
+    if(gen!==speakToken) return; /* 已被取消/新朗读取代：不再发声念旧文本 */
     try{
       var u2=newUtt(text);
       if(!u2){ finish(); return; }
@@ -909,6 +912,7 @@ function speakOneNow(text, lang, rate, onDone, override){
   u.onend=finish;
   u.onerror=function(ev){
     var e=(ev&&ev.error)||"";
+    if(gen!==speakToken) return; /* 这已是旧朗读的迟到 error：作废，别走重试 */
     if(e==="interrupted"||e==="canceled") return;
     if(e==="not-allowed"||e==="NotAllowedError"){
       showHint(IS_WECHAT?"微信拦住了声音，请点播放按钮再试一次 👆":"浏览器拦住了播放，请再点一次播放按钮 👆");
@@ -928,6 +932,7 @@ function speakOneNow(text, lang, rate, onDone, override){
           ur.onend=finish;
           ur.onerror=function(ev2){
             var e2=(ev2&&ev2.error)||"";
+            if(gen!==speakToken) return;
             if(e2==="interrupted"||e2==="canceled") return;
             speakDefault(); /* 重试仍失败 → 退默认，不再重试 */
           };
@@ -943,6 +948,7 @@ function speakOneNow(text, lang, rate, onDone, override){
   try{
     if(synth.speaking||synth.pending) synth.cancel();
     var doSpeak=function(){
+      if(gen!==speakToken) return; /* 已被取消/被新朗读取代：作废 */
       try{
         synth.speak(u);
         /* Chrome 引擎会「假死」：speak 后 resume() 能唤醒；
@@ -957,7 +963,7 @@ function speakOneNow(text, lang, rate, onDone, override){
 
   /* 2.2 秒还没开声 → 换系统默认语音重试一次（不指定 voice，兼容性最高） */
   wakeTimer=setTimeout(function(){
-    if(started || done) return;
+    if(started || done || gen!==speakToken) return;
     try{ synth.cancel(); }catch(e){}
     try{
       var u3=newUtt(text);
@@ -1681,6 +1687,7 @@ function playSentence(idx, autoNext){
   }
 }
 function stopPlayback(){
+  speakToken++;
   player.playing=false; clearTimeout(player.timer);
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
   $("#playBtn").textContent="▶ 播放"; $("#playBtn").classList.remove("on");
@@ -1736,7 +1743,7 @@ function toggleVocabList(){
 /* ========================= 打字测试（句子里填词） ========================= */
 var tt={ items:[], idx:0, correct:0, total:0, results:[], drafts:[], timer:null, speakGen:0 };
 var ttSpellGen=0, ttSpellTimer=null;
-function ttCancelSpell(){ ttSpellGen++; clearTimeout(ttSpellTimer); ttSpellTimer=null; }
+function ttCancelSpell(){ ttSpellGen++; speakToken++; clearTimeout(ttSpellTimer); ttSpellTimer=null; }
 /* 归一化：小写、去标点、压空格 */
 function ttNorm(s){
   return String(s||"").toLowerCase()
@@ -1955,7 +1962,7 @@ function appleAward(){ var n=appleGet()+1; appleSet(n); return n; }
 
 /* 取消正在进行的答案朗读，并让旧链失效（gen 不匹配即中止） */
 function ttCancelSpeak(){
-  tt.speakGen++;
+  tt.speakGen++; speakToken++;
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
 }
 /* 依次念出答案单词（不拼读）；gen 不匹配立即停，防止切题后旧链继续 */
@@ -2561,7 +2568,8 @@ function bind(){
     this.textContent=state.muted?"🔇":"🔊";
     this.classList.toggle("off", state.muted);
     if(!state.muted) tone(880,.07,"triangle",.03);
-    else { try{ var s=getSynth(); if(s) s.cancel(); }catch(e){} }
+    else { speakToken++; /* 作废排队中的朗读（90ms speak / 2.2s 兜底），否则静音后还会冒出上一句 */
+           try{ var s=getSynth(); if(s) s.cancel(); }catch(e){} }
   });
 
   /* 历史文章 */
