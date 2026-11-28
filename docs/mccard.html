@@ -2290,7 +2290,6 @@ function histSortEnter(){
 function histSortFinish(commit){
   if(histSortMode&&commit&&histDraft){
     if(!histSet(histDraft)){ toast("保存失败：空间不足，顺序没变"); return; }
-    toast("已保存新的文章顺序");
   }
   histSortMode=false; histDraft=null;
   renderHistStore(); renderHistList(); histRenderSortUI();
