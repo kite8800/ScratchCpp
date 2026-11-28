@@ -2259,7 +2259,6 @@ function histRenderSortUI(){
   $("#histSortCancelBtn").hidden=!histSortMode;
   $("#histClearBtn").hidden=histSortMode;
   $("#histSortTip").hidden=!histSortMode;
-  $("#histCancelBtn").textContent=histSortMode?"取消排序":"取消";
 }
 function renderHistList(){
   var list=histSortMode&&histDraft?histDraft:histGet(), el=$("#histList");
