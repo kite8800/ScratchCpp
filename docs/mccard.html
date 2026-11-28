@@ -284,6 +284,7 @@ body.kb-open .type-mask{padding-top:8px}
 .wc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:3px solid var(--ink);border-radius:16px;box-shadow:var(--shadow);background:var(--paper);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .wc-front{background:linear-gradient(160deg,var(--card-front),var(--card-front2))}
 .wc-back{transform:rotateY(180deg);background:linear-gradient(160deg,var(--card-back),var(--card-back2))}
+#wordCards.card-white{--card-front:#ffffff;--card-front2:#ffffff;--card-back:#ffffff;--card-back2:#ffffff}
 .wc-pic-wrap{width:190px;height:190px;flex:none;border:2.5px dashed rgba(47,36,24,.2);border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px}
 .wc-pic-wrap[hidden]{display:none}
 .wc-pic-wrap img{width:100%;height:100%;object-fit:contain}
@@ -593,6 +594,7 @@ body.kb-open .type-mask{padding-top:8px}
       <div class="row-break"></div>
       <button class="sw" id="wcChangePicBtn" title="为这个单词生成一张配图（免费图源，有额度限制）">🖼 生图</button>
       <button class="sw on" id="wcTogglePicBtn" title="隐藏这张卡的配图（只隐藏，不再请求图片）">图片：开</button>
+      <button class="sw" id="wcThemeBtn" title="切换卡片配色（全局所有卡片；打印始终是白底）">配色：蓝</button>
       <button class="sw" id="wcPrintBtn" title="打印这张卡的正、反两面（扑克牌大小，白底）">🖨 打印</button>
       <div class="row-break"></div>
       <button class="sw" id="wcReadWordBtn" title="只读英文单词">🔊 读词</button>
@@ -1860,6 +1862,21 @@ function toggleCardPic(){
   applyCardPic();
   if(!$("#wordCards").hidden) wcRenderPic(); /* 开着时立刻刷新卡面 */
 }
+/* 卡片配色：全局统一（蓝 / 白），存 mcr_cardTheme；只影响屏幕卡面，打印另走白底 #cardPrintArea */
+var cardTheme=load("cardTheme","blue");
+function applyCardTheme(){
+  var white=cardTheme==="white";
+  $("#wordCards").classList.toggle("card-white", white);
+  var btn=$("#wcThemeBtn"); if(!btn) return;
+  btn.textContent=white?"配色：白":"配色：蓝";
+  btn.title=white?"当前白色卡片，点一下换回蓝色（打印始终白底）":"当前蓝色卡片，点一下换成白色（打印始终白底）";
+}
+function toggleCardTheme(){
+  cardTheme=cardTheme==="white"?"blue":"white";
+  save("cardTheme",cardTheme);
+  applyCardTheme();
+}
+applyCardTheme();
 
 /* ========================= 胡萝卜奖励（单词卡）=========================
    单词卡这一轮每个词都点过「记住了」才奖 1 个胡萝卜，存 localStorage（mcr_carrots）。
@@ -2026,6 +2043,7 @@ function wcStart(){
   $("#wordCards").hidden=false;
   wcShowDone(false);
   carrotRender();
+  applyCardTheme();
   wcRender();
   var fb=$("#wcFlipBtn"); if(fb) fb.focus(); /* 让方向键/空格导航生效 */
 }
@@ -2553,6 +2571,7 @@ function bind(){
     if(e.target.closest("#wcReadExBtn")){ if(!wc.flipped) wcFlip(); wcSpeak("ex"); return; } /* 例句在背面，先翻过去 */
     if(e.target.closest("#wcChangePicBtn")){ wcGenerate(); return; }
     if(e.target.closest("#wcTogglePicBtn")){ click(); toggleCardPic(); return; }
+    if(e.target.closest("#wcThemeBtn")){ click(); toggleCardTheme(); return; }
     if(e.target.closest("#wcPrintBtn")){ click(); wcPrint(); return; }
   });
   /* 方向键翻词、空格翻卡（单词卡全屏时） */
