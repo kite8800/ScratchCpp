@@ -365,12 +365,8 @@ body.kb-open .type-mask{padding-top:8px}
 .hist-foot .hgroup[hidden],.sw[hidden],.hist-sort-tip[hidden]{display:none!important}
 .hist-foot .sw.primary{background:var(--grass-d);color:#fff;border-color:var(--grass-d)}
 .hist-sort-tip{padding:8px 14px 0;font-size:11.5px;color:var(--ink2);line-height:1.5}
-.hist-item.sorting .hist-grip{flex:none;width:16px;display:grid;grid-template-columns:repeat(2,3px);grid-template-rows:repeat(3,3px);gap:2px;align-content:center;justify-content:center;cursor:grab;touch-action:none}
-.hist-item.sorting .hist-grip i{width:3px;height:3px;border-radius:50%;background:var(--ink2)}
 .hist-item.sorting .hist-move{flex:none;width:26px;height:26px;padding:0;border:2px solid var(--ink);border-radius:8px;background:var(--cream);font-weight:900;font-size:13px;line-height:1}
 .hist-item.sorting .hist-move[disabled]{opacity:.3;cursor:not-allowed}
-.hist-item.dragging{opacity:.4}
-.hist-item.dragover{border-color:var(--grass-d)!important;background:#f0f8e9}
 
 /* 头像右键 / 长按：语音与音调高级设置浮层 */
 .voice-panel{position:fixed;z-index:9600;width:340px;max-width:calc(100vw - 20px);max-height:calc(100vh - 20px);display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;font-size:13px}
@@ -643,7 +639,7 @@ body.kb-open .type-mask{padding-top:8px}
       <div class="hist-bar" id="histBar"><i id="histBarFill"></i></div>
     </div>
     <div class="hist-list" id="histList"></div>
-    <div class="hist-sort-tip" id="histSortTip" hidden>点 ↑ ↓ 或拖动左边的点点调整顺序；「完成」才保存，「还原」放弃改动。</div>
+    <div class="hist-sort-tip" id="histSortTip" hidden>点 ↑ ↓ 调整顺序；「完成」才保存，「还原」放弃改动。</div>
     <div class="hist-foot">
       <div class="hgroup">
         <button class="sw" id="histCancelBtn">取消</button>
@@ -2256,7 +2252,7 @@ function renderHistStore(){
   $("#histBar").classList.toggle("warn",low);
 }
 /* 渲染历史列表：平时只读，排序模式显示 ↑↓ 和拖拽手柄 */
-var histSortMode=false, histDraft=null, histDragIdx=-1;
+var histSortMode=false, histDraft=null;
 function histRenderSortUI(){
   $("#histSortBtn").hidden=histSortMode;
   $("#histSortDoneBtn").hidden=!histSortMode;
@@ -2274,8 +2270,7 @@ function renderHistList(){
     var meta='<div class="meta"><div class="t">'+esc(histTitle(it.raw))+'</div>'+
       '<div class="d">'+histDate(it.ts)+' · '+chars+' 字 · '+lineCount+' 行</div></div>';
     if(histSortMode){
-      return '<div class="hist-item sorting" data-idx="'+i+'" draggable="true">'+
-        '<span class="hist-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>'+
+      return '<div class="hist-item sorting">'+
         meta+
         '<button class="hist-move" data-up="'+i+'"'+(i===0?" disabled":"")+' title="上移" aria-label="上移">↑</button>'+
         '<button class="hist-move" data-down="'+i+'"'+(i===list.length-1?" disabled":"")+' title="下移" aria-label="下移">↓</button>'+
@@ -2290,7 +2285,7 @@ function renderHistList(){
 function histSortEnter(){
   var list=histGet();
   if(list.length<2){ toast("至少存两篇才能排序"); return; }
-  histDraft=list.slice(); histSortMode=true; histDragIdx=-1;
+  histDraft=list.slice(); histSortMode=true;
   renderHistList(); histRenderSortUI();
 }
 function histSortFinish(commit){
@@ -2298,7 +2293,7 @@ function histSortFinish(commit){
     if(!histSet(histDraft)){ toast("保存失败：空间不足，顺序没变"); return; }
     toast("已保存新的文章顺序");
   }
-  histSortMode=false; histDraft=null; histDragIdx=-1;
+  histSortMode=false; histDraft=null;
   renderHistStore(); renderHistList(); histRenderSortUI();
 }
 function histMove(i,dir){
@@ -2699,40 +2694,6 @@ function bind(){
     var ob=e.target.closest("[data-open]"), db=e.target.closest("[data-delete]");
     if(ob){ click(); histOpen(Number(ob.getAttribute("data-open"))); }
     else if(db){ click(); histDelete(Number(db.getAttribute("data-delete"))); }
-  });
-  $("#histList").addEventListener("dragstart", function(e){
-    if(!histSortMode) return;
-    var row=e.target.closest(".hist-item.sorting");
-    if(!row) return;
-    histDragIdx=Number(row.getAttribute("data-idx"));
-    row.classList.add("dragging");
-    if(e.dataTransfer){ e.dataTransfer.effectAllowed="move"; try{ e.dataTransfer.setData("text/plain",""); }catch(err){} }
-  });
-  $("#histList").addEventListener("dragover", function(e){
-    if(!histSortMode||histDragIdx<0) return;
-    var row=e.target.closest(".hist-item.sorting");
-    if(!row) return;
-    e.preventDefault();
-    if(e.dataTransfer) e.dataTransfer.dropEffect="move";
-    $$(".hist-item.dragover").forEach(function(x){ x.classList.remove("dragover"); });
-    row.classList.add("dragover");
-  });
-  $("#histList").addEventListener("drop", function(e){
-    if(!histSortMode||histDragIdx<0) return;
-    var row=e.target.closest(".hist-item.sorting");
-    if(!row) return;
-    e.preventDefault();
-    var to=Number(row.getAttribute("data-idx"));
-    if(to!==histDragIdx){
-      var item=histDraft.splice(histDragIdx,1)[0];
-      histDraft.splice(to,0,item);
-      renderHistList();
-    }
-    histDragIdx=-1;
-  });
-  $("#histList").addEventListener("dragend", function(){
-    histDragIdx=-1;
-    $$(".hist-item.dragging,.hist-item.dragover").forEach(function(x){ x.classList.remove("dragging","dragover"); });
   });
   histRenderSortUI();
 
