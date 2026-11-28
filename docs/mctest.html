@@ -1911,6 +1911,8 @@ function toggleCardPic(){
 
 /* ========================= 打字测试（句子里填词） ========================= */
 var tt={ items:[], idx:0, correct:0, total:0, results:[], drafts:[], timer:null, speakGen:0 };
+var ttSpellGen=0, ttSpellTimer=null;
+function ttCancelSpell(){ ttSpellGen++; clearTimeout(ttSpellTimer); ttSpellTimer=null; }
 /* 归一化：小写、去标点、压空格 */
 function ttNorm(s){
   return String(s||"").toLowerCase()
@@ -2000,23 +2002,32 @@ function ttStart(){
 function ttExit(){
   clearTimeout(tt.timer); /* 退出时取消闪答案/翻页定时，避免关掉后又动 */
   tt.speakGen++; /* 失效正在进行的答案朗读链 */
+  ttCancelSpell(); /* 停掉正在进行的拼读链 */
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
   ttKbReset();
   $("#typeTest").hidden=true;
   document.body.classList.remove("tt-on");
 }
-/* 逐字母拼读再读整词：W → O → R → K → work */
+/* 逐字母拼读再读整词：W → O → R → K → work
+   再点一次（或退出/跳题）时旧链立即失效，从头重新开始，不与新链交错 */
 function ttSpell(word){
   if(!word) return;
+  ttCancelSpell();
+  var myGen=ttSpellGen;
   try{ var s=getSynth(); if(s) s.cancel(); }catch(e){}
   var letters=Array.from(word).filter(function(c){return /[A-Za-z]/.test(c);});
   var i=0;
   function next(){
+    if(myGen!==ttSpellGen) return;
     if(i<letters.length){
       var ch=letters[i++];
-      speakOne(ch.toUpperCase(), "en", .8, function(){ setTimeout(next, 90); });
+      speakOne(ch.toUpperCase(), "en", .8, function(){
+        if(myGen===ttSpellGen) ttSpellTimer=setTimeout(next, 90);
+      });
     } else {
-      setTimeout(function(){ speakOne(word, "en", .85, function(){}); }, 160);
+      ttSpellTimer=setTimeout(function(){
+        if(myGen===ttSpellGen) speakOne(word, "en", .85, function(){});
+      }, 160);
     }
   }
   next();
@@ -2026,6 +2037,7 @@ function ttGo(i){
   if(i<0 || i>=tt.items.length) return;
   clearTimeout(tt.timer);
   tt.speakGen++; /* 回退时停掉正在念的答案 */
+  ttCancelSpell(); /* 停掉正在进行的拼读链 */
   try{ var sg=getSynth(); if(sg) sg.cancel(); }catch(e){}
   ttClearPeek();
   renderTT(i);
